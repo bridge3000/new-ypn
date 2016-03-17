@@ -24,3 +24,10 @@ td,th, div, span, body
     margin: 0;
     padding: 3px;
 }
+
+.main_left
+{
+	width:200px;
+	float:left;
+	border:1px solid blue;
+}

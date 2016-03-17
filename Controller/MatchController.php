@@ -34,9 +34,8 @@ class MatchController extends AppController
         self::render("all");
     }
     
-    public function play()
+    public function play($nowDate)
     {
-        header("content-type:text/html; charset=utf-8");
         $nowDate = SettingManager::getInstance()->getNowDate();
         
         $todayMatches = MatchManager::getInstance()->getTodayMatches($nowDate, 0);
@@ -90,6 +89,9 @@ class MatchController extends AppController
         
         //save
         MatchManager::getInstance()->saveMany($todayMatches);
+		
+		/*体力为0的变成伤员*/
+        PlayerManager::getInstance()->update(array("condition_id"=>"4", 'InjuredDay'=>6), array('sinew <' => 0));
     }
     
     private function start(&$curMatch, &$hostPlayers, &$guestPlayers, &$hostTeam, &$guestTeam)

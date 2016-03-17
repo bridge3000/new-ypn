@@ -12,11 +12,11 @@ function __autoload($class)
 	 require_once(MainConfig::ROOTPATH . MainConfig::DS . $class);
 }
 
-$strM = $_GET['c'];
+$strM = isset($_GET['c']) ? $_GET['c'] : '';
 
 if ($strM == "")
 {
-    header("location:index.html");
+    MatchController::getInstance()->today();
 }
 else
 {
@@ -36,4 +36,3 @@ else
     
     call_user_func_array(array($ClassName::getInstance(), $action), $params);
 }
-?>

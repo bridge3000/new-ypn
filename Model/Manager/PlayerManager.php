@@ -18,6 +18,7 @@ class PlayerManager extends DataManager
 		$sqlArr[] = "update ypn_players set InjuredDay=InjuredDay-1 where InjuredDay>0";
 		$sqlArr[] = "update ypn_players set condition_id=3 where InjuredDay=0 and condition_id not in (1,2)";
 		$sqlArr[] = "update ypn_players set cooperate=100 where cooperate>100";
+		$sqlArr[] = "update ypn_players set state=state-2 where state>66";
         
         DBManager::getInstance()->multi_execute(implode(";", $sqlArr));
     }

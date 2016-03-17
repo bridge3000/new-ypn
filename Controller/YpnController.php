@@ -25,7 +25,6 @@ class YpnController extends AppController
         
         $myCoach = CoachManager::getInstance()->getMyCoach();
         $myTeamId = $myCoach->team_id;
-		
 		$nowDate = SettingManager::getInstance()->getNowDate();
 		$thisYear = date('Y', strtotime($nowDate));
 		$weekday = date("w", strtotime($nowDate));
@@ -33,162 +32,170 @@ class YpnController extends AppController
 		
 		if ($nowDate == ($thisYear . '-06-01'))
 		{
-			if (YpnManager::getInstance()->checkWorldCupDay())
-			{
-				$targetCountries = YpnManager::getInstance()->query('select * from countries where title in (select name from ypn_teams where id in(select team_id from ypn_worldcup_groups))');
-				foreach($targetCountries as $tc)
-				{
-					$targetCountry['Country'] = $tc['countries'];
-					$this->Country->uploadPlayers($targetCountry);
-				}
-			}
-			else if (YpnManager::getInstance()->checkEuroCupDay())
-			{
-				$targetCountries = YpnManager::getInstance()->query('select * from countries where title in (select name from ypn_teams where id in(select team_id from euro_cup_groups))');
-				foreach($targetCountries as $tc)
-				{
-					$targetCountry['Country'] = $tc['countries'];
-					$this->Country->uploadPlayers($targetCountry);
-				}
-			}
+			$this->prepareI18nMatch(); //准备国际比赛上调到国家队的球员
 		}
 		
-		$isTransferDay = YpnManager::getInstance()->checkTransferDay($nowDate);
-
-		$teams = TeamManager::getInstance()->find('all', array(
-			'fields' => array('id'),
-			'contain' => array()
+		$allUnplayedMatches = MatchManager::getInstance()->find('all', array(
+				'conditions' => array('isPlayed' => 0),
+				'contain' => array()
 			)
 		);
 		
-		$allTeams = array();
-		for ($i = 0; $i < count($teams); $i++)
-		{
-			$allTeams[] = $teams[$i]['id'];
-		}
-		unset($teams);
-		
-		$matchTeams = array();
-		$matches = MatchManager::getInstance()->find('all', array(
-				'conditions' => array(
-					'PlayTime' => $nowDate,
-					'isPlayed ' => 0
-				),
-			)
-		);
-		for ($i = 0; $i < count($matches); $i++)
-		{
-			array_push($matchTeams, $matches[$i]['HostTeam_id'], $matches[$i]['GuestTeam_id']);
-		}
-		
-		if (count($matches) > 0)
+		$todayMatchTeamIds = $this->getTodayMatchTeamIds($allUnplayedMatches, $nowDate);
+		if (!empty($todayMatchTeamIds)) //开始今日比赛
 		{
             $this->redirect(array('controller' => 'match', 'action' => 'play'));
 		}
 
-		echo ("<div align=center><img src='" . MainConfig::STATIC_DIR . "img/training.jpg' width='500' /><br><br>training<img src='" . MainConfig::STATIC_DIR . "img/loading.gif'></div>");
-		echo ("<script>window.status='new day...'</script>");flush();
-		
-		/*体力为0的变成伤员*/
-        PlayerManager::getInstance()->update(array("condition_id"=>"4", 'InjuredDay'=>6), array('sinew <' => 0));
-        
-		$noMatchTeams = array_diff($allTeams, $matchTeams);
+		$this->flushTraining();
 
-		/*今天没比赛的球队训练(8-1开始训练，之前是假期，如果是世界杯年，则参赛球队的球员要继续训练)*/
-		/*队员状态减2*/
-        PlayerManager::getInstance()->update(array("state"=>"state-2"), array('state >' => 66));
-		
-		if (!$isHoliday)
+		$this->training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate);
+		unset($todayMatchTeamIds);
+
+		$this->checkTransferOverDayAndDo($nowDate, $thisYear); //如果刚刚过转会期人还没有招满
+
+		/*如果赛季比赛全完事，则进入新赛季页面*/
+		if (empty($allUnplayedMatches))
 		{
-			$myInjuredPlayers = PlayerManager::getInstance()->train($noMatchTeams, $myTeamId);
-                            
+			$this->newSeason();
+		}
+		else
+		{
+			/*如果是FIFA-DAY的前一天则抽调国家队队员*/
+			$this->inviteFriendMatch($nowDate);
+
+			SettingManager::getInstance()->addDate();
+
+			echo ("<script>top.frames['top1'].location.reload();</script>");flush();  /*日期加一，到达明天，刷新顶部框架*/
+
+			$isTransferDay = YpnManager::getInstance()->checkTransferDay($nowDate);
+			$this->doWeekday($weekday, $isTransferDay, $isHoliday);
+
+			$this->changeStatus('新的一天开始了.');
+
+			$this->redirect(array('controller'=>'player', 'action'=>'pay_birthday'), false); /*过生日的队员发奖金*/
+
+			NewsManager::getInstance()->saveAllData();
+
+			/*列出近期新闻，如果不采用弹出窗口显示则不用列出*/
+			$this->set('news', NewsManager::getInstance()->getUnreadNews($myTeamId));
+			NewsManager::getInstance()->readAll($myTeamId);
+
+			PlayerManager::getInstance()->doNormal(); //球员日常变化
+
+			echo "<script>location.href = 'index.php?c=match&a=today';</script>";
+		}
+	}
+	
+	private function training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate)
+	{
+		$allTeamIds = TeamManager::getInstance()->getAllTeamIds();
+		$noMatchTeamIds = array_diff($allTeamIds, $todayMatchTeamIds); //今日没有比赛的球队ID
+		
+		if (!$isHoliday) //不是假期要训练
+		{
+			$myInjuredPlayers = PlayerManager::getInstance()->train($noMatchTeamIds, $myTeamId);
             foreach ($myInjuredPlayers as $mip)
             {
                 NewsManager::getInstance()->add("<font color=red>" . $mip['name'] . "</font>在训练中受伤，需要休息" . $mip['InjuredDay'] . "天。", $mip['team_id'], $nowDate, $mip['ImgSrc']);	
             }
 		}
-		else
+		else //假期检测是否世界大赛期间
 		{
 			if (YpnManager::getInstance()->checkWorldCupDay($nowDate))
 			{
 				$wcTeams = PlayerManager::getInstance()->query('select team_id from ypn_worldcup_groups');
 				for ($i = 0;$i < count($wcTeams);$i++)
 				{
-					$allTeams[$i] = $wcTeams[$i]['worldcupgroups']['team_id'];
+					$allTeamIds[$i] = $wcTeams[$i]['worldcupgroups']['team_id'];
 				}
 				unset($wcTeams);
-				
-				$noMatchTeams = array_diff($allTeams, $matchTeams);
-				$myInjuredPlayers = PlayerManager::getInstance()->training($noMatchTeams, $myTeamId);
+
+				$myInjuredPlayers = PlayerManager::getInstance()->training($noMatchTeamIds, $myTeamId);
 			}
 			else if (YpnManager::getInstance()->checkEuroCupDay($nowDate))
 			{
 				$wcTeams = PlayerManager::getInstance()->query('select team_id from ypn_eurocup_groups');
 				for ($i = 0;$i < count($wcTeams);$i++)
 				{
-					$allTeams[$i] = $wcTeams[$i]['ypn_eurocup_groups']['team_id'];
+					$allTeamIds[$i] = $wcTeams[$i]['ypn_eurocup_groups']['team_id'];
 				}
 				unset($wcTeams);
-				
-				$noMatchTeams = array_diff($allTeams, $matchTeams);
-				PlayerManager::getInstance()->training($noMatchTeams, $myTeamId);
+
+				PlayerManager::getInstance()->training($noMatchTeamIds, $myTeamId);
 			}
 		}
-		unset($matchTeams);
-		unset($noMatchTeams);
-		unset($allTeams);
-		
-		/*如果刚刚过转会期人还没有招满*/
+	}
+	
+	private function flushTraining()
+	{
+		echo ("<div align=center><img src='" . MainConfig::STATIC_DIR . "img/training.jpg' width='500' /><br><br>training<img src='" . MainConfig::STATIC_DIR . "img/loading.gif'></div>");
+		echo ("<script>window.status='new day...'</script>");
+		flush();
+	}
+	
+	/**
+	 * 如果已达到世界大赛开始日，则开始抽调国家队队员
+	 */
+	private function prepareI18nMatch()
+	{
+		if (YpnManager::getInstance()->checkWorldCupDay())
+		{
+			$targetCountries = YpnManager::getInstance()->query('select * from countries where title in (select name from ypn_teams where id in(select team_id from ypn_worldcup_groups))');
+			foreach($targetCountries as $tc)
+			{
+				$targetCountry['Country'] = $tc['countries'];
+				$this->Country->uploadPlayers($targetCountry);
+			}
+		}
+		else if (YpnManager::getInstance()->checkEuroCupDay())
+		{
+			$targetCountries = YpnManager::getInstance()->query('select * from countries where title in (select name from ypn_teams where id in(select team_id from euro_cup_groups))');
+			foreach($targetCountries as $tc)
+			{
+				$targetCountry['Country'] = $tc['countries'];
+				$this->Country->uploadPlayers($targetCountry);
+			}
+		}
+	}
+	
+	private function getTodayMatchTeamIds($allUnplayedMatches, $nowDate)
+	{
+		$todayMatchTeamIds = array();
+		foreach($allUnplayedMatches as $m)
+		{
+			if ($m['PlayTime'] == $nowDate)
+			{
+				array_push($todayMatchTeamIds, $m['HostTeam_id'], $m['GuestTeam_id']);
+			}
+		}
+		return $todayMatchTeamIds;
+	}
+	
+	private function checkTransferOverDayAndDo($nowDate, $thisYear)
+	{
 		if ($nowDate == $thisYear . "-09-01")
 		{
 		    TeamController::getInstance()->get_young_players();
 			PlayerManager::getInstance()->query('update ypn_players set popular=popular-10 where team_id=0');
 			PlayerManager::getInstance()->query('update ypn_players set popular=10 where popular<10');
 		}
-
-		/*如果赛季比赛全完事，则进入新赛季页面*/
-		$matches = MatchManager::getInstance()->find('first', array(
-				'conditions' => array('isPlayed' => 0),
-				'contain' => array()
-			)
-		);
-        
-		if (empty($matches))
-		{
-			echo("<script>location = 'new_season';</script>");exit;
-		}
-		
-		/*如果是FIFA-DAY的前一天则抽调国家队队员*/
+	}
+	
+	private function inviteFriendMatch($nowDate)
+	{
 		$fifaDates = SettingManager::getInstance()->getFifaDates();
         $tomorrow = date('Y-m-d', strtotime("$nowDate +1 day"));
         if (in_array($tomorrow, $fifaDates, true))
         {
             $this->Country->inviteFriendMatch();
         }
-		
-		SettingManager::getInstance()->addDate();
-                
-		echo ("<script>top.frames['top1'].location.reload();</script>");flush();  /*日期加一，到达明天，刷新顶部框架*/
-        
-        $this->doWeekday($weekday, $isTransferDay, $isHoliday);
-		
-		$this->changeStatus('新的一天开始了.');
-		
-        $this->redirect(array('controller'=>'player', 'action'=>'pay_birthday'), false); /*过生日的队员发奖金*/
-        
-        NewsManager::getInstance()->saveAllData();
-		
-		/*列出近期新闻，如果不采用弹出窗口显示则不用列出*/
-        $this->set('news', NewsManager::getInstance()->getUnreadNews($myTeamId));
-        NewsManager::getInstance()->readAll($myTeamId);
-        
-        PlayerManager::getInstance()->doNormal();
-        
-        echo "<script>location = 'index.php?c=match&a=today';</script>";
-//        header("location:index.php?c=match&a=today");
 	}
 	
-	function newSeason()
+	/**
+	 * 整理本赛季数据，开始下个赛季
+	 */
+	private function newSeason()
 	{
                 //重算工资总量
         
@@ -778,19 +785,19 @@ class YpnController extends AppController
         
         $allPlayers = PlayerManager::getInstance()->find('all', array(
             'conditions' => array('team_id<>'=>0),
-            'fields' => array('team_id', 'salary')
+            'fields' => array('id', 'team_id', 'salary')
         ));
-        
-//        print_r($allPlayers);exit;
         
         for($i=0;$i<count($allTeams);$i++)
         {
+			unset($allTeams[$i]->playerCount);
+			
             $total = 0;
             foreach($allPlayers as $k=>$player)
             {
+
                 if ($player['team_id'] == $allTeams[$i]->id)
                 {
-                    die($player['id']);
                     $total += $player['salary'];
                     unset($allPlayers[$k]);
                 }
@@ -801,6 +808,9 @@ class YpnController extends AppController
         TeamManager::getInstance()->saveMany($allTeams);
     }
     
+	/**
+	 * 刷新所有游戏数据，重新play
+	 */
 	public function new_game()
 	{
         header("content-type:text/html; charset=utf-8");
@@ -809,7 +819,7 @@ class YpnController extends AppController
                 
 		YpnManager::getInstance()->multi_execute('TRUNCATE TABLE ypn_news;TRUNCATE TABLE ypn_honours;TRUNCATE TABLE ypn_fifa_dates;TRUNCATE TABLE ypn_matches;TRUNCATE TABLE ypn_teams;TRUNCATE TABLE ypn_players'); /*删除新闻、FIFA-DATE,honour*/
 				
-		YpnManager::getInstance()->query("update ypn_settings set today='2013-7-2'"); //更新现在日期
+		YpnManager::getInstance()->query("update ypn_settings set today='2015-7-2'"); //更新现在日期
 		
         FifaDateManager::getInstance()->updateFifaDate();
 		

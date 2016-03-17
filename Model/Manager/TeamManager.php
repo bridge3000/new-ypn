@@ -361,5 +361,20 @@ class TeamManager extends DataManager
         );
         TeamManager::getInstance()->update($data, array('id'=>$teamId));
 	}
+	
+	public function getAllTeamIds()
+	{
+		$teams = TeamManager::getInstance()->find('all', array(
+			'fields' => array('id'),
+			'contain' => array()
+			)
+		);
+		
+		$allTeamIds = array();
+		for ($i = 0; $i < count($teams); $i++)
+		{
+			$allTeamIds[] = $teams[$i]['id'];
+		}
+		return $allTeamIds;
+	}
 }
-?>

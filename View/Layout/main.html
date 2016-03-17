@@ -7,6 +7,68 @@
         <script type="text/javascript" src="res/js/jquery.js"></script>
     </head>
     <body>
+		<div>
+			<div class="main_left">
+				<table id="menu" border="0" align="center" cellpadding="3" cellspacing="0" bgcolor="#FFFFFF">
+					<tr>
+						<td><a href="index.php?c=match&a=all" target="_self"><img src="" width="20" height="20" border="0" /> all</a></td>
+					</tr>
+					<tr>
+						<td><a href="index.php?c=match&a=today" target="_self"><img src="" width="20" height="20" border="0" /> today match</a></td>
+					</tr>
+					<tr>
+						<td><a href="index.php?c=player&a=chuchang" target="_self"><img src="" width="20" height="20" border="0" /> chuchang</a></td>
+					</tr>
+					<tr>
+						<td><a href="index.php?c=ypn&a=new_day" target="_self" onclick="//$('#cover').show();"><img src="" width="20" height="20" border="0" /> new day</a></td>
+					</tr>
+					<tr>
+						<td><a href="index.php?c=team&a=edit" target="_self"><img src="" width="20" height="20" border="0" /> myclub</a></td>
+					</tr>
+					<tr>
+						<td><a href="#" target="_self" onclick="$('#tr_italy').toggle();
+								return false;"><img src="" width="20" height="20" border="0" /> ItalyLeague</a></td>
+					</tr>
+					<tr id="tr_italy" style="display:none;">
+						<td>
+							<div><a href="index.php?c=team&a=list_league_rank&p=1" target="_self"><img src="" width="20" height="20" border="0" /> 积分榜</a></div>
+							<div><a href="index.php?c=player&a=list_player_king&p=1,goal" target="_self"><img src="" width="20" height="20" border="0" /> 射手榜</a></div>
+							<div><a href="index.php?c=player&a=list_player_king&p=1,assist" target="_self"><img src="" width="20" height="20" border="0" /> 助攻榜</a></div>
+							<div><a href="index.php?c=player&a=list_player_king&p=1,tackle" target="_self"><img src="" width="20" height="20" border="0" /> 抢断榜</a></div>
+						</td>
+					</tr>
+
+					<tr>
+						<td><a href="#" target="_self" onclick="$('#tr_premier').toggle();
+								return false;"><img src="" width="20" height="20" border="0" /> PremierLeague</a></td>
+					</tr>
+					<tr id="tr_premier" style="display:none;">
+						<td>
+							<div><a href="index.php?c=team&a=list_league_rank&p=3" target="_self"><img src="" width="20" height="20" border="0" /> 积分榜</a></div>
+							<div><a href="index.php?c=player&a=list_player_king&p=31,goal" target="_self"><img src="" width="20" height="20" border="0" /> 射手榜</a></div>
+							<div><a href="index.php?c=player&a=list_player_king&p=31,assist" target="_self"><img src="" width="20" height="20" border="0" /> 助攻榜</a></div>
+							<div><a href="index.php?c=player&a=list_player_king&p=31,tackle" target="_self"><img src="" width="20" height="20" border="0" /> 抢断榜</a></div>
+						</td>
+					</tr>
+
+					<tr>
+						<td><a href="#" target="_self" onclick="$('#tr_transfer').toggle();
+								return false;"><img src="" width="20" height="20" border="0" /> transfer market</a></td>
+					</tr>
+
+					<tr id="tr_transfer" style="display:none;">
+						<td>
+							<div><a href="index.php?c=player&a=buy_list&p=1" target="_self"><img src="" width="20" height="20" border="0" /> buy</a></div>
+							<div><a href="transfer/selling" target="_self"><img src="" width="20" height="20" border="0" /> sell</a></div>
+						</td>
+					</tr>
+				</table>
+
+			</div>
+			<div></div>
+		</div>
+
+
         <?php require "View/" . $this->name . "/$view.php";?>
     </body>
 </html>

@@ -21,7 +21,4 @@ class FifaDateManager extends DataManager
         $this->saveMany($fifaDates);
     }
     
-    
 }
-
-?>

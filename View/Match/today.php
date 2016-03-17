@@ -15,7 +15,7 @@ function watchMatch(match_id)
 if (count($matches) == 0)
 {
 ?>
-	<div align=center><img src="../img/NoMatch.gif" /></div>
+	<div align=center><img src="" /></div>
 <?php 
 }
 else
@@ -28,7 +28,7 @@ else
 		<th>主队</th>
 		<th></th>
 		<th>客队</th>
-		<th><img src="../img/replay.gif" /></th>
+		<th><img src="" /></th>
 		</tr>
 	<?php
 	$i = 0;
@@ -59,7 +59,7 @@ else
 		if ($match['isPlayed'])
 		{
 	?>
-			<a href="replay/<?php echo $match['id']; ?>"><img border="0" src="../img/replay.gif" /></a>
+			<a href="replay/<?php echo $match['id']; ?>"><img border="0" src="" /></a>
 	<?php
 		}
 		else

@@ -8,7 +8,7 @@ class Team
     public $name;
     public $formattion;
     public $league_id;
-    public $managerId;
+    public $manager_id;
     public $playerCount;
     private $positionInfo;
     private $bill;
