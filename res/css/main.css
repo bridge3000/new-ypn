@@ -1,0 +1,26 @@
+td,th, div, span, body 
+{
+    font-size: 12px;
+}
+
+.tb_style_1 
+{
+    margin: 0 auto;
+    border-collapse:collapse;  
+    border-spacing:0; 
+}
+
+.tb_style_1 th
+{
+    border:1px solid silver;
+    margin: 0;
+    padding: 3px;
+    background-color: whitesmoke;
+}
+
+.tb_style_1 td
+{
+    border:1px solid silver;
+    margin: 0;
+    padding: 3px;
+}
