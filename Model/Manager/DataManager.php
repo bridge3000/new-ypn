@@ -238,6 +238,7 @@ class DataManager
             foreach($obj as $k=>$v)
             {
                 $keys[] = "`$k`";
+				$v = str_replace("'", "''", $v);
                 $values[] = "'$v'";
             }
 
@@ -249,6 +250,7 @@ class DataManager
             $arr = array();
             foreach($obj as $k => $v)
             {
+				$v = str_replace("'", "''", $v);
                 $this->explainFieldValue($v);
                 $arr[] = $k . '=' . $v;
             }
@@ -256,6 +258,8 @@ class DataManager
             $sql .= implode(",", $arr);
             $sql .= ' where id=' . $obj->id;
         }
+		
+
         return $sql;
     }
     

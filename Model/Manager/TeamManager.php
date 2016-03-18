@@ -34,7 +34,7 @@ class TeamManager extends DataManager
         return $teams;
     }
 	
-    private function buySomePlayers(&$team, $allTeamUsedNOs, $allCanBuyPlayers)
+    public function buySomePlayers(&$team, $allTeamUsedNOs, $allCanBuyPlayers)
     {
         /*前锋2名　守门员1名　中后卫2名　左右边卫前后腰1名*/
         $this->flushNow("<br><font color=blue><strong>" . $team['Team']['name'] . "</strong></font>正在转会<br>");
@@ -235,34 +235,6 @@ class TeamManager extends DataManager
         }
     }
     
-    private function checkZhenrongValid($id)
-	{
-		$msg = '';
-		
-		$players = $this->query('select count(id) as count1 from ypn_players where condition_id=1 and team_id=' . $id);
-		if ($players[0][0]['count1'] <> 11)
-		{
-			$msg = '首发的人数不对';	
-			return $msg;
-		}
-		
-		$players = $this->query('select count(id) as count1 from ypn_players where condition_id=1 and position_id=4 and team_id=' . $id);
-		if ($players[0][0]['count1'] <> 1)
-		{
-			$msg = '首发阵容只能有一个守门员';	
-			return $msg;
-		}
-				
-		$players = $this->query('select count(id) as count1 from ypn_players where condition_id=2 and team_id=' . $id);
-		if ($players[0][0]['count1'] > 5)
-		{
-			$msg = '替补的人数超出了';			
-			return $msg;
-		}
-		
-		return 'ok';
-	}
-    
     public function resetAllFormattion(&$allTeams, $formattions)
     {
         for ($i = 0;$i < count($allTeams);$i++)
@@ -289,7 +261,6 @@ class TeamManager extends DataManager
      */
     public function getAllComputerTeams()
     {
-//        $sql = "select id,money,name,formattion from ypn_teams where manager_id=0 and league_id<>100";
         $records = $this->find('all', array(
             'fields' => array('id', 'money', 'name', 'formattion'),
             'conditions' => array('manager_id'=>0, 'league_id<>'=>100),

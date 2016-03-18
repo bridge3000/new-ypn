@@ -7,8 +7,8 @@ class Player
     public $name;
     public $alias;
     public $ShirtNo;
-    public $teamId;
-    public $positionId;
+    public $team_id;
+    public $position_id;
 	public $birthday;
     
     public function getId() {
@@ -28,7 +28,7 @@ class Player
     }
 
     public function getTeamId() {
-        return $this->teamId;
+        return $this->team_id;
     }
 
     public function setId($id) {
@@ -48,15 +48,15 @@ class Player
     }
 
     public function setTeamId($teamId) {
-        $this->teamId = $teamId;
+        $this->team_id = $teamId;
     }
     
     public function getPositionId() {
-        return $this->positionId;
+        return $this->position_id;
     }
 
     public function setPositionId($positionId) {
-        $this->positionId = $positionId;
+        $this->position_id = $positionId;
     }
 
     public function getAge($nowDate)

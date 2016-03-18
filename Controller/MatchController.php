@@ -283,4 +283,15 @@ class MatchController extends AppController
             parent::flushNow($str);
         }
     }
+	
+	public function ajax_get_my_next()
+	{
+		$myCoach = CoachManager::getInstance()->getMyCoach();
+        $myTeamId = $myCoach->team_id;
+		
+		$data = MatchManager::getInstance()->getNextUnplayedMatch($myTeamId);
+        
+        $msg = $data . ', today ' . SettingManager::getInstance()->getNowdate();
+		echo $msg;
+	}
 }

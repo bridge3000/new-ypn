@@ -100,7 +100,8 @@ class MainConfig
     );
     
     const STATIC_DIR = "http://ypn.com/";
-    
+	
+	const BASE_URL = "http://ypn.com/";
 }
 
 ?>

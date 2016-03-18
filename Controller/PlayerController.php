@@ -192,7 +192,7 @@ class PlayerController extends AppController
 					$contractEnd = date('Y', strtotime($nowDate))+mt_rand(3, 5) . "-6-30";
 				}
 				
-				$this->query("update ypn_players set ContractBegin='" . $nowDate . "', ContractEnd='" . $contractEnd . "', salary=" . $newSalary . " where id=" . $curPlayer->id);
+				PlayerManager::getInstance()->update(array('ContractBegin'=> $nowDate, 'ContractEnd'=> $contractEnd , 'salary'=>$newSalary), array('id'=>$curPlayer->id));
 			}
 		}
 	}
@@ -235,6 +235,11 @@ class PlayerController extends AppController
     public function chuchang($group_id = 0) 
 	{
 		$this->layout = 'main';
+		header("Expires: Mon, 26 Jul 1997 05:00:00 GMT"); 
+		header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT"); 
+		header("Cache-Control: no-cache, must-revalidate"); 
+		header("Pramga: no-cache"); 
+
         $myCoach = CoachManager::getInstance()->getMyCoach();
 		
 		/*nextmatchclass*/
@@ -287,13 +292,20 @@ class PlayerController extends AppController
 		$this->set('tibus', $playersCondition2);
 		$this->set('playergroups', $playergroups);
 		$this->set('group_id', $group_id);
-		$this->set('cornerpositions', \MainConfig::$cornerPositions);
+		$this->set('cornerpositions', MainConfig::$cornerPositions);
 		$this->set('fieldPunish', $fieldPunish);
 		$this->set('playergroups', array());
         
         $this->render('chuchang');
 	}
     
-    
+    public function ajax_change_condition($playerId, $conditionId)
+	{
+		PlayerManager::getInstance()->update(array('condition_id'=>$conditionId), array('id'=>$playerId));
+	}
+	
+	public function ajax_change_position($playerId, $positionId)
+	{
+		PlayerManager::getInstance()->update(array('position_id'=>$positionId), array('id'=>$playerId));
+	}
 }
-?>

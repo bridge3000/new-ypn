@@ -66,8 +66,6 @@ class YpnController extends AppController
 
 			SettingManager::getInstance()->addDate();
 
-			echo ("<script>top.frames['top1'].location.reload();</script>");flush();  /*日期加一，到达明天，刷新顶部框架*/
-
 			$isTransferDay = YpnManager::getInstance()->checkTransferDay($nowDate);
 			$this->doWeekday($weekday, $isTransferDay, $isHoliday);
 
@@ -129,7 +127,7 @@ class YpnController extends AppController
 	
 	private function flushTraining()
 	{
-		echo ("<div align=center><img src='" . MainConfig::STATIC_DIR . "img/training.jpg' width='500' /><br><br>training<img src='" . MainConfig::STATIC_DIR . "img/loading.gif'></div>");
+		echo ("<div align=center><img src='" . MainConfig::STATIC_DIR . "img/training.jpg' width='500' /><br><br>training<img src='" . MainConfig::STATIC_DIR . "res/img/loading.gif'></div>");
 		echo ("<script>window.status='new day...'</script>");
 		flush();
 	}
@@ -790,7 +788,7 @@ class YpnController extends AppController
         
         for($i=0;$i<count($allTeams);$i++)
         {
-			unset($allTeams[$i]->playerCount);
+			unset($allTeams[$i]->player_count);
 			
             $total = 0;
             foreach($allPlayers as $k=>$player)
@@ -852,28 +850,16 @@ class YpnController extends AppController
 		$this->flushNow('all complete');
 	}	
 	
-	function help()
+	public function help()
 	{
 		$this->layout = 'main';
 	}
     
-    function country2Club()
+    public function country2Club()
     {
         YpnManager::getInstance()->country2Club();
     }
     
-    public function board()
-    {
-        $this->layout = 'main';
-        $myTeamId = 4;
-        $data = MatchManager::getInstance()->getNextUnplayedMatch($myTeamId);
-        
-        $msg = $data . ', today ' . SettingManager::getInstance()->getNowdate();
-        
-        $this->set('msg', $msg);
-        $this->render('board');
-    }
-
 	/**
 	 * 周每日工作
 	 * @param type $weekday

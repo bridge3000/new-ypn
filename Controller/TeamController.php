@@ -68,7 +68,6 @@ class TeamController extends AppController
         
     	foreach ($players as $targetPlayer)
     	{
-			$targetPlayer = $players[$i];
             $sellPrice = $targetPlayer->estimateFee($nowDate);
 			$targetPlayer->isSelling = 1;
 			$targetPlayer->fee = $sellPrice;
@@ -85,7 +84,7 @@ class TeamController extends AppController
         	/*如果财政赤字则卖出队内最贵的球员*/
             if ($teams[$i]->money < 0)
             {
-                $result = $this->sellBestPlayer($teamsArray[$i]['ypn_teams']['id']);
+                $result = $this->sellBestPlayer($teams[$i]->id);
                 echo("<font color=blue>" . $result['name'] . "</font>被以<font color=red>" . $result['fee'] . "</font>W欧元卖出了<br>");
             }
             

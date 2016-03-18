@@ -1,33 +1,64 @@
-td,th, div, span, body 
-{
+td,th, div, span, body {
     font-size: 12px;
 }
 
-.tb_style_1 
-{
+.tb_style_1 {
     margin: 0 auto;
     border-collapse:collapse;  
     border-spacing:0; 
 }
 
-.tb_style_1 th
-{
+.tb_style_1 th {
     border:1px solid silver;
     margin: 0;
     padding: 3px;
     background-color: whitesmoke;
 }
 
-.tb_style_1 td
-{
+.tb_style_1 td {
     border:1px solid silver;
     margin: 0;
     padding: 3px;
 }
 
-.main_left
-{
+.main_left {
 	width:200px;
 	float:left;
 	border:1px solid blue;
 }
+
+.main_right {
+	float: left;
+}
+
+#board {
+	padding: 5px;
+	border: 3px activeborder solid;
+}
+
+.main_body {
+	padding: 5px;
+}
+
+#field {
+	width: 350px;
+	height: 468px;
+	background: url("../img/field.gif");
+	position: relative;
+}
+
+.player_position {
+	position: absolute;
+	text-align: center;
+	color: #ffffff;
+	overflow: hidden;
+}
+
+#tibu {
+	width: 100px;
+	margin-left:120px;
+}
+
+#tibu li {
+	list-style-image:url(../img/chair.gif);
+ }

@@ -9,7 +9,7 @@ class Team
     public $formattion;
     public $league_id;
     public $manager_id;
-    public $playerCount;
+    public $player_count;
     private $positionInfo;
     private $bill;
     
@@ -61,11 +61,11 @@ class Team
     }
     
     public function getPlayerCount() {
-        return $this->playerCount;
+        return $this->player_count;
     }
 
     public function setPlayerCount($playerCount) {
-        $this->playerCount = $playerCount;
+        $this->player_count = $playerCount;
     }
     
     public function getPositionInfo() {

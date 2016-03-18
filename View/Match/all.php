@@ -29,7 +29,7 @@ else
 		<th>主队</th>
 		<th></th>
 		<th>客队</th>
-		<th><img src="../img/replay.gif" /></th>
+		<th></th>
 		</tr>
 	<?php
 	$i = 0;
