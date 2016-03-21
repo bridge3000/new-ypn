@@ -189,14 +189,22 @@ class Player
         $playerValue = ($this->height / 2 + $this->weight + $this->ShotPower + $this->ShotAccurate + $this->header + $this->tackle + $this->BallControl + $this->speed + $this->agility + $this->pass + $this->qiangdian + $this->pinqiang + $this->arc + $this->scope + $this->beat + $this->close_marking + $this->SinewMax + $this->mind) * $jishu * $this->popular / 100 / 18 * $this->creativation / 100 / 100 * $birthXishu / 100 * $dirXishu / 100;
         return intval($playerValue);
     }
+	
+	public function getContractRemainMonth($nowDate)
+	{
+		return intval((strtotime($this->ContractEnd) - strtotime($nowDate)) / (3600 * 24 * 30));
+	}
     
 	public function estimateFee($nowDate)
     {
         $contractXishu = 0;
-        $monthDepart = 0;
-        $monthDepart = intval((strtotime($this->ContractEnd) - strtotime($nowDate)) / (3600 * 24 * 30));
+        $monthDepart = $this->getContractRemainMonth($nowDate);
 
-        if (($monthDepart < 12) && ($monthDepart>6))
+		if ($monthDepart <= 6)
+		{
+			$contractXishu = 0;
+		}
+        else if (($monthDepart < 12) && ($monthDepart>6))
         {
             $contractXishu = 100 - (12-$monthDepart) * 10;
         }
@@ -226,6 +234,57 @@ class Player
             return mt_rand(0, 1)?$this->name:$this->alias;
         }
     }
-}
+	
+	/**
+	 * 新入球员获得号码
+	 * @param type $existTeamNos
+	 * @return int
+	 */
+	public function setBestShirtNo($existTeamNos)
+	{
+		$newNo = 0;
+		$positionMap = array(
+			1 => 9,//'前锋',
+			2 => 6,//'后腰',
+			3 => 4,//'中后卫',
+			4 => 1,//'门将',
+			5 => 11,//'左边锋',
+			6 => 17,//'右边锋',
+			7 => 9,//'中锋',
+			8 => 10,//'前腰',
+			9 => 7,//'左前卫',
+			10 => 8,//'右前卫',
+			13 => 3,//'左后卫',
+			14 => 2,//'右后卫'
+		);
+				
+		$myPositionBestNo = $positionMap[$this->position_id];
+		$myBirthdayNo = date('Y', $this->birthday);
+		
+		if (!in_array($this->ShirtNo, $existTeamNos))
+		{
+			$newNo = $this->ShirtNo;
+		}
+		else if (!in_array($myPositionBestNo, $existTeamNos))
+		{
+			$newNo = $myPositionBestNo;
+		}
+		else if (!in_array($myBirthdayNo, $existTeamNos))
+		{
+			$newNo = $myBirthdayNo;
+		}
+		else
+		{
+			for($i=1;$i<100;$i++)
+			{
+				if(!in_array($i, $existTeamNos))
+				{
+					$newNo = $i;
+					break;
+				}
+			}
+		}
 
-?>
+		return $newNo;
+	}
+}

@@ -1,6 +1,7 @@
 <?php
 namespace Controller;
-use \MainConfig;
+
+use MainConfig;
 use Model\Manager\PlayerManager;
 use Model\Manager\FutureContractManager;
 use Model\Manager\SettingManager;
@@ -8,6 +9,8 @@ use Model\Manager\RetiredShirtManager;
 use Model\Manager\CoachManager;
 use Model\Manager\TeamManager;
 use Model\Manager\MatchManager;
+use \DateTime;
+use \DateInterval;
 
 class PlayerController extends AppController
 {
@@ -203,6 +206,7 @@ class PlayerController extends AppController
      */
     public function buy_list($type)
     {
+		$this->layout = 'main';
         $conditions = array();
         
         switch ($type) 
@@ -217,7 +221,7 @@ class PlayerController extends AppController
         
         $players = PlayerManager::getInstance()->find('all', array(
             'conditions' => array(),
-            'fields' => array('id', 'name', 'team_id', 'position_id', 'fee', 'salary', 'popular'),
+            'fields' => array('id', 'name', 'team_id', 'position_id', 'fee', 'salary', 'popular', 'ContractBegin', 'ContractEnd'),
             'order' => array('fee'=>'desc', 'salary'=>'desc','popular'=>'desc'),
             'limit' => 20
         ));
@@ -307,5 +311,117 @@ class PlayerController extends AppController
 	public function ajax_change_position($playerId, $positionId)
 	{
 		PlayerManager::getInstance()->update(array('position_id'=>$positionId), array('id'=>$playerId));
+	}
+	
+	public function buy_apply($id)
+	{
+		$this->layout = 'main';
+		$curPlayer = PlayerManager::getInstance()->find('first', array(
+			'fields' => array('id', 'name', 'salary', 'ContractBegin', 'ContractEnd', 'team_id', 'fee'),
+			'conditions' => array('id'=>$id),
+		));
+		
+		$curTeam = TeamManager::getInstance()->find('first', array(
+			'fields' => array('id', 'name'),
+			'conditions' => array('id'=>$id),
+		));
+		
+		$myCoach = CoachManager::getInstance()->getMyCoach();
+        $myTeamId = $myCoach->team_id;
+		
+		$this->set('curPlayer', $curPlayer);
+		$this->set('curTeam', $curTeam);
+		$this->set('years', array(6=>6,12=>12,18=>18,24=>24,30=>30,36=>36,42=>42,48=>48,54=>54,60=>60,66=>66,72=>72));
+		$this->set('myTeamId', $myTeamId);
+		
+		$this->render('buy_apply');
+	}
+		
+	/**
+	 * 收到购买申请
+	 * @param type $playerId
+	 */
+	public function buy($playerId)
+	{
+		$newSalary = $_POST['new_salary'];
+		$newPrice = $_POST['new_price'];
+		$addMonthCount = $_POST['month'];
+		$buyTeamId = $_POST['buy_team_id'];
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$curPlayerArray = PlayerManager::getInstance()->findById($playerId);
+		$arr = PlayerManager::getInstance()->loadData(array($curPlayerArray));
+		$curPlayer = $arr[0];
+		$isSuccess = FALSE;
+		
+		$expectedSalary = $curPlayer->getExpectedSalary($nowDate);
+		if ($newSalary >= $expectedSalary) //player salary同意
+		{
+			$contractRemainMonth = $curPlayer->getContractRemainMonth($nowDate); //until contract_end month
+		
+			if ( ($curPlayer->team_id == 0) || ($contractRemainMonth <= 6) )//free transfer
+			{
+				$isSuccess = TRUE;
+			}
+			else
+			{
+				$expectedValue = $curPlayer->estimateFee($nowDate); //预估价格
+				$wave = mt_rand(1, 10);
+				if ($newPrice >= $expectedValue - $expectedSalary*$wave/100)
+				{
+					$isSuccess = TRUE;
+				}
+				else
+				{
+					$isSuccess = FALSE;
+					die('fee error');
+				}
+			}
+		}
+		else //salary不满
+		{
+			die('salaray error, expected ' . $expectedSalary);
+			//add news
+		}
+		
+		if ($isSuccess)
+		{
+			//reset total salary
+			if ($curPlayer->team_id)
+			{
+				$sellTeam = TeamManager::getInstance()->findById($curPlayer->team_id);
+				$sellTeam['money'] += $newPrice;
+				$sellTeam['TotalSalary'] -= $newSalary;
+				$sellTeam['player_count'] -= 1;
+				TeamManager::getInstance()->update(array('money'=>$sellTeam['money'], 'TotalSalary'=>$sellTeam['TotalSalary'], 'player_count'=>$sellTeam['player_count']), array('id'=>$curPlayer->team_id));
+			}
+			
+			$buyTeam = TeamManager::getInstance()->findById($buyTeamId);
+			$buyTeam['money'] -= $newPrice;
+			$buyTeam['TotalSalary'] += $newSalary;
+			$buyTeam['player_count'] += 1;
+			TeamManager::getInstance()->update(array('money'=>$buyTeam['money'], 'TotalSalary'=>$buyTeam['TotalSalary'], 'player_count'=>$buyTeam['player_count']), array('id'=>$buyTeamId));
+			
+			$curPlayer->team_id = $buyTeamId;
+			$curPlayer->salary = $newSalary;
+			$curPlayer->ContractBegin = $nowDate;
+			
+			//shirt no  1old no 2postion best no  3birthday no 4rnd no < 100
+			
+			
+			
+			
+			
+			$d1 = new DateTime($nowDate);
+			$d1->add(new DateInterval('P' . $addMonthCount . 'M'));
+			
+			$curPlayer->ContractEnd = $d1->date;
+			PlayerManager::getInstance()->save($curPlayer, 'update');
+
+			echo 'success';
+		}
+		else
+		{
+			echo 'failed';
+		}
 	}
 }

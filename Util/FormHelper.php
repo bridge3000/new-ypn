@@ -1,33 +1,33 @@
 <?php
 namespace Util;
 
-class FormHelper 
-{
-    public static function select($attrList, $dataList, $default)
-    {
-        $str = '<select ';
-        
-        foreach($attrList as $k=>$v)
-        {
-            $str .= $k . '="' . $v . '" ';
-        }
-        
-        $str .= '>';
-        
-        foreach($dataList as $k=>$v)
-        {
-            $str .= '<option value="' . $k . '"';
-                    
-            if ($k == $default)
-            {
-                $str .= 'selected="selected"';
-            }
-                    
-            $str .= '>' . $v . '</option>';
-        }
-        $str .= '</select>';
-        echo $str;
-    }
+/**
+ * Description of FormHelper
+ *
+ * @author qiaoliang
+ */
+class FormHelper {
+	/**
+	 * 生成表单select
+	 * @param string $name 表单元素name
+	 * @param array $data 填充的数据
+	 * @param string $selectValue 选中的数据
+	 * @param array $options 其他选项
+	 */
+	public static function select($name, $data, $selectValue, $options)
+	{
+		$optionsStr = '';
+		foreach($options as $k=>$v)
+		{
+			$optionsStr .= " {$k}=\"{$v}\"";
+		}
+		
+		$selectHtml = "<select name=\"{$name}\" {$optionsStr}>";
+		foreach($data as $k=>$v)
+		{
+			$selectHtml .= "<option value=\"{$k}\">{$v}</option>";
+		}
+		$selectHtml .= '</select>';
+		return $selectHtml;
+	}
 }
-
-?>

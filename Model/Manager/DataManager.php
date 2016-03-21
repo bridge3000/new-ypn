@@ -35,6 +35,7 @@ class DataManager
 	
     public function find($type, $option = array())
     {
+		$data = array();
         $fields = array();
         if (array_key_exists('fields', $option))
         {
@@ -72,7 +73,7 @@ class DataManager
         {
             $sql .= " limit " . $option['limit'];
         }
-        
+
         if ($type == "all")
         {
             $data = DBManager::getInstance()->fetch($sql);

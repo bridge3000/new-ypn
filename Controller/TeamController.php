@@ -385,6 +385,5 @@ class TeamController extends AppController
         TeamManager::getInstance()->setAttack($myCoach->team_id, $attack);
 		echo $attack;
 	}
-}
 
-?>
+}
