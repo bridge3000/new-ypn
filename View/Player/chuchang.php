@@ -18,47 +18,42 @@
 					<th>右属性</th>
 				</tr>
 <?php
-foreach ($players as $player):
+foreach ($players as $n):
 ?>
 					<tr>
-						<td><?php echo $player['ShirtNo']; ?></td>
-						<td><a href="/ypn/players/view/<?php echo $player['id']; ?>"><?php echo $player['name']; ?></a></td>
+						<td><?=$n['ShirtNo']?></td>
+						<td><a href="javascript:;" class="player_name" value="<?=$n['id']?>"><?=$n['name']?></a></td>
 						<td>
-	<?php // echo $this->Form->input('position_id', array('label' => false, 'options' => $positions, 'selected' => $player['position_id'], 'onChange' => 'changePosition(' . $player['id'] . ', this.value);'));  ?> 
-							<select id="sel_position" onchange="changePosition(<?=$player['id']?>, this.value)">
-							<?php
-							foreach (MainConfig::$positions as $k => $v) {
-								?>
-									<option value="<?=$k?>" <?=(($k==$player['position_id'])?'selected':'')?> ><?=$v?></option>               
-									<?php
-								}
-								?>
+							<select id="sel_position" onchange="changePosition(<?=$n['id']?>, this.value)">
+							<?php foreach (MainConfig::$positions as $k => $v): ?>
+								<option value="<?=$k?>" <?=(($k==$n['position_id'])?'selected':'')?> ><?=$v?></option>               
+							<?php endforeach; ?>
 							</select>        
 						</td>
 						<td>
 	<?php
-	if ($player['condition_id'] == 4) {
-		echo ("<img src='" . IMG_DIR . "/img/injured.gif'> " . $player['InjuredDay'] . "天");
-	} else if ($player[$fieldPunish] > 0) {
-		echo("<img src='" . IMG_DIR . "/img/RedCard.gif' />停赛" . $player[$fieldPunish] . "场");
+	if ($n['condition_id'] == 4) {
+		echo ("<img src='" . IMG_DIR . "/img/injured.gif'> " . $n['InjuredDay'] . "天");
+	} else if ($n[$fieldPunish] > 0) {
+		echo("<img src='" . IMG_DIR . "/img/RedCard.gif' />停赛" . $n[$fieldPunish] . "场");
 	} else {
 		?>
-								<select name="select" id="select" onchange="changeCondition(<?php echo $player['id']; ?>, this.value)">
-									<option value="1" <?php if ($player['condition_id'] == 1) echo(" selected"); ?>>首发</option>
-									<option value="2" <?php if ($player['condition_id'] == 2) echo(" selected"); ?>>板凳</option>
-									<option value="3" <?php if ($player['condition_id'] == 3) echo(" selected"); ?>>场外</option>
+								<select name="select" id="select" onchange="changeCondition(<?php echo $n['id']; ?>, this.value)">
+									<option value="1" <?php if ($n['condition_id'] == 1) echo(" selected"); ?>>首发</option>
+									<option value="2" <?php if ($n['condition_id'] == 2) echo(" selected"); ?>>板凳</option>
+									<option value="3" <?php if ($n['condition_id'] == 3) echo(" selected"); ?>>场外</option>
 								</select>
 								<?php
 							}
 							?>
 						</td>
 						<td>
-							<select name="select3" id="select3" onchange="location = '/ypn/players/changegroup/<?php echo $player['id']; ?>/' + this.value;">
+							<select name="select3" id="select3" onchange="location = '/ypn/players/changegroup/<?php echo $n['id']; ?>/' + this.value;">
 								<option value="0">未分组</option>
 							<?php
 							for ($i = 0; $i < count($playergroups); $i++) {
 								?>
-									<option value="<?php echo $playergroups[$i]['ypn_player_groups']['id']; ?>" <?php if ($playergroups[$i]['ypn_player_groups']['id'] == $player['group_id']) echo(" selected"); ?>><?php echo $playergroups[$i]['ypn_player_groups']['name']; ?></option>
+									<option value="<?php echo $playergroups[$i]['ypn_player_groups']['id']; ?>" <?php if ($playergroups[$i]['ypn_player_groups']['id'] == $n['group_id']) echo(" selected"); ?>><?php echo $playergroups[$i]['ypn_player_groups']['name']; ?></option>
 		<?php
 	}
 	?>
@@ -78,21 +73,21 @@ foreach ($players as $player):
 
 						</td>  
 
-						<td><?php echo $player['state']; ?></td>
+						<td><?php echo $n['state']; ?></td>
 						<td>
 
 								<?php
-								if ($player['sinew'] < 78) {
-									echo "<font color=red>" . $player['sinew'] . "</font>";
+								if ($n['sinew'] < 78) {
+									echo "<font color=red>" . $n['sinew'] . "</font>";
 								} else {
-									echo $player['sinew'];
+									echo $n['sinew'];
 								}
 								?>
 						</td>
-						<td><?=$player['cooperate']?></td>
-						<td><?=$player['LeftProperties']?> </td>
-						<td><?=$player['MidProperties']?> </td>
-						<td><?=$player['RightProperties']?> </td>
+						<td><?=$n['cooperate']?></td>
+						<td><?=$n['LeftProperties']?> </td>
+						<td><?=$n['MidProperties']?> </td>
+						<td><?=$n['RightProperties']?> </td>
 					</tr>
 				<?php endforeach; ?>
 			</table>
@@ -122,13 +117,24 @@ foreach ($players as $player):
 			<br /><div align="center">目前场上有<span id="spShoufaCount" style="color:#0000FF;font-weight:bold;"><?php echo $shoufaCount; ?></span>人</div>
 			
 			<ul id="tibu">
-			<?php for ($i = 0; $i < count($tibus); $i++): ?>
+			<?php for($i = 0; $i < count($tibus); $i++): ?>
 				<li><?=$tibus[$i]['ShirtNo']?><?=$tibus[$i]['name']?></li>
 			<?php endfor; ?>
 			</ul>
 		</td>
 	</tr>
 </table>
+
+<div id="full_bg"></div>
+
+<div id="player_div">
+	<table class="tb_style_1">
+		<tr><th>姓名</th><td id="player_name"></td></tr>
+		<tr><th>状态</th><td id="player_state"></td></tr>
+		<tr><th>体能</th><td id="player_sinew"></td></tr>
+		<tr><th></th><td></td></tr>
+	</table>
+</div>
 
 <script>
 	var players = <?=json_encode($players)?>;
@@ -262,4 +268,19 @@ foreach ($players as $player):
 			}
 		}
 	}
+	
+	$(".player_name").click(function(){
+		$.get("<?=  MainConfig::BASE_URL?>player/ajax_get/"+$(this).attr("value"), {}, function(player){
+			$("#player_div").fadeIn();
+			$("#player_name").text(player.name);
+			$("#player_state").text(player.state);
+			$("#player_sinew").text(player.sinew);
+			$("#full_bg").show();
+		}, 'json');
+	});
+
+	$("#full_bg").click(function(){
+		$("#player_div").fadeOut();
+		$("#full_bg").fadeOut();
+	});
 </script>

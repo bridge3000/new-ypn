@@ -891,6 +891,12 @@ class PlayerManager extends DataManager
         return array('name'=>$players[$maxIndex]->name, 'fee'=>$maxFee);
     }
     
+	/**
+	 * 卖出多余球员
+	 * @param type $teamId
+	 * @param type $formattion
+	 * @return type
+	 */
     public function sellUnnecessaryPlayer($teamId, $formattion)
     {
     	$playersArray = $this->query('select * from ypn_players where team_id=' . $teamId . " and id not in (select player_id from ypn_future_contracts) order by ClubDepending desc, LastSeasonScore desc");
@@ -1259,4 +1265,19 @@ class PlayerManager extends DataManager
             $this->saveMany(self::$youngPlayers);
         }
     }
+	
+	public function getExistNos($teamId)
+	{
+		$players = PlayerManager::getInstance()->find('all', array(
+			'fields' => array('ShirtNo'),
+			'conditions' => array('team_id'=>$teamId),
+		));
+		
+		$nos = array();
+		foreach($players as $p)
+		{
+			$nos[] = $p['ShirtNo'];
+		}
+		return $nos;
+	}
 }

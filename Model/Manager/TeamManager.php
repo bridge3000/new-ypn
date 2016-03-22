@@ -348,4 +348,5 @@ class TeamManager extends DataManager
 		}
 		return $allTeamIds;
 	}
+
 }

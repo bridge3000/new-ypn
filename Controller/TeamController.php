@@ -54,7 +54,7 @@ class TeamController extends AppController
     }
     
     public function sell_players()
-    {    
+    {
         $nowDate = SettingManager::getInstance()->getNowDate();
     	PlayerManager::getInstance()->query("update ypn_players set isSelling=0 where team_id not in (select team_id from ypn_managers)");
     	
@@ -65,7 +65,6 @@ class TeamController extends AppController
     	$playersArray = PlayerManager::getInstance()->query("select * from ypn_players where ClubDepending<50 and id not in (select player_id from ypn_future_contracts) and team_id not in (select team_id from ypn_managers) and team_id>0");
         $players = PlayerManager::getInstance()->loadData($playersArray);
         unset($playersArray);
-        
     	foreach ($players as $targetPlayer)
     	{
             $sellPrice = $targetPlayer->estimateFee($nowDate);
@@ -88,14 +87,17 @@ class TeamController extends AppController
                 echo("<font color=blue>" . $result['name'] . "</font>被以<font color=red>" . $result['fee'] . "</font>W欧元卖出了<br>");
             }
             
-			$players = PlayerManager::getInstance()->sellUnnecessaryPlayer($teams[$i]->id, $teams[$i]->formattion);
-            
-            foreach($players as $player)
-            {
-                echo("<font color=blue>" . $player->name . "</font>被以<font color=red><strong>" . $player->fee . "</strong></font>W欧元的价格挂牌出售<br>");
-                flush();
-            }
+			if ($teams[$i]->player_count > 33) //球员太多 需要减肥
+			{
+				$players = PlayerManager::getInstance()->sellUnnecessaryPlayer($teams[$i]->id, $teams[$i]->formattion);
+				foreach($players as $player)
+				{
+					echo("<font color=blue>" . $player->name . "</font>被以<font color=red><strong>" . $player->fee . "</strong></font>W欧元的价格挂牌出售<br>");
+					flush();
+				}
+			}
         }
+		
     }
     
     public function buy_players()

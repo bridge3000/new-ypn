@@ -8,10 +8,10 @@
 <table class="tb_style_1">
     <tr><th>name</th><th>country</th><th>birthdate</th></tr>
 <?php
-foreach ($players as $player)
+foreach ($players as $n)
 {
 ?>
-    <tr><td><?php echo $player['name'] ?></td><td><?php echo $player['country'] ?></td><td><?php echo $player['birthday'] ?></td></tr>
+    <tr><td><?php echo $n['name'] ?></td><td><?php echo $n['country'] ?></td><td><?php echo $n['birthday'] ?></td></tr>
 <?php
 }
 ?>

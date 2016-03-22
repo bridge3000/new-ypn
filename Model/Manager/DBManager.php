@@ -39,7 +39,7 @@ class DBManager
     public function multi_execute($sql)
     {
         mysqli_multi_query(DBManager::getInstance()->conn, $sql);
-        while (mysqli_next_result(DBManager::getInstance()->conn)) {;}
+//        while (mysqli_next_result(DBManager::getInstance()->conn)) {;}
 //        if (mysqli_multi_query(DBManager::getInstance()->conn, $sql)) 
 //        {
 //            do {
@@ -47,7 +47,6 @@ class DBManager
 //                if ($result = mysqli_store_result(DBManager::getInstance()->conn)) {
 //                    mysqli_free_result(DBManager::getInstance()->conn);
 //                }
-////            } while (mysqli_next_result(DBManager::getInstance()->conn));
 //            } while (mysqli_more_results(DBManager::getInstance()->conn));
 //        }
 //        else

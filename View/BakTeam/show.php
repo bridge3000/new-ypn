@@ -13,13 +13,13 @@
     <table class="tb_style_1">
     <tr><th>no</th><th>name</th><th>birthday</th><th>edit</th><th>del</th></tr>
 <?php
-foreach ($players as $player)
+foreach ($players as $n)
 {
 ?>
     <tr>
-        <td><?php echo $player['ShirtNo'] ?></td>
-        <td><a href="index.php?c=BakPlayer&a=show&p=<?php echo $player['id'] ?>"><?php echo $player['name'] ?></a></td>
-        <td><?php echo $player['birthday'] ?></td>
+        <td><?php echo $n['ShirtNo'] ?></td>
+        <td><a href="index.php?c=BakPlayer&a=show&p=<?php echo $n['id'] ?>"><?php echo $n['name'] ?></a></td>
+        <td><?php echo $n['birthday'] ?></td>
         <td>edit</td>
         <td>del</td>
     </tr>

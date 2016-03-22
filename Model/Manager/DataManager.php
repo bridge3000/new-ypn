@@ -41,8 +41,12 @@ class DataManager
         {
             $fields = $option['fields'];
         }
-        
-        if (empty($fields))
+		
+		if ($type == 'count')
+		{
+			$fields = "count(*) as count";
+		}
+        else if (empty($fields))
         {
             $fields = "*";
         }
@@ -71,7 +75,15 @@ class DataManager
         
         if (array_key_exists('limit', $option))
         {
-            $sql .= " limit " . $option['limit'];
+			if (is_array($option['limit']))
+			{
+				$sql .= " limit " . $option['limit'][0] . ',' . $option['limit'][1];
+			}
+			else
+			{
+				$sql .= " limit " . $option['limit'];
+			}
+			
         }
 
         if ($type == "all")
@@ -91,13 +103,18 @@ class DataManager
         {
             $data = DBManager::getInstance()->fetchList($sql);
         }
+		else if ($type == "count")
+        {
+            $data = DBManager::getInstance()->fetch($sql);
+			$data = $data[0]['count'];
+        }
         return $data;
     }
     
-    public function findById($id)
+    public function findById($id, $options=array())
     {
-        $option = array('conditions' => array('id'=>$id));
-        $data = $this->find('first', $option);
+        $options['conditions'] = array('id'=>$id);
+        $data = $this->find('first', $options);
         return $data;
     }
     
@@ -271,24 +288,18 @@ class DataManager
      */
     public function saveMany($arrObj, $type='')
     {
-        $sqlArr = array();
-
         foreach($arrObj as $i=>$obj)
         {
             $sql = $this->generateSaveSql($obj, $type);
             DBManager::getInstance()->execute($sql);
-            
-//            $sqlArr[] = $sql;
-//            if ($i % 400 == 0)
-//            {
-//                DBManager::getInstance()->multi_execute(implode(";", $sqlArr));
-//                $sqlArr = array();
-//            }
         }
-        
-//        DBManager::getInstance()->multi_execute(implode(";", $sqlArr));     
     }
     
+	/**
+	 * 将array批量装载到obj
+	 * @param type $arrData
+	 * @return \Model\Manager\className
+	 */
     public function loadData($arrData)
     {
         $className = str_replace("Manager", "Core", get_called_class()) ;

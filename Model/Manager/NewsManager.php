@@ -1,5 +1,6 @@
 <?php
 namespace Model\Manager;
+use Model\Manager\DataManager;
 use Model\Core\News;
 
 class NewsManager extends DataManager
@@ -7,7 +8,7 @@ class NewsManager extends DataManager
     public $table = "news";
     private static $newArr = array();
 
-    function add($content, $team_id, $nowDate, $imgSrc, $isRead = 0)
+    public function add($content, $team_id, $nowDate, $imgSrc, $isRead = 0)
 	{
         $newNews = new News();
         $newNews->content = $content;

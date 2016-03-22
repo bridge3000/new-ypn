@@ -67,7 +67,7 @@ class YpnController extends AppController
 			SettingManager::getInstance()->addDate();
 
 			$isTransferDay = YpnManager::getInstance()->checkTransferDay($nowDate);
-			$this->doWeekday($weekday, $isTransferDay, $isHoliday);
+			$this->doWeekdayJob($weekday, $isTransferDay, $isHoliday);
 
 			$this->changeStatus('新的一天开始了.');
 
@@ -81,7 +81,8 @@ class YpnController extends AppController
 
 			PlayerManager::getInstance()->doNormal(); //球员日常变化
 
-			echo "<script>location.href = 'index.php?c=match&a=today';</script>";
+			echo "<a href=\"" . MainConfig::BASE_URL . "match/today\">today match</a>";
+//			echo "<script>location.href = 'index.php?c=match&a=today';</script>";
 		}
 	}
 	
@@ -771,12 +772,12 @@ class YpnController extends AppController
 		echo("<script>$(parent.frames['left'].document).find('#cover').hide();");exit;
 	}
     
-    private function resetTotalSalary()
+    private function resetTotalSalaryAndPlayerCount()
     {
         $this->flushNow('reset total salary');
         $allTeamArray = TeamManager::getInstance()->find('all', array(
             'conditions' => array('league_id<>'=>100),
-            'fields' => array('id', 'TotalSalary')
+//            'fields' => array('id', 'TotalSalary')
         ));
         
         $allTeams = TeamManager::getInstance()->loadData($allTeamArray);
@@ -791,15 +792,18 @@ class YpnController extends AppController
 			unset($allTeams[$i]->player_count);
 			
             $total = 0;
+			$playerCount = 0;
             foreach($allPlayers as $k=>$player)
             {
 
                 if ($player['team_id'] == $allTeams[$i]->id)
                 {
                     $total += $player['salary'];
+					$playerCount++;
                     unset($allPlayers[$k]);
                 }
             }
+			$allTeams[$i]->player_count = $playerCount;
             $allTeams[$i]->TotalSalary = $total;
         }
         
@@ -815,7 +819,13 @@ class YpnController extends AppController
         $this->autoRender = false;
         $this->flushNow('start new game<br>');
                 
-		YpnManager::getInstance()->multi_execute('TRUNCATE TABLE ypn_news;TRUNCATE TABLE ypn_honours;TRUNCATE TABLE ypn_fifa_dates;TRUNCATE TABLE ypn_matches;TRUNCATE TABLE ypn_teams;TRUNCATE TABLE ypn_players'); /*删除新闻、FIFA-DATE,honour*/
+//		YpnManager::getInstance()->multi_execute('TRUNCATE TABLE ypn_news;TRUNCATE TABLE ypn_honours;TRUNCATE TABLE ypn_fifa_dates;TRUNCATE TABLE ypn_matches;TRUNCATE TABLE ypn_teams;TRUNCATE TABLE ypn_players'); /*删除新闻、FIFA-DATE,honour*/
+		YpnManager::getInstance()->query('TRUNCATE TABLE ypn_news;'); 
+		YpnManager::getInstance()->query('TRUNCATE TABLE ypn_fifa_dates;');
+		YpnManager::getInstance()->query('TRUNCATE TABLE ypn_teams');
+		YpnManager::getInstance()->query('TRUNCATE TABLE ypn_matches');
+		YpnManager::getInstance()->query('TRUNCATE TABLE ypn_honours');
+		YpnManager::getInstance()->query('TRUNCATE TABLE ypn_players');
 				
 		YpnManager::getInstance()->query("update ypn_settings set today='2015-7-2'"); //更新现在日期
 		
@@ -845,7 +855,7 @@ class YpnController extends AppController
 		
 #        YpnManager::getInstance()->resetPlayerUpload();
         
-        $this->resetTotalSalary();
+        $this->resetTotalSalaryAndPlayerCount();
 		
 		$this->flushNow('all complete');
 	}	
@@ -866,7 +876,7 @@ class YpnController extends AppController
 	 * @param type $isTransferDay
 	 * @param type $isHoliday
 	 */
-    private function doWeekday($weekday, $isTransferDay, $isHoliday)
+    private function doWeekdayJob($weekday, $isTransferDay, $isHoliday)
     {
 		$nowDate = SettingManager::getInstance()->getNowDate();
 		
@@ -933,15 +943,14 @@ class YpnController extends AppController
 		}
     }
     
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
+	public function test()
+	{
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$playerId = 11082;
+		$arr = PlayerManager::getInstance()->findById($playerId);
+		$players = PlayerManager::getInstance()->loadData(array($arr));
+		$curPlayer = $players[0];
+		print_r($curPlayer);
+		echo $curPlayer->estimateValue($nowDate);
+	}
 }
-?>

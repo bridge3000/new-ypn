@@ -289,9 +289,13 @@ class MatchController extends AppController
 		$myCoach = CoachManager::getInstance()->getMyCoach();
         $myTeamId = $myCoach->team_id;
 		
+		$nowDate = SettingManager::getInstance()->getNowdate();
+		$weekarray=array("日","一","二","三","四","五","六"); //先定义一个数组
+		$weekDay = "星期".$weekarray[date("w", strtotime($nowDate))];
+		
 		$data = MatchManager::getInstance()->getNextUnplayedMatch($myTeamId);
         
-        $msg = $data . ', today ' . SettingManager::getInstance()->getNowdate();
+        $msg = 'today: ' . $nowDate . $weekDay .  ', ' . $data;
 		echo $msg;
 	}
 }

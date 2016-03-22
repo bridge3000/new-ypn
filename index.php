@@ -60,7 +60,15 @@ else if (!empty($slashParams)) //根据斜线分割
 {
 	$tmpArr = explode("/", $slashParams[0]);
 	$controller = $tmpArr[1];
-	$action = $tmpArr[2];
+	if(isset($tmpArr[2]))
+	{
+		$action = $tmpArr[2];
+	}
+	else
+	{
+		$action = 'index';
+	}
+	
 	for($i=3;$i<count($tmpArr);$i++)
 	{
 		$params[] = $tmpArr[$i];

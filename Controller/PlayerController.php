@@ -140,7 +140,6 @@ class PlayerController extends AppController
 				
 			}
 		}
-		unset($birthdayPlayers);
     }
     
     public function alert_low_loyalty()
@@ -204,10 +203,10 @@ class PlayerController extends AppController
      *
      * @param type $type 1common 2free 3all
      */
-    public function buy_list($type)
+    public function buy_list($type=1, $curPage=1)
     {
 		$this->layout = 'main';
-        $conditions = array();
+		$perPage = 20;
         
         switch ($type) 
         {
@@ -218,13 +217,21 @@ class PlayerController extends AppController
                 $conditions['team_id'] = 0;
                 break;
         }
+		
+		$conditions = array('isSelling'=>1);
         
         $players = PlayerManager::getInstance()->find('all', array(
-            'conditions' => array(),
+            'conditions' => $conditions,
             'fields' => array('id', 'name', 'team_id', 'position_id', 'fee', 'salary', 'popular', 'ContractBegin', 'ContractEnd'),
-            'order' => array('fee'=>'desc', 'salary'=>'desc','popular'=>'desc'),
-            'limit' => 20
+            'order' => array('fee'=>'desc', 'salary'=>'desc','popular'=>'desc', 'id'=>'desc'),
+            'limit' => array(($curPage-1)*$perPage, $perPage)
         ));
+		
+		$recordCount = PlayerManager::getInstance()->find('count', array(
+			'conditions' => $conditions
+		));
+		
+		$pageCount = ceil($recordCount / $perPage);
         
         $teamList = TeamManager::getInstance()->find('list', array(
             'conditions' => array('league_id<>'=>100),
@@ -233,6 +240,8 @@ class PlayerController extends AppController
         
         $this->set('players', $players);
         $this->set('teamList', $teamList);
+		$this->set('pageCount', $pageCount);
+		$this->set('curPage', $curPage);
         $this->render('buy_list');
     }
     
@@ -404,12 +413,7 @@ class PlayerController extends AppController
 			$curPlayer->team_id = $buyTeamId;
 			$curPlayer->salary = $newSalary;
 			$curPlayer->ContractBegin = $nowDate;
-			
-			//shirt no  1old no 2postion best no  3birthday no 4rnd no < 100
-			
-			
-			
-			
+			$curPlayer->setBestShirtNo(PlayerManager::getInstance()->getExistNos());
 			
 			$d1 = new DateTime($nowDate);
 			$d1->add(new DateInterval('P' . $addMonthCount . 'M'));
@@ -423,5 +427,11 @@ class PlayerController extends AppController
 		{
 			echo 'failed';
 		}
+	}
+	
+	public function ajax_get($id)
+	{
+		$curPlayer = PlayerManager::getInstance()->findById($id);
+		echo json_encode($curPlayer);
 	}
 }

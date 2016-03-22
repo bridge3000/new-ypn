@@ -3,10 +3,10 @@
     <tr><th>rank</th><th>name</th><th><?php echo $fieldText ?></th></tr>
 <?php
 $i = 1;
-foreach($players as $player)
+foreach($players as $n)
 {
 ?>
-        <tr><td><?php echo $i ?></td><td><?php echo $player['name'] ?></td><td><?php echo $player[$fieldName] ?></td></tr>
+        <tr><td><?php echo $i ?></td><td><?php echo $n['name'] ?></td><td><?php echo $n[$fieldName] ?></td></tr>
 <?php
     $i++;
 }

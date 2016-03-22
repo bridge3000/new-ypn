@@ -285,6 +285,6 @@ class Player
 			}
 		}
 
-		return $newNo;
+		$this->ShirtNo = $newNo;
 	}
 }

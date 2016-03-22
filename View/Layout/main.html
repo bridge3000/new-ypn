@@ -14,16 +14,19 @@
 						<td><a href="<?=MainConfig::BASE_URL?>match/all" target="_self"><img src="" width="20" height="20" border="0" /> all</a></td>
 					</tr>
 					<tr>
-						<td><a href="<?=MainConfig::BASE_URL?>index.php?c=match&a=today" target="_self"><img src="" width="20" height="20" border="0" /> today match</a></td>
+						<td><a href="<?=MainConfig::BASE_URL?>match/today" target="_self"><img src="" width="20" height="20" border="0" /> today match</a></td>
 					</tr>
 					<tr>
-						<td><a href="<?=MainConfig::BASE_URL?>index.php?c=player&a=chuchang" target="_self"><img src="" width="20" height="20" border="0" /> chuchang</a></td>
+						<td><a href="<?=MainConfig::BASE_URL?>/player/chuchang" target="_self"><img src="" width="20" height="20" border="0" /> chuchang</a></td>
 					</tr>
 					<tr>
-						<td><a href="<?=MainConfig::BASE_URL?>index.php?c=ypn&a=new_day" target="_self" onclick="//$('#cover').show();"><img src="" width="20" height="20" border="0" /> new day</a></td>
+						<td><a href="<?=MainConfig::BASE_URL?>news" target="_self" onclick="//$('#cover').show();"><img src="" width="20" height="20" border="0" /> news list</a></td>
 					</tr>
 					<tr>
-						<td><a href="<?=MainConfig::BASE_URL?>index.php?c=team&a=edit" target="_self"><img src="" width="20" height="20" border="0" /> myclub</a></td>
+						<td><a href="<?=MainConfig::BASE_URL?>ypn/new_day" target="_self" onclick="//$('#cover').show();"><img src="" width="20" height="20" border="0" /> new day</a></td>
+					</tr>
+					<tr>
+						<td><a href="<?=MainConfig::BASE_URL?>team/edit" target="_self"><img src="" width="20" height="20" border="0" /> myclub</a></td>
 					</tr>
 					<tr>
 						<td><a href="#" target="_self" onclick="$('#tr_italy').toggle();
@@ -75,7 +78,7 @@
 		</div>
 
 		<script>
-			$.get("index.php?c=match&a=ajax_get_my_next", {}, function(msg){
+			$.get("<?=MainConfig::BASE_URL?>match/ajax_get_my_next", {}, function(msg){
 				$("#board").text(msg);
 			});
 		</script>
