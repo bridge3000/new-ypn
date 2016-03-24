@@ -857,7 +857,7 @@ class PlayerManager extends DataManager
         return array('headerIndex'=>$headerIndex, 'goalkeeperIndex'=>$goalkeeperIndex, 'isAttackingGet'=>$isAttackingGet, 'result'=>$result);
     }
     
-    public function sellBestPlayer($team_id)
+    public function sellBestPlayer($teamId)
     {
         $maxId = 0;
         $maxFee = 0;
@@ -867,7 +867,7 @@ class PlayerManager extends DataManager
 
         $playerArray = $this->find('all', array(
         	'conditions' => array(
-			'team_id' => $team_id        
+			'team_id' => $teamId        
 	        ),
 	        'contain' => array()
         ));

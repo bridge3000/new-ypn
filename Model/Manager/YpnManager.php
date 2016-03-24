@@ -103,7 +103,6 @@ class YpnManager extends DataManager
 		if ((($nowDate >= $thisYear . "-01-01") && ($nowDate <= $thisYear . "-05-30")) || (($nowDate >= $thisYear . "-08-01") && ($nowDate <= $thisYear . "-12-24")))
 		{
 			$isHoliday = false;
-
 		}
 		else
 		{

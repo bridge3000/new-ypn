@@ -7,6 +7,7 @@ use Model\Manager\TeamManager;
 use Model\Manager\SettingManager;
 use Model\Manager\PlayerManager;
 use Model\Manager\CoachManager;
+use Model\Manager\NewsManager;
 
 class MatchController extends AppController 
 {
@@ -297,5 +298,46 @@ class MatchController extends AppController
         
         $msg = 'today: ' . $nowDate . $weekDay .  ', ' . $data;
 		echo $msg;
+	}
+	
+	public function friend_matches()
+	{
+		$myCoach = CoachManager::getInstance()->getMyCoach();
+        $myTeamId = $myCoach->team_id;
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$teamList = TeamManager::getInstance()->find('list', array(
+			'conditions' => array('league_id <>'=>100),
+			'fields' => array('id', 'name'),
+		));
+		
+		$friendMatches = MatchManager::getInstance()->find('all', array(
+			'conditions' => array(
+				'class_id'=>24,
+				'or' => array('HostTeam_id'=>$myTeamId, 'GuestTeam_id'=>$myTeamId)
+				),
+			'order' => array('PlayTime' => 'asc')
+			
+		));
+	
+		$this->set('nowDate', $nowDate);
+		$this->set('myTeamId', $myTeamId);
+		$this->set('friendMatches', $friendMatches);
+		$this->set("teamList", $teamList);
+		$this->render("friend_matches");
+	}
+	
+	public function ajax_invite_friend_match()
+	{
+		$myCoach = CoachManager::getInstance()->getMyCoach();
+        $myTeamId = $myCoach->team_id;
+		$guestTeamId = $_POST['guest_team_id'];
+		$playDate = $_POST['play_date'];
+		
+		$newMatch['HostTeam_id'] = $myTeamId;
+		$newMatch['GuestTeam_id'] = $guestTeamId;
+		$newMatch['PlayTime'] = $playDate;
+		$newMatch['class_id'] = 24;
+		
+		MatchManager::getInstance()->save($newMatch, 'insert');
 	}
 }

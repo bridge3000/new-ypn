@@ -47,8 +47,6 @@ class YpnController extends AppController
             $this->redirect(array('controller' => 'match', 'action' => 'play'));
 		}
 
-		$this->flushTraining();
-
 		$this->training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate);
 		unset($todayMatchTeamIds);
 
@@ -88,6 +86,10 @@ class YpnController extends AppController
 	
 	private function training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate)
 	{
+		echo ("<div align=center><img src='" . MainConfig::STATIC_DIR . "img/training.jpg' width='500' /><br><br>training<img src='" . MainConfig::STATIC_DIR . "res/img/loading.gif'></div>");
+		echo ("<script>window.status='new day...'</script>");
+		flush();
+		
 		$allTeamIds = TeamManager::getInstance()->getAllTeamIds();
 		$noMatchTeamIds = array_diff($allTeamIds, $todayMatchTeamIds); //今日没有比赛的球队ID
 		
@@ -124,13 +126,6 @@ class YpnController extends AppController
 				PlayerManager::getInstance()->training($noMatchTeamIds, $myTeamId);
 			}
 		}
-	}
-	
-	private function flushTraining()
-	{
-		echo ("<div align=center><img src='" . MainConfig::STATIC_DIR . "img/training.jpg' width='500' /><br><br>training<img src='" . MainConfig::STATIC_DIR . "res/img/loading.gif'></div>");
-		echo ("<script>window.status='new day...'</script>");
-		flush();
 	}
 	
 	/**

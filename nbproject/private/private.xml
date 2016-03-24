@@ -3,11 +3,10 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/D:/workspace/new-ypn/Model/Core/Player.php</file>
-            <file>file:/D:/workspace/new-ypn/Controller/PlayerController.php</file>
-            <file>file:/D:/workspace/new-ypn/index.php</file>
+            <file>file:/D:/workspace/new-ypn/View/Match/friend_matches.php</file>
             <file>file:/D:/workspace/new-ypn/Model/Manager/DataManager.php</file>
-            <file>file:/D:/workspace/new-ypn/View/Player/buy_apply.php</file>
+            <file>file:/D:/workspace/new-ypn/View/Layout/main.html</file>
+            <file>file:/D:/workspace/new-ypn/Controller/MatchController.php</file>
             <file>file:/D:/workspace/new-ypn/MainConfig.php</file>
         </group>
     </open-files>

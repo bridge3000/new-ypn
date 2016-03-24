@@ -37,7 +37,6 @@ class TeamManager extends DataManager
     public function buySomePlayers(&$team, $allTeamUsedNOs, $allCanBuyPlayers)
     {
         /*前锋2名　守门员1名　中后卫2名　左右边卫前后腰1名*/
-        $this->flushNow("<br><font color=blue><strong>" . $team['Team']['name'] . "</strong></font>正在转会<br>");
 
         $needPoses = array(
             array('positionId'=>4, 'minCount'=>3),
@@ -221,7 +220,7 @@ class TeamManager extends DataManager
                 	}
 
                 	$this->allCanBuyPlayers[$i]['team_id'] = $team['Team']['id'];
-                	$this->allCanBuyPlayers[$i]['ClubDepending'] = 85;
+                	$this->allCanBuyPlayers[$i]['ClubDepending'] = 80;
                     $this->allCanBuyPlayers[$i]['loyalty'] = 80;
                 	$this->allCanBuyPlayers[$i]['salary'] = $newSalary;
                 	$this->allCanBuyPlayers[$i]['ShirtNo'] = $playerNO;
@@ -348,5 +347,28 @@ class TeamManager extends DataManager
 		}
 		return $allTeamIds;
 	}
-
+	
+	/**
+	 * 
+	 * @param type $teamId
+	 * @param type $dir 1收入 2支出
+	 * @param type $money
+	 * @param type $content
+	 */
+	public function changeMoney($teamId, $dir, $money, $nowDate, $content)
+	{
+		$curTeam = TeamManager::getInstance()->findById($teamId);
+		if ($dir == 1)
+		{
+			$curTeam['money'] += $money;
+		}
+		else
+		{
+			$curTeam['money'] -= $money;
+		}
+		$bills = json_decode($curTeam['bills'], TRUE);
+		$bills[] = array('dir' => $dir, 'money' => $money, 'remain' => $curTeam['money'], 'content' => $content, 'date'=>strtotime($nowDate));
+		$curTeam['bills'] = json_encode($bills);
+		$this->save($curTeam, 'update');
+	}
 }

@@ -21,7 +21,7 @@ class NewsController extends AppController {
         $myTeamId = $myCoach->team_id;
 		$news = NewsManager::getInstance()->find('all', array(
 			'conditions' => array('team_id'=>$myTeamId),
-			'fields' => array('id', 'PubTime', 'content'),
+			'fields' => array('id', 'PubTime', 'content', 'ImgSrc'),
 			'limit' => array(($curPage-1)*$perPage, $perPage),
 			'order' => array('id'=>'desc'),
 		));

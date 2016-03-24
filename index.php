@@ -1,6 +1,5 @@
 <?php
 require 'MainConfig.php';
-//use Controller\MatchController as MatchController;
 
 function __autoload($class) 
 {  

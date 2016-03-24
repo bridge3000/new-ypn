@@ -83,7 +83,8 @@ class TeamController extends AppController
         	/*如果财政赤字则卖出队内最贵的球员*/
             if ($teams[$i]->money < 0)
             {
-                $result = $this->sellBestPlayer($teams[$i]->id);
+				var_dump($teams[$i]);
+                $result = PlayerManager::getInstance()->sellBestPlayer($teams[$i]->id);
                 echo("<font color=blue>" . $result['name'] . "</font>被以<font color=red>" . $result['fee'] . "</font>W欧元卖出了<br>");
             }
             
@@ -149,6 +150,7 @@ class TeamController extends AppController
         	} 	
 			
             //buy suitable player
+			$this->flushNow("<br><font color=blue><strong>" . $allTeams[$i]->name . "</strong></font>正在转会<br>");
             TeamManager::getInstance()->buySomePlayers($allTeams[$i], $allTeamUsedNOs, $allCanBuyPlayers);
             unset($allTeams[$i]);
         }
@@ -162,7 +164,7 @@ class TeamController extends AppController
         	    if ($sellingPlayer['isChanged'])
 	        	{
 	        		$data = $sellingPlayer;
-	        		$Player->save($data);
+	        		PlayerManager::getInstance()->save($data);
 	        	}
         	}
         }
@@ -388,4 +390,23 @@ class TeamController extends AppController
 		echo $attack;
 	}
 
+	public function ajax_give_birthday_subsidy($playerId)
+	{
+		$money = 1;
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$myCoach = CoachManager::getInstance()->getMyCoach();
+		$curTeam = TeamManager::getInstance()->findById($myCoach->team_id);
+		$curPlayer = PlayerManager::getInstance()->findById($playerId);
+		TeamManager::getInstance()->changeMoney($myCoach->team_id, 2, 1, $nowDate, "给予生日{$curPlayer['name']}贺礼");
+	}
+	
+	public function bill_list()
+	{
+		$myCoach = CoachManager::getInstance()->getMyCoach();
+		$curTeam = TeamManager::getInstance()->findById($myCoach->team_id);
+		$bills = json_decode($curTeam['bills'], TRUE);
+		$bills = is_array($bills) ? $bills : array();
+		$this->set('bills', $bills);
+		$this->render('bill_list');
+	}
 }

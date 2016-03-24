@@ -93,3 +93,14 @@ td,th, div, span, body {
 .pagination .active {
 	border:1px #666666 solid;
 }
+
+ #player_sell_div {
+	padding: 5px;
+	position: absolute;
+	top: 200px;
+	left: 200px;
+	z-index: 2;
+	background-color: #ffffff;
+	display: none;
+ }
+ 

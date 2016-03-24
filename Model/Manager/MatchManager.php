@@ -46,7 +46,7 @@ class MatchManager extends DataManager
             'order' => array('PlayTime'=>'asc')
         ));
         
-        echo("next match played:" . $data['PlayTime']);
+        return "next match played:" . $data['PlayTime'];
     }
     
     public function getTodayMatches($nowDate, $isPlayed = -1)

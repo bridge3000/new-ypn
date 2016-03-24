@@ -9,6 +9,7 @@ use Model\Manager\RetiredShirtManager;
 use Model\Manager\CoachManager;
 use Model\Manager\TeamManager;
 use Model\Manager\MatchManager;
+use Model\Manager\NewsManager;
 use \DateTime;
 use \DateInterval;
 
@@ -64,7 +65,8 @@ class PlayerController extends AppController
     
     public function drink()
     {
-        $myCoash = CoachManager::getInstance()->getMyCoach();
+		$nowDate = SettingManager::getInstance()->getNowDate();
+        $myCoach = CoachManager::getInstance()->getMyCoach();
         $myDrinkPlayers = PlayerManager::getInstance()->drink($myCoach->id);
         foreach ($myDrinkPlayers as $dPlayer)
         {
@@ -118,7 +120,7 @@ class PlayerController extends AppController
         $nowDate = SettingManager::getInstance()->getNowDate();
         $conditions = array("DATE_FORMAT(birthday, '%m-%d')" => date('m-d', strtotime($nowDate)), 'team_id > ' => 0);
 		$contain = array();
-		$fields = array('id', 'name', 'team_id', 'loyalty');
+		$fields = array('id', 'name', 'team_id', 'loyalty', 'ImgSrc');
 		$birthdayPlayers = PlayerManager::getInstance()->find('all', compact('conditions', 'contain', 'fields'));
         $myCoach = CoachManager::getInstance()->getMyCoach();
         $myTeamId = $myCoach->team_id;
@@ -127,15 +129,15 @@ class PlayerController extends AppController
 		{
 			if ($birthdayPlayers[$i]['team_id'] == $myTeamId)
 			{
-				echo ("<script>window.showModalDialog('/ypn/players/pay_birthday/" . $birthdayPlayers[$i]['id'] . "','','dialogHeight:400px;dialogWidth:400px;dialogLeft:300px;dialogTop:300px;');</script>");flush();
+				NewsManager::getInstance()->add($birthdayPlayers[$i]['name']."今日过生日", $birthdayPlayers[$i]['team_id'], $nowDate, $birthdayPlayers[$i]['ImgSrc']);
 			}
 			else
 			{
 				if (mt_rand(1, 2) === 1)
 				{
-//					TeamManager::getInstance()->writeJournal($birthdayPlayers[$i]['team_id'], 2, 1, '给' . $birthdayPlayers[$i]['name'] . '发生日补助');
-//					$birthdayPlayers[$i]['loyalty'] += 1;
-//					PlayerManager::getInstance()->save($birthdayPlayers[$i]);
+					TeamManager::getInstance()->changeMoney($birthdayPlayers[$i]['team_id'], 2, 1, $nowDate, '给' . $birthdayPlayers[$i]['name'] . '发生日补助');
+					$birthdayPlayers[$i]['loyalty'] += 1;
+					PlayerManager::getInstance()->save($birthdayPlayers[$i], 'update');
 				}
 				
 			}
@@ -347,7 +349,7 @@ class PlayerController extends AppController
 	}
 		
 	/**
-	 * 收到购买申请
+	 * 人操作买入
 	 * @param type $playerId
 	 */
 	public function buy($playerId)
@@ -370,6 +372,7 @@ class PlayerController extends AppController
 			if ( ($curPlayer->team_id == 0) || ($contractRemainMonth <= 6) )//free transfer
 			{
 				$isSuccess = TRUE;
+				NewsManager::getInstance()->add("买进{$curPlayer->name}成功", $buyTeamId, $nowDate, '', 0);
 			}
 			else
 			{
@@ -382,14 +385,13 @@ class PlayerController extends AppController
 				else
 				{
 					$isSuccess = FALSE;
-					die('fee error');
+					NewsManager::getInstance()->add('fee error, expected ' . $expectedValue, $buyTeamId, $nowDate, '', 0);
 				}
 			}
 		}
 		else //salary不满
 		{
-			die('salaray error, expected ' . $expectedSalary);
-			//add news
+			NewsManager::getInstance()->add('salaray error, expected ' . $expectedSalary, $buyTeamId, $nowDate, '', 0);
 		}
 		
 		if ($isSuccess)
@@ -404,8 +406,9 @@ class PlayerController extends AppController
 				TeamManager::getInstance()->update(array('money'=>$sellTeam['money'], 'TotalSalary'=>$sellTeam['TotalSalary'], 'player_count'=>$sellTeam['player_count']), array('id'=>$curPlayer->team_id));
 			}
 			
+			TeamManager::getInstance()->changeMoney($buyTeamId, 2, $newPrice, $nowDate, "买进球员{$curPlayer->name}");
+			
 			$buyTeam = TeamManager::getInstance()->findById($buyTeamId);
-			$buyTeam['money'] -= $newPrice;
 			$buyTeam['TotalSalary'] += $newSalary;
 			$buyTeam['player_count'] += 1;
 			TeamManager::getInstance()->update(array('money'=>$buyTeam['money'], 'TotalSalary'=>$buyTeam['TotalSalary'], 'player_count'=>$buyTeam['player_count']), array('id'=>$buyTeamId));
@@ -413,6 +416,7 @@ class PlayerController extends AppController
 			$curPlayer->team_id = $buyTeamId;
 			$curPlayer->salary = $newSalary;
 			$curPlayer->ContractBegin = $nowDate;
+			$curPlayer->ClubDepending = 80;
 			$curPlayer->setBestShirtNo(PlayerManager::getInstance()->getExistNos());
 			
 			$d1 = new DateTime($nowDate);
@@ -433,5 +437,37 @@ class PlayerController extends AppController
 	{
 		$curPlayer = PlayerManager::getInstance()->findById($id);
 		echo json_encode($curPlayer);
+	}
+	
+	public function my_list() 
+	{
+		$this->layout = 'main';
+
+        $myCoach = CoachManager::getInstance()->getMyCoach();
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		
+		/*nextmatchclass*/
+		$conditions = array('isPlayed' => 0, 'or' => array('HostTeam_id' => $myCoach->team_id, 'GuestTeam_id' => $myCoach->team_id));
+		$order = array('PlayTime'=>'asc');
+		$contain = array();
+		
+		$players = PlayerManager::getInstance()->find('all', array(
+				'conditions' => array('team_id' => $myCoach->team_id),
+				'order' => array('condition_id'=>'asc', 'ShirtNo'=>'asc'),
+			)
+		);
+		
+        $positions = MainConfig::$positions;
+		$this->set('positions', $positions);
+		$this->set('players', $players);
+		$this->set('nowDate', $nowDate);
+        
+        $this->render('my_list');
+	}
+	
+	public function ajax_sell($id, $price)
+	{
+		PlayerManager::getInstance()->update(array('isSelling'=>1, 'fee'=>$price), array('id'=>$id));
+		echo 1;
 	}
 }

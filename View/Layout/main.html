@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
+		<meta charset="utf-8">
         <title>YPN</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <link type="text/css" rel="stylesheet" href="<?=MainConfig::BASE_URL?>res/css/main.css" />
+		<link type="text/css" rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css" />
+		
         <script type="text/javascript" src="<?=MainConfig::BASE_URL?>res/js/jquery.js"></script>
+		<script type="text/javascript" src="<?=MainConfig::BASE_URL?>res/js/jquery-ui.min.js"></script>
     </head>
     <body>
 		<div>
@@ -17,13 +20,22 @@
 						<td><a href="<?=MainConfig::BASE_URL?>match/today" target="_self"><img src="" width="20" height="20" border="0" /> today match</a></td>
 					</tr>
 					<tr>
+						<td><a href="<?=MainConfig::BASE_URL?>match/friend_matches" target="_self"><img src="" width="20" height="20" border="0" /> friend matches</a></td>
+					</tr>
+					<tr>
 						<td><a href="<?=MainConfig::BASE_URL?>/player/chuchang" target="_self"><img src="" width="20" height="20" border="0" /> chuchang</a></td>
+					</tr>
+					<tr>
+						<td><a href="<?=MainConfig::BASE_URL?>/player/my_list" target="_self"><img src="" width="20" height="20" border="0" /> my list</a></td>
 					</tr>
 					<tr>
 						<td><a href="<?=MainConfig::BASE_URL?>news" target="_self" onclick="//$('#cover').show();"><img src="" width="20" height="20" border="0" /> news list</a></td>
 					</tr>
 					<tr>
 						<td><a href="<?=MainConfig::BASE_URL?>ypn/new_day" target="_self" onclick="//$('#cover').show();"><img src="" width="20" height="20" border="0" /> new day</a></td>
+					</tr>
+					<tr>
+						<td><a href="<?=MainConfig::BASE_URL?>team/bill_list" target="_self" onclick="//$('#cover').show();"><img src="" width="20" height="20" border="0" /> bills</a></td>
 					</tr>
 					<tr>
 						<td><a href="<?=MainConfig::BASE_URL?>team/edit" target="_self"><img src="" width="20" height="20" border="0" /> myclub</a></td>

@@ -227,6 +227,12 @@ class DataManager
         return DBManager::getInstance()->execute($sql);
     }
     
+	/**
+	 * 
+	 * @param array||obj $obj
+	 * @param string $type
+	 * @return string
+	 */
     private function generateSaveSql($obj, $type)
     {
         $sql = '';
@@ -268,15 +274,24 @@ class DataManager
             $arr = array();
             foreach($obj as $k => $v)
             {
-				$v = str_replace("'", "''", $v);
-                $this->explainFieldValue($v);
-                $arr[] = $k . '=' . $v;
+				if ($k != 'id')
+				{
+					$v = str_replace("'", "''", $v);
+					$this->explainFieldValue($v);
+					$arr[] = $k . '=' . $v;
+				}
             }
 
             $sql .= implode(",", $arr);
-            $sql .= ' where id=' . $obj->id;
+			if (is_array($obj))
+			{
+				$sql .= ' where id=' . $obj['id'];
+			}
+			else
+			{
+				$sql .= ' where id=' . $obj->id;
+			}
         }
-		
 
         return $sql;
     }
