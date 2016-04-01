@@ -341,7 +341,7 @@ class PlayerManager extends DataManager
 				break;
 			case 2:
 				$attackPoses = array(1, 2, 7, 8);
-				$defenserPoses = array(2, 3);
+				$defenserPoses = array(2, 3, 8);
 				$attackDirField = "MidProperties";
 				$defenseDirField = "MidProperties";
 				$aDirstr = "中";

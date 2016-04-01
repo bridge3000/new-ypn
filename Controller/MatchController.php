@@ -1,5 +1,6 @@
 <?php
 namespace Controller;
+use MainConfig;
 use Controller\AppController;
 use Model\Core\Player;
 use Model\Manager\MatchManager;
@@ -38,7 +39,6 @@ class MatchController extends AppController
     public function play($nowDate)
     {
         $nowDate = SettingManager::getInstance()->getNowDate();
-        
         $todayMatches = MatchManager::getInstance()->getTodayMatches($nowDate, 0);
         
         $teamIds = array();
@@ -68,18 +68,19 @@ class MatchController extends AppController
         $playedMatchClasses = array();
         foreach ($todayMatches as $match)
         {
+			$this->isWatch = $match->isWatched;
             $hostPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$match->HostTeam_id], $match->class_id, $matchTeams[$match->HostTeam_id]->formattion);
-            $strHtml = '<div style="float:left">';
-            $strHtml .= $this->generateZhenrongHtml($hostPlayers);
+            $strHtml = '<div class="shoufa_div">';
+            $strHtml .= $this->generateZhenrongHtml($hostPlayers, $matchTeams[$match->HostTeam_id]);
             $strHtml .= '</div>';
             $this->flushNow($strHtml);
             
             $guestPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$match->GuestTeam_id], $match->class_id, $matchTeams[$match->GuestTeam_id]->formattion);
-            $strHtml = '<div style="float:right">';
-            $strHtml .= $this->generateZhenrongHtml($guestPlayers);
+            $strHtml = '<div class="shoufa_div">';
+            $strHtml .= $this->generateZhenrongHtml($guestPlayers, $matchTeams[$match->GuestTeam_id]);
             $strHtml .= '</div><div style="clear:both"></div>';
             $this->flushNow($strHtml);
-        
+			
             $this->start($match, $hostPlayers, $guestPlayers, $matchTeams[$match->HostTeam_id], $matchTeams[$match->GuestTeam_id]);
             $match->isPlayed = 1;
             if (!in_array($match->class_id, $playedMatchClasses, true))
@@ -97,7 +98,6 @@ class MatchController extends AppController
     
     private function start(&$curMatch, &$hostPlayers, &$guestPlayers, &$hostTeam, &$guestTeam)
     {
-        $this->isWatch = $curMatch->isWatched;
         $assaultCount = ($hostTeam->attack + $guestTeam->attack) / 15;
 		for ($i = 0; $i < $assaultCount; $i++)
 		{
@@ -170,38 +170,38 @@ class MatchController extends AppController
             $defenseTeam = $hostTeam;
         }
         
-        $this->flushNow('<br/>' . $attackTeam->name . " attack from " . $strDir[$attackDir] . '，');
+        $this->flushNow('<br/>' . $attackTeam->name . "进攻" . $strDir[$attackDir] . '，');
         $collisionResult = PlayerManager::getInstance()->collision($attackDir, $attackPlayers['shoufa'], $defensePlayers['shoufa']);
         if ($collisionResult['result'])
         {
-            $this->flushNow($attackPlayers['shoufa'][$collisionResult['attackerIndex']]->name .  'break succes，');
+            $this->flushNow($attackPlayers['shoufa'][$collisionResult['attackerIndex']]->name .  '突破成功，');
             switch (mt_rand(1, 2)) 
             {
                 case 1: //pass
-                    $this->flushNow($attackPlayers['shoufa'][$collisionResult['attackerIndex']]->name .  'pass bal，');
+                    $this->flushNow($attackPlayers['shoufa'][$collisionResult['attackerIndex']]->name .  '传球，');
                     $shotResult = PlayerManager::getInstance()->shot($collisionResult['attackerIndex'], $attackPlayers, $defensePlayers, $attackDir);
-                    $this->flushNow($attackPlayers['shoufa'][$shotResult['shoterIndex']]->name . ' shot,');
+                    $this->flushNow($attackPlayers['shoufa'][$shotResult['shoterIndex']]->name . '射门,');
                     
                     switch ($shotResult['result']) 
                     {
                         case 1:
-                            $this->flushNow(' goal<br/>');
+                            $this->flushNow('球进了<br/>');
                             $curMatch->saveGoal();
                             $needTurn = true;
                             break;
                         case 2:
-                            $this->flushNow($defensePlayers['shoufa'][$shotResult['goalkeeperIndex']]->name . ' saved<br/>');
-                            $this->flushNow('corner,');
+                            $this->flushNow($defensePlayers['shoufa'][$shotResult['goalkeeperIndex']]->name . '扑救成功<br/>');
+                            $this->flushNow('角球,');
                             $needTurn = $this->corner($attackPlayers, $defensePlayers, $attackTeam->CornerKicker_id, $curMatch);
                             break;
                         case 3:
-                            $this->flushNow($defensePlayers['shoufa'][$shotResult['goalkeeperIndex']]->name . ' saved<br/>');
-                            $this->flushNow('fan ji');
+                            $this->flushNow($defensePlayers['shoufa'][$shotResult['goalkeeperIndex']]->name . '扑救成功<br/>');
+                            $this->flushNow('发动反击');
                             break;
                     }
                     break;
                 case 2: //foul
-                    $this->flushNow($defensePlayers['shoufa'][$collisionResult['defenserIndex']]->name . ' foul,');
+                    $this->flushNow($defensePlayers['shoufa'][$collisionResult['defenserIndex']]->name . '犯规,');
                     break;
             } 
         }
@@ -257,13 +257,13 @@ class MatchController extends AppController
         return $needTurn;
     }
     
-    private function generateZhenrongHtml($players)
+    private function generateZhenrongHtml($players, $curTeam)
     {
-        $str = "<table>";
+        $str = "<div class='title'>" . $curTeam->name . " </div><table class='tb_style_1'>";
 
         foreach($players['shoufa'] as $player)
         {
-            $str .= '<tr><td>' . $player->ShirtNo . "</td><td>" . $player->name . "</td><td>" . $player->condition_id . '</td></tr>';
+            $str .= '<tr><td>' . $player->ShirtNo . "</td><td>" . $player->name . "</td><td>" . MainConfig::$positions[$player->position_id] . '</td></tr>';
         }
 
         $str .= '</table>';

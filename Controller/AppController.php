@@ -61,6 +61,6 @@ class AppController
     
     protected function changeStatus($str)
     {
-        
+        $this->flushNow($str);
     }
 }

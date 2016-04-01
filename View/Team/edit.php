@@ -1,89 +1,9 @@
-<?php ?>
-<script>
-	function changeAttack(attackRate)
-	{
-		$.get("index.php?c=team&a=ajax_change_attack&p=" + attackRate, {}, function (attack) {
-			$(".attack_td").each(function(){
-				if ($(this).attr("value") == attack)
-				{
-					$(this).css("background-color", "red");
-				}
-				else
-				{
-					$(this).css("background-color", "white");
-				}
-			});
-		});
-	}
-
-	function changeGoalkeeperAttack()
-	{
-		$.get("change_goalkeeper_attack/", {}, function () {
-
-		});
-	}
-
-	function changeAutoFormat()
-	{
-		$.get("change_auto_format/", {}, function () {
-
-		});
-	}
-
-	function changeKicker(kickerType, kickerId)
-	{
-		$.get("index.php", {c: 'team', a: 'change_kicker', p: kickerType + ',' + kickerId}, function () {
-		});
-	}
-
-	function changefieldName()
-	{
-		$("#spfieldName").html("<input type=text id='txtfieldName' style='width:160px; height:18px;border:1px dashed silver;' value='" + $("#spfieldName").html() + "' />");
-		$("#button1").hide();
-		$("#button2").show();
-	}
-
-	function savefieldName()
-	{
-		var fieldName = $('#txtfieldName').val();
-		if (confirm('更改球场名称将使俱乐部人气下降，确认更改吗？'))
-		{
-			$.get("change_field_name/" + fieldName, function (data) {
-				$("#spfieldName").html(fieldName);
-				$("#button1").show();
-				$("#button2").hide();
-				$("#spPopular").html(eval($("#spPopular").html()) - 5);
-			});
-		}
-	}
-
-	function changePrice()
-	{
-		$("#spPrice").html("<input type=text id='txtPrice' style='width:30px; height:18px;border:1px dashed silver;' value='" + $("#spPrice").html() + "' />");
-		$("#btnPrice1").hide();
-		$("#btnPrice2").show();
-	}
-
-	function savePrice()
-	{
-		price = $('#txtPrice').val();
-		if (confirm('更改球票价格将使俱乐部人气变化，确认更改吗？'))
-		{
-			$.get("change_price/" + price, function (data) {
-				$("#spPrice").html(price);
-				$("#btnPrice1").show();
-				$("#btnPrice2").hide();
-				$("#spPopular").html(eval($("#spPopular").html()) - data);
-			});
-		}
-	}
-</script>
 <span id="spMsg"></span>
 
 <table width="500" border="0" cellspacing="1" cellpadding="3" align="center" bgcolor="#CCCCCC">
 	<tr>
 		<td align="right" bgcolor="whitesmoke">队 标：</td>
-		<td bgcolor="#FFFFFF"><img src="<?php echo IMG_DIR . $myTeam['ImgSrc']; ?>" /></td>
+		<td bgcolor="#FFFFFF"><img src="" /></td>
 	</tr>
 	<tr>
 		<td align="right" bgcolor="whitesmoke">名 称：</td>
@@ -180,23 +100,15 @@ foreach ($myPlayers as $k => $v) {
 	<tr>
 		<td align="right" bgcolor="whitesmoke">角球手：</td>
 		<td bgcolor="#FFFFFF">
-
 			<select onchange="changeKicker('CornerKicker_id', $(this).val())">
-<?php
-foreach ($myPlayers as $k => $v) {
-	?>
-					<option value="<?php echo $k ?>" <?php if ($k == $myTeam['CornerKicker_id']) echo(' selected') ?>><?php echo $v ?></option>
-	<?php
-}
-?>
+			<?php foreach ($myPlayers as $k => $v): 	?>
+				<option value="<?php echo $k ?>" <?php if ($k == $myTeam['CornerKicker_id']) echo(' selected') ?>><?php echo $v ?></option>
+			<?php endforeach; ?>
 			</select>
-
 		</td></tr>
 	<tr>
 		<td align="right" bgcolor="whitesmoke">自动设置阵容：</td>
-		<td bgcolor="#FFFFFF"><input type="checkbox" name="checkbox2" id="checkbox2" onclick="changeAutoFormat();" <?php if ($myTeam['isAutoFormat']) {
-	echo(" checked");
-} ?> /></td>
+		<td bgcolor="#FFFFFF"><input type="checkbox" id="chkAutoFormat" <?=($myTeam['isAutoFormat']?"checked":"")?> /></td>
 	</tr>
 	<tr>
 		<td align="right" bgcolor="whitesmoke">攻击程度：</td>
@@ -235,3 +147,87 @@ for ($i = 10; $i < 110; $i += 10) {
 		</td>
 	</tr>
 </table>
+
+<script>
+	function changeAttack(attackRate)
+	{
+		$.get("index.php?c=team&a=ajax_change_attack&p=" + attackRate, {}, function (attack) {
+			$(".attack_td").each(function(){
+				if ($(this).attr("value") == attack)
+				{
+					$(this).css("background-color", "red");
+				}
+				else
+				{
+					$(this).css("background-color", "white");
+				}
+			});
+		});
+	}
+
+	function changeGoalkeeperAttack()
+	{
+		$.get("change_goalkeeper_attack/", {}, function () {
+
+		});
+	}
+
+	$("#chkAutoFormat").click(function(){
+		
+		var isChecked = $(this).is(':checked');
+		isAutoFormat = isChecked ? 1 : 0;
+		console.log(isAutoFormat);
+		
+		$.post("ajax_change_auto_format/", {auto_format:isAutoFormat}, function () {
+
+		});
+	});
+
+	function changeKicker(kickerType, kickerId)
+	{
+		$.get("index.php", {c: 'team', a: 'change_kicker', p: kickerType + ',' + kickerId}, function () {
+		});
+	}
+
+	function changefieldName()
+	{
+		$("#spfieldName").html("<input type=text id='txtfieldName' style='width:160px; height:18px;border:1px dashed silver;' value='" + $("#spfieldName").html() + "' />");
+		$("#button1").hide();
+		$("#button2").show();
+	}
+
+	function savefieldName()
+	{
+		var fieldName = $('#txtfieldName').val();
+		if (confirm('更改球场名称将使俱乐部人气下降，确认更改吗？'))
+		{
+			$.get("change_field_name/" + fieldName, function (data) {
+				$("#spfieldName").html(fieldName);
+				$("#button1").show();
+				$("#button2").hide();
+				$("#spPopular").html(eval($("#spPopular").html()) - 5);
+			});
+		}
+	}
+
+	function changePrice()
+	{
+		$("#spPrice").html("<input type=text id='txtPrice' style='width:30px; height:18px;border:1px dashed silver;' value='" + $("#spPrice").html() + "' />");
+		$("#btnPrice1").hide();
+		$("#btnPrice2").show();
+	}
+
+	function savePrice()
+	{
+		price = $('#txtPrice').val();
+		if (confirm('更改球票价格将使俱乐部人气变化，确认更改吗？'))
+		{
+			$.get("change_price/" + price, function (data) {
+				$("#spPrice").html(price);
+				$("#btnPrice1").show();
+				$("#btnPrice2").hide();
+				$("#spPopular").html(eval($("#spPopular").html()) - data);
+			});
+		}
+	}
+</script>

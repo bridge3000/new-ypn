@@ -242,11 +242,23 @@ class TeamManager extends DataManager
         }
     }
     
-    public function addOtherLeagueTeamSalary()
+    public function addOtherLeagueTeamSalary($myTeamId)
     {
-        $rate = (50 + mt_rand(1, 50)) / 100 / 10000;
-        
-        $this->update(array('money' => 'money+TicketPrice*seats*' . $rate), array('NOT' => array('league_id' => array(1, 3, 100))));
+		$otherLeagueTeams = $this->find('all', array(
+			'conditions' => array('NOT' => array('league_id' => array(1, 3, 100))),
+			'fields' => array('id','money','TicketPrice','seats'),
+			));
+		
+		foreach($otherLeagueTeams as $t)
+		{
+			if ($t['id'] == $myTeamId)
+			{
+				continue;
+			}
+			
+			$money =  $t['money'] + ($t['TicketPrice'] * $t['seats'] * (50 + mt_rand(1, 50)) / (100 * 10000) );
+			$this->update(array('money' => $money), array('id'=>$t['id']));
+		}
     }
     
     public function resetTeams()

@@ -65,7 +65,7 @@ class YpnController extends AppController
 			SettingManager::getInstance()->addDate();
 
 			$isTransferDay = YpnManager::getInstance()->checkTransferDay($nowDate);
-			$this->doWeekdayJob($weekday, $isTransferDay, $isHoliday);
+			$this->doWeekdayJob($weekday, $isTransferDay, $isHoliday, $myTeamId);
 
 			$this->changeStatus('新的一天开始了.');
 
@@ -871,10 +871,9 @@ class YpnController extends AppController
 	 * @param type $isTransferDay
 	 * @param type $isHoliday
 	 */
-    private function doWeekdayJob($weekday, $isTransferDay, $isHoliday)
+    private function doWeekdayJob($weekday, $isTransferDay, $isHoliday, $myTeamId)
     {
 		$nowDate = SettingManager::getInstance()->getNowDate();
-		
 		switch ($weekday)
 		{
 			case 0:
@@ -918,7 +917,7 @@ class YpnController extends AppController
 				}
 				break;
 			case 4:
-                TeamManager::getInstance()->addOtherLeagueTeamSalary(); //非意甲球队每周也有球票收入
+                TeamManager::getInstance()->addOtherLeagueTeamSalary($myTeamId); //非意甲球队每周也有球票收入
 				$this->redirect(array('controller'=>'player', 'action'=>'drink'), false);   //增加球员个人活动的意外
                 break;
 			case 5:/*周五*/

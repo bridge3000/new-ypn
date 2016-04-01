@@ -103,5 +103,3 @@ class MainConfig
 	
 	const BASE_URL = "http://ypn.com/";
 }
-
-?>

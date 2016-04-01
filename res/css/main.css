@@ -104,3 +104,13 @@ td,th, div, span, body {
 	display: none;
  }
  
+ .shoufa_div {
+	 float: left;
+	 padding:10px;
+	 border: 1px activeborder solid;
+ }
+ 
+ .shoufa_div .title {
+	 text-align:center;
+	 font-weight:bold;
+ }

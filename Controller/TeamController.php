@@ -53,6 +53,9 @@ class TeamController extends AppController
         $this->render('list_league_rank');
     }
     
+	/**
+	 * 卖出
+	 */
     public function sell_players()
     {
         $nowDate = SettingManager::getInstance()->getNowDate();
@@ -408,5 +411,14 @@ class TeamController extends AppController
 		$bills = is_array($bills) ? $bills : array();
 		$this->set('bills', $bills);
 		$this->render('bill_list');
+	}
+	
+	public function ajax_change_auto_format()
+	{
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$myTeamId = CoachManager::getInstance()->getMyCoach()->team_id;
+		$isAutoFormat = $_POST['auto_format'];
+		
+		TeamManager::getInstance()->update(array('isAutoFormat'=>$isAutoFormat), array('id'=>$myTeamId));
 	}
 }
