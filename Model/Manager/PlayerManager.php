@@ -1280,4 +1280,31 @@ class PlayerManager extends DataManager
 		}
 		return $nos;
 	}
+	
+	/**
+	 * 获取每个位置的数量数组
+	 * @param type $teamId
+	 * @return int
+	 */
+	public function groupByPosition($teamId)
+	{
+		$players = $this->find('all', array(
+			'conditions' => array('team_id'=>$teamId),
+			'fields' => array('position_id')
+		));
+		
+		$positionCountArr = array();
+		foreach($players as $p)
+		{
+			if (array_key_exists($p['position_id'], $positionCountArr))
+			{
+				$positionCountArr[$p['position_id']]++;
+			}
+			else
+			{
+				$positionCountArr[$p['position_id']] = 1;
+			}
+		}
+		return $positionCountArr;
+	}
 }

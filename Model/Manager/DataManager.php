@@ -244,7 +244,7 @@ class DataManager
             }
             else
             {
-                if ($obj->id == null)
+                if (!isset($obj->id))
                 {
                     $type = 'insert';
                 }

@@ -36,9 +36,9 @@ class MatchController extends AppController
         self::render("all");
     }
     
-    public function play($nowDate)
+    public function play()
     {
-        $nowDate = SettingManager::getInstance()->getNowDate();
+		$nowDate = SettingManager::getInstance()->getNowDate();
         $todayMatches = MatchManager::getInstance()->getTodayMatches($nowDate, 0);
         
         $teamIds = array();
@@ -69,7 +69,9 @@ class MatchController extends AppController
         foreach ($todayMatches as $match)
         {
 			$this->isWatch = $match->isWatched;
+			print_r($matchTeams[$match->HostTeam_id]);exit;
             $hostPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$match->HostTeam_id], $match->class_id, $matchTeams[$match->HostTeam_id]->formattion);
+			print_r($hostPlayers);exit;
             $strHtml = '<div class="shoufa_div">';
             $strHtml .= $this->generateZhenrongHtml($hostPlayers, $matchTeams[$match->HostTeam_id]);
             $strHtml .= '</div>';
@@ -333,11 +335,26 @@ class MatchController extends AppController
 		$guestTeamId = $_POST['guest_team_id'];
 		$playDate = $_POST['play_date'];
 		
-		$newMatch['HostTeam_id'] = $myTeamId;
-		$newMatch['GuestTeam_id'] = $guestTeamId;
-		$newMatch['PlayTime'] = $playDate;
-		$newMatch['class_id'] = 24;
+		$guestPlayerCount = PlayerManager::getInstance()->find('count', array(
+			'conditions' => array('team_id'=>$guestTeamId)
+		));
 		
-		MatchManager::getInstance()->save($newMatch, 'insert');
+		$result = 0;
+		
+		if($guestPlayerCount > 11)
+		{
+			$newMatch['HostTeam_id'] = $myTeamId;
+			$newMatch['GuestTeam_id'] = $guestTeamId;
+			$newMatch['PlayTime'] = $playDate;
+			$newMatch['class_id'] = 24;
+			MatchManager::getInstance()->save($newMatch, 'insert');
+			$result = 0;
+		}
+		else
+		{
+			$result = -1;
+		}
+		
+		echo json_encode(array('result'=>$result));
 	}
 }

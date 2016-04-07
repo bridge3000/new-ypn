@@ -446,14 +446,9 @@ class PlayerController extends AppController
         $myCoach = CoachManager::getInstance()->getMyCoach();
 		$nowDate = SettingManager::getInstance()->getNowDate();
 		
-		/*nextmatchclass*/
-		$conditions = array('isPlayed' => 0, 'or' => array('HostTeam_id' => $myCoach->team_id, 'GuestTeam_id' => $myCoach->team_id));
-		$order = array('PlayTime'=>'asc');
-		$contain = array();
-		
 		$players = PlayerManager::getInstance()->find('all', array(
 				'conditions' => array('team_id' => $myCoach->team_id),
-				'order' => array('condition_id'=>'asc', 'ShirtNo'=>'asc'),
+				'order' => array('ShirtNo'=>'asc'),
 			)
 		);
 		

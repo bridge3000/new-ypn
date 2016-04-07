@@ -24,7 +24,7 @@ class TeamController extends AppController
     {
         $nowDate = SettingManager::getInstance()->getNowDate();
     	$conditions = array();
-    	$fields = array('id', 'name', 'ImgSrc', 'TotalSalary');
+    	$fields = array('id', 'name', 'ImgSrc', 'TotalSalary', 'money');
     	$allTeamsData = TeamManager::getInstance()->find('all', compact('conditions', 'fields'));
         $allTeams = TeamManager::getInstance()->loadData($allTeamsData, 'Team');
         for ($i = 0;$i < count($allTeams);$i++)
@@ -65,7 +65,7 @@ class TeamController extends AppController
     	PlayerManager::getInstance()->query("select id,name,contractend,isselling from ypn_players where contractend<'" . $nowDate . "'");
 
 		//俱乐部依赖小于50的卖掉
-    	$playersArray = PlayerManager::getInstance()->query("select * from ypn_players where ClubDepending<50 and id not in (select player_id from ypn_future_contracts) and team_id not in (select team_id from ypn_managers) and team_id>0");
+    	$playersArray = PlayerManager::getInstance()->query("select * from ypn_players where ClubDepending<50 and contractend>'" . $nowDate . "' and id not in (select player_id from ypn_future_contracts) and team_id not in (select team_id from ypn_managers) and team_id>0");
         $players = PlayerManager::getInstance()->loadData($playersArray);
         unset($playersArray);
     	foreach ($players as $targetPlayer)
@@ -154,7 +154,9 @@ class TeamController extends AppController
 			
             //buy suitable player
 			$this->flushNow("<br><font color=blue><strong>" . $allTeams[$i]->name . "</strong></font>正在转会<br>");
-            TeamManager::getInstance()->buySomePlayers($allTeams[$i], $allTeamUsedNOs, $allCanBuyPlayers);
+			
+			$curTeamPlayerPositions = PlayerManager::getInstance()->groupByPosition($allTeams[$i]->id);
+            TeamManager::getInstance()->buySomePlayers($allTeams[$i], $allTeamUsedNOs, $allCanBuyPlayers, $curTeamPlayerPositions);
             unset($allTeams[$i]);
         }
         

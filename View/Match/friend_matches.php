@@ -24,10 +24,17 @@ use Util\FormHelper;
 		};
 		
 		$.post("<?=  MainConfig::BASE_URL?>match/ajax_invite_friend_match", postData, function(response){
-			alert('提交成功');
-			
-			$("#friend_match_table").append("<tr><td>" + teamList[myTeamId] + "</td><td>" + teamList[postData.guest_team_id] + "</td><td>" + postData.play_date +  "</td></tr>");
-		});
+			if(response.result == 0)
+			{
+				alert('预约成功');
+				$("#friend_match_table").append("<tr><td>" + teamList[myTeamId] + "</td><td>" + teamList[postData.guest_team_id] + "</td><td>" + postData.play_date +  "</td></tr>");
+			}
+			else if(response.result == -1)
+			{
+				alert('预约失败，对方人员不足');
+			}
+
+		}, 'json');
 	});
 	
 	var myDate = new Date()

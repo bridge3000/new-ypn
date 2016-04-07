@@ -34,99 +34,82 @@ class TeamManager extends DataManager
         return $teams;
     }
 	
-    public function buySomePlayers(&$team, $allTeamUsedNOs, $allCanBuyPlayers)
+    public function buySomePlayers(&$team, $allTeamUsedNOs, $allCanBuyPlayers, $myPoses)
     {
         /*前锋2名　守门员1名　中后卫2名　左右边卫前后腰1名*/
 
         $needPoses = array(
-            array('positionId'=>4, 'minCount'=>3),
-            array('positionId'=>3, 'minCount'=>2),
-            array('positionId'=>9, 'minCount'=>2),
-            array('positionId'=>10, 'minCount'=>2),
-            array('positionId'=>13, 'minCount'=>2),
-            array('positionId'=>14, 'minCount'=>2),
-            array('positionId'=>2, 'minCount'=>2),
+//            array('positionId'=>4, 'minCount'=>3),
+			4 => 3,
+            3 => 2,
+            9 => 2,
+            10 => 2,
+            13 => 2,
+            14 => 2,
+            2 => 2,
         );
 
-        switch ($team['Team']['formattion']) 
+        switch ($team->formattion) 
         {
             case "4-4-2":
-                $needPoses[] = array('positionId'=>1, 'minCount'=>4);
-                $needPoses[] = array('positionId'=>8, 'minCount'=>2);
-                $needPoses[] = array('positionId'=>3, 'minCount'=>2);
+                $needPoses[1] = 4;
+                $needPoses[8] = 2;
+                $needPoses[3] = 2;
                 break;
             case "3-5-2":
-                $needPoses[] = array('positionId'=>2, 'minCount'=>2);
-                $needPoses[] = array('positionId'=>8, 'minCount'=>2);
-                $needPoses[] = array('positionId'=>1, 'minCount'=>4);
+                $needPoses[2] = 2;
+                $needPoses[8] = 2;
+                $needPoses[1] = 4;
                 break;
             case "5-3-2":
-                $needPoses[] = array('positionId'=>3, 'minCount'=>4);
-                $needPoses[] = array('positionId'=>1, 'minCount'=>4);
+                $needPoses[3] = 4;
+                $needPoses[1] = 4;
                 break;
             case "3-4-3":
-                $needPoses[] = array('positionId'=>2, 'minCount'=>2);
-                $needPoses[] = array('positionId'=>5, 'minCount'=>2);
-                $needPoses[] = array('positionId'=>6, 'minCount'=>2);
-                $needPoses[] = array('positionId'=>7, 'minCount'=>2);
+                $needPoses[2] = 2;
+                $needPoses[5] = 2;
+                $needPoses[6] = 2;
+                $needPoses[7] = 2;
                 break;
             case "4-3-3":
-                $needPoses[] = array('positionId'=>3, 'minCount'=>2);
-                $needPoses[] = array('positionId'=>5, 'minCount'=>2);
-                $needPoses[] = array('positionId'=>6, 'minCount'=>2);
-                $needPoses[] = array('positionId'=>7, 'minCount'=>2);
+                $needPoses[3] = 2;
+                $needPoses[5] = 2;
+                $needPoses[6] = 2;
+                $needPoses[7] = 2;
                 break;
             case "4-5-1":
-                $needPoses[] = array('positionId'=>3, 'minCount'=>2);
-                $needPoses[] = array('positionId'=>7, 'minCount'=>2);
-                $needPoses[] = array('positionId'=>2, 'minCount'=>2);
-                $needPoses[] = array('positionId'=>8, 'minCount'=>2);
+                $needPoses[3] = 2;
+                $needPoses[7] = 2;
+                $needPoses[2] = 2;
+                $needPoses[8] = 2;
                 break;
             case "圣诞树":
-                $needPoses[] = array('positionId'=>3, 'minCount'=>2);
-                $needPoses[] = array('positionId'=>8, 'minCount'=>4);
-                $needPoses[] = array('positionId'=>7, 'minCount'=>2);
+                $needPoses[3] = 2;
+                $needPoses[8] = 4;
+                $needPoses[7] = 2;
                 break;
         }
                 
-        $myPoses = array();
-        for ($i = 0;$i < count($team['PlayerPosition']);$i++)
+        if (array_key_exists($team->id, $allTeamUsedNOs))
         {
-            if (array_key_exists($team['PlayerPosition'][$i]['position_id'], $myPoses))
-            {
-                $myPoses[$team['PlayerPosition'][$i]['position_id']] += 1;
-            }
-            else
-            {
-                $myPoses[$team['PlayerPosition'][$i]['position_id']] = 1;
-            }
-        }
-        
-        if (array_key_exists($team['Team']['id'], $allTeamUsedNOs))
-        {
-            $usedNOs = $allTeamUsedNOs[$team['Team']['id']];
+            $usedNOs = $allTeamUsedNOs[$team->id];
         }
         else
         {
             $usedNOs = array();
         }
 
-        foreach($needPoses as $np)
+        foreach($needPoses as $positionId=>$minCount) //遍历每个位置，对比标准配置数和现有数量，缺少的buy-in
         {
-            $posCount = 0;
-            if (array_key_exists($np['positionId'], $myPoses))
+            $posCount = array_key_exists($positionId, $myPoses) ? $myPoses[$positionId] : 0;
+            if ($posCount < $minCount)
             {
-                $posCount = $myPoses[$np['positionId']];
-            }
-            
-            if ($posCount >= $np['minCount']) continue;
-            
-            $newNO = $this->buySuitablePlayer($team, $np['positionId'], $usedNOs, $allCanBuyPlayers);
-            if ($newNO != null)
-            {
-                $usedNOs[] = $newNO;
-//                break; //一个球队每次只买成功一个球员
-            }
+				$newNO = $this->buySuitablePlayer($team, $positionId, $usedNOs, $allCanBuyPlayers);
+				if ($newNO != null)
+				{
+					$usedNOs[] = $newNO;
+				}
+			}
         }
     }
 
@@ -143,8 +126,6 @@ class TeamManager extends DataManager
         $newSalary;
         $playerValue;
         $playerNO = 0;
-        $News = $this->getModel("News");
-        $Player = $this->getModel("Player");
 
         for ($i = 0;$i < count($this->allCanBuyPlayers);$i++) //traverse allplayers to transfer
         {
