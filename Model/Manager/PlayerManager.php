@@ -572,101 +572,6 @@ class PlayerManager extends DataManager
         return $usedNOs;
     }
     
-        /**
-     *
-     * @param type $player curPlayer
-     * @param type $usedNOs 
-     * @return int 
-     */
-	public function getPlayerNewShirtNo($player, $usedNOs)
-    {
-    	$newNO = 30;
-    	$canUseThisNO = true;
-    	
-    	if (in_array($newNO, $usedNOs, true))
-    	{
-    		$canUseThisNO = false;
-    	}
-    	
-    	if (!$canUseThisNO)
-    	{
-    		$canUseThisNO = true;
-        	switch ($player['position_id']) 
-        	{
-	    		case 1:
-		    		$newNO = 9;
-		    	break;
-	     		case 2:
-		    		$newNO = 6;
-		    	break;  
-	    		case 3:
-		    		$newNO = 4;
-		    	break; 
-	    		case 4:
-		    		$newNO = 1;
-		    	break; 	
-	    		case 5:
-		    		$newNO = 7;
-		    	break;	
-	    		case 6:
-		    		$newNO = 8;
-		    	break;
-	    		case 7:
-		    		$newNO = 9;
-		    	break;
-	    		case 8:
-		    		$newNO = 10;
-		    	break;
-	    		case 9:
-		    		$newNO = 7;
-		    	break;	
-	    		case 10:
-		    		$newNO = 8;
-		    	break;
-	    		case 13:
-		    		$newNO = 3;
-		    	break;	
-	    		case 14:
-		    		$newNO = 2;
-		    	break;
-	    		default:
-	    			$newNO = 30;
-	    		break;
-	    	}
-	    	
-        	if (in_array($newNO, $usedNOs, true))
-	    	{
-	    		$canUseThisNO = false;
-	    	}
-    	}
-    	
-    	/*如果相关位置的默认号码没有，则从12开始计算*/
-    	if (!$canUseThisNO)
-    	{
-    		if ($player['position_id'] == 4)
-    		{
-    			$newNO = 12;
-    		}
-    		else 
-    		{
-    			$newNO = 13;
-    		}
-
-        	while(!$canUseThisNO)
-	    	{
-	    		$canUseThisNO = true;
-                if (in_array($newNO, $usedNOs, true))
-                {
-                    $canUseThisNO = false;
-                    $newNO++;
-                    if ($newNO == 100) $newNO = 1;
-                }
-	    	}
-    	}
-        
-    	return $newNO;
-    }
-    
     public function drink($myTeamId)
     {
         $myDrinkPlayers = array();
@@ -1307,4 +1212,52 @@ class PlayerManager extends DataManager
 		}
 		return $positionCountArr;
 	}
+	
+	/**
+	 * 将指定league的player排前面
+	 * @param type $allCanBuyPlayers
+	 * @param type $leagueId
+	 * @return type
+	 */
+	public function sortByMyLeague($allCanBuyPlayers, $leagueId)
+	{
+		$myLeaguePlayers = array();
+		for ($k = 0;$k < count($allCanBuyPlayers);$k++)
+		{
+			if ($allCanBuyPlayers[$k]['league_id'] == $leagueId)
+			{
+				$myLeaguePlayers[] = $allCanBuyPlayers[$k];
+				unset($allCanBuyPlayers[$k]);
+			}
+		}
+
+		$allCanBuyPlayers = array_merge($myLeaguePlayers, $allCanBuyPlayers);
+		return $allCanBuyPlayers;
+	}
+	
+	public function resetTotalSalaryAndPlayerCount()
+    {
+        $allTeamPlayerData = array();
+        $allPlayers = PlayerManager::getInstance()->find('all', array(
+            'conditions' => array('team_id<>'=>0),
+            'fields' => array('id', 'team_id', 'salary')
+        ));
+        
+		$total = 0;
+		$playerCount = 0;
+		foreach($allPlayers as $k=>$player)
+		{
+			if(isset($allTeamPlayerData[$player['team_id']]))
+			{
+				$allTeamPlayerData[$player['team_id']]['player_count'] += 1;
+				$allTeamPlayerData[$player['team_id']]['TotalSalary'] += $player['salary'];
+			}
+			else
+			{
+				$allTeamPlayerData[$player['team_id']] = array('id'=>$player['id'], 'player_count'=>1, 'TotalSalary'=>$player['salary']);
+			}
+		}
+        
+		return $allTeamPlayerData;
+    }
 }

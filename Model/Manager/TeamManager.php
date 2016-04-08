@@ -34,187 +34,6 @@ class TeamManager extends DataManager
         return $teams;
     }
 	
-    public function buySomePlayers(&$team, $allTeamUsedNOs, $allCanBuyPlayers, $myPoses)
-    {
-        /*前锋2名　守门员1名　中后卫2名　左右边卫前后腰1名*/
-
-        $needPoses = array(
-//            array('positionId'=>4, 'minCount'=>3),
-			4 => 3,
-            3 => 2,
-            9 => 2,
-            10 => 2,
-            13 => 2,
-            14 => 2,
-            2 => 2,
-        );
-
-        switch ($team->formattion) 
-        {
-            case "4-4-2":
-                $needPoses[1] = 4;
-                $needPoses[8] = 2;
-                $needPoses[3] = 2;
-                break;
-            case "3-5-2":
-                $needPoses[2] = 2;
-                $needPoses[8] = 2;
-                $needPoses[1] = 4;
-                break;
-            case "5-3-2":
-                $needPoses[3] = 4;
-                $needPoses[1] = 4;
-                break;
-            case "3-4-3":
-                $needPoses[2] = 2;
-                $needPoses[5] = 2;
-                $needPoses[6] = 2;
-                $needPoses[7] = 2;
-                break;
-            case "4-3-3":
-                $needPoses[3] = 2;
-                $needPoses[5] = 2;
-                $needPoses[6] = 2;
-                $needPoses[7] = 2;
-                break;
-            case "4-5-1":
-                $needPoses[3] = 2;
-                $needPoses[7] = 2;
-                $needPoses[2] = 2;
-                $needPoses[8] = 2;
-                break;
-            case "圣诞树":
-                $needPoses[3] = 2;
-                $needPoses[8] = 4;
-                $needPoses[7] = 2;
-                break;
-        }
-                
-        if (array_key_exists($team->id, $allTeamUsedNOs))
-        {
-            $usedNOs = $allTeamUsedNOs[$team->id];
-        }
-        else
-        {
-            $usedNOs = array();
-        }
-
-        foreach($needPoses as $positionId=>$minCount) //遍历每个位置，对比标准配置数和现有数量，缺少的buy-in
-        {
-            $posCount = array_key_exists($positionId, $myPoses) ? $myPoses[$positionId] : 0;
-            if ($posCount < $minCount)
-            {
-				$newNO = $this->buySuitablePlayer($team, $positionId, $usedNOs, $allCanBuyPlayers);
-				if ($newNO != null)
-				{
-					$usedNOs[] = $newNO;
-				}
-			}
-        }
-    }
-
-    /**
-     * 购买一名特定位置的球员
-     * @param type $team
-     * @param type $position_id
-     * @param type $minCount
-     * @param type $usedNOs
-     * @return type
-     */
-    private function buySuitablePlayer(&$team, $position_id, $usedNOs, $allCanBuyPlayers)
-    {
-        $newSalary;
-        $playerValue;
-        $playerNO = 0;
-
-        for ($i = 0;$i < count($this->allCanBuyPlayers);$i++) //traverse allplayers to transfer
-        {
-            if (!array_key_exists("isChanged", $this->allCanBuyPlayers[$i]))
-            {
-            	$this->allCanBuyPlayers[$i]['isChanged'] = false;
-            }
-            
-            if (in_array($this->allCanBuyPlayers[$i]['id'], $this->futrueContractPlayers)) continue;
-            
-            if ( ($this->allCanBuyPlayers[$i]['team_id'] != $team['Team']['id']) && ($this->allCanBuyPlayers[$i]['position_id'] == $position_id) && !$this->allCanBuyPlayers[$i]['isChanged'])
-            {
-            	if (mt_rand(1, 2) == 1) return;
-                
-            	$transferCompleteNow = false;
-                
-                /*free*/
-                if ($this->allCanBuyPlayers[$i]["team_id"] == 0)
-                {
-                	$transferCompleteNow = true;
-                    echo("<font color=green><strong>" . $this->allCanBuyPlayers[$i]['name'] . "</strong></font>自由转会去了" . $team['Team']['name'] . "<br>");flush();
-                }
-                /*normal*/
-                else if ( ($team['Team']['money'] > $this->allCanBuyPlayers[$i]['fee']) && $this->allCanBuyPlayers[$i]['isSelling'])
-                {
-                    $playerFee = $Player->estimateFee($this->allCanBuyPlayers[$i]);
-                    $playerValue = $Player->estimateValue($this->allCanBuyPlayers[$i]);
-                	if ($playerFee < $this->allCanBuyPlayers[$i]['fee'])
-                	{
-                		$News->Add1($team['Team']['name'] . "希望通过<font color=red><strong>" . $playerFee . "</strong></font>万欧元的价格买进<font color=blue><strong>" . $this->allCanBuyPlayers[$i]['name'] . "</strong></font>", $this->allCanBuyPlayers[$i]['team_id'], $this->nowDate, $this->allCanBuyPlayers[$i]['ImgSrc']);
-                		return;
-                	}
-                	
-					if (mt_rand(1, 2) == 1)
-					{
-						/*买进球员的队减钱*/
-                        $this->writeJournal($team['Team']['id'], 2, $this->allCanBuyPlayers[$i]['fee'], '买进球员' . $this->allCanBuyPlayers[$i]['name']);
-                            
-						/*卖出球员的队加钱*/
-                        $this->writeJournal($this->allCanBuyPlayers[$i]['team_id'], 1, $this->allCanBuyPlayers[$i]['fee'], '卖出球员' . $this->allCanBuyPlayers[$i]['name']);
-						
-                        $News->Add1("<font color=green><strong>" . $this->allCanBuyPlayers[$i]['name'] . "</strong></font>已经被" . $team['Team']['name'] . "成功引进", $this->allCanBuyPlayers[$i]['team_id'], $this->nowDate, $this->allCanBuyPlayers[$i]['ImgSrc']);
-	
-                        $transferCompleteNow = true;
-                            
-                        echo("<font color=green><strong>" . $this->allCanBuyPlayers[$i]['name'] . "</strong></font>以<font color=red><strong>" . $this->allCanBuyPlayers[$i]['fee'] . "</strong></font>万欧元去了" . $team['Team']['name'] . "<br>");flush();
-					}
-				}
-                /*last 6 month，忠诚度小于85的会自由转会*/
-                elseif ((date("Y-m-d", strtotime("$this->nowDate + 181 day")) > $this->allCanBuyPlayers[$i]['ContractEnd']) && !$this->allCanBuyPlayers[$i]['isChanged'] && ($this->allCanBuyPlayers[$i]['loyalty'] < 85))
-                {
-                    $newSalary = $Player->getExpectedSalary($this->allCanBuyPlayers[$i]);
-                    $this->query("insert into ypn_future_contracts (player_id, NewContractEnd, NewTeam_id,NewSalary,OldContractEnd) values(" . $this->allCanBuyPlayers[$i]['id'] . ", '" . date("Y", strtotime("$this->nowDate + " . $this->getRandom(1, 6) . " year")) . "-6-30" . "'," . $team['Team']['id'] . "," . $newSalary . ",'" . $this->allCanBuyPlayers[$i]['ContractEnd'] . "')");
-                    $this->allCanBuyPlayers[$i]['isChanged'] = true;  
-					$info = "<font color=green><strong>" . $this->allCanBuyPlayers[$i]['name'] . "</strong></font>将在6个月内自由转会加盟<font color=blue>" . $team['Team']['name'] . "</font>";
-                    $News->Add1($info, $this->allCanBuyPlayers[$i]['team_id'], $this->nowDate, $this->allCanBuyPlayers[$i]['ImgSrc']);
-                    echo($info . "<br>");flush();                    
-                }
-                
-                if ($transferCompleteNow)
-                {
-                    $newSalary = $Player->getExpectedSalary($this->allCanBuyPlayers[$i]);
-                    $playerNO = $this->getPlayerNewShirtNo($this->allCanBuyPlayers[$i], $usedNOs);
-                
-                    if ($this->allCanBuyPlayers[$i]['league_id'] == $team['Team']['league_id'])
-                	{
-						$this->allCanBuyPlayers[$i]['cooperate'] = 90;
-                	}
-                	else
-                	{
-                        $this->allCanBuyPlayers[$i]['cooperate'] = 80;
-						$this->allCanBuyPlayers[$i]['league_id'] = $team['Team']['league_id'];
-                	}
-
-                	$this->allCanBuyPlayers[$i]['team_id'] = $team['Team']['id'];
-                	$this->allCanBuyPlayers[$i]['ClubDepending'] = 80;
-                    $this->allCanBuyPlayers[$i]['loyalty'] = 80;
-                	$this->allCanBuyPlayers[$i]['salary'] = $newSalary;
-                	$this->allCanBuyPlayers[$i]['ShirtNo'] = $playerNO;
-                	$this->allCanBuyPlayers[$i]['ContractBegin'] = $this->nowDate;
-                	$this->allCanBuyPlayers[$i]['ContractEnd'] = date('Y', strtotime($this->nowDate))+$this->getRandom(1, 5) . "-6-30";
-                	$this->allCanBuyPlayers[$i]['isSelling'] = false;
-                	$this->allCanBuyPlayers[$i]['isChanged'] = true;
-                    return $playerNO;
-                }
-            }
-        }
-    }
-    
     public function resetAllFormattion(&$allTeams, $formattions)
     {
         for ($i = 0;$i < count($allTeams);$i++)
@@ -254,53 +73,28 @@ class TeamManager extends DataManager
     public function getAllComputerTeams()
     {
         $records = $this->find('all', array(
-            'fields' => array('id', 'money', 'name', 'formattion'),
+            'fields' => array('id', 'money', 'name', 'formattion', 'player_count'),
             'conditions' => array('manager_id'=>0, 'league_id<>'=>100),
             'order' => array('league_id' => 'asc'),
             ));
         
-        $newTeam = new Team();
-        $computerTeams = array();
-        foreach($records as $r)
-        {
-            $newTeam = clone $newTeam;
-            $newTeam->setId($r['id']);
-            $newTeam->setMoney($r['money']);
-            $newTeam->setName($r['name']);
-            $newTeam->setFormattion($r['formattion']); 
-            $computerTeams[] = $newTeam;
-        }
-        
+		$computerTeams = $this->loadData($records);
         return $computerTeams;
     }
     
     /**
      * 获取有钱的电脑队
-     * @return type
+     * @return array(Team) $computerTeams
      */
     public function getRichComputerTeams()
     {
         $records = $this->find('all', array(
-            'fields' => array('id', 'money', 'name', 'formattion', 'league_id', 'manager_id', 'player_count'),
+            'fields' => array('id', 'money', 'name', 'formattion', 'league_id', 'manager_id', 'player_count', 'bills', 'TotalSalary'),
             'conditions' => array('manager_id'=>0, 'league_id<>'=>100, 'money>'=>0),
             'order' => array('league_id' => 'asc'),
             ));
         
-        $newTeam = new Team();
-        $computerTeams = array();
-        foreach($records as $r)
-        {
-            $newTeam = clone $newTeam;
-            $newTeam->setId($r['id']);
-            $newTeam->setMoney($r['money']);
-            $newTeam->setName($r['name']);
-            $newTeam->setFormattion($r['formattion']); 
-            $newTeam->setLeagueId($r['league_id']);
-            $newTeam->setManagerId($r['manager_id']);
-            $newTeam->setPlayerCount($r['player_count']);
-            $computerTeams[] = $newTeam;
-        }
-        
+		$computerTeams = $this->loadData($records);
         return $computerTeams;
     }
     

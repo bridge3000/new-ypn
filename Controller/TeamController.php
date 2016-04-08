@@ -23,22 +23,20 @@ class TeamController extends AppController
     public function payoff()
     {
         $nowDate = SettingManager::getInstance()->getNowDate();
-    	$conditions = array();
-    	$fields = array('id', 'name', 'ImgSrc', 'TotalSalary', 'money');
+		
+    	$conditions = array('id <>'=>100);
+    	$fields = array('id', 'name', 'ImgSrc', 'TotalSalary', 'money', 'bills');
     	$allTeamsData = TeamManager::getInstance()->find('all', compact('conditions', 'fields'));
         $allTeams = TeamManager::getInstance()->loadData($allTeamsData, 'Team');
         for ($i = 0;$i < count($allTeams);$i++)
     	{
-            if (is_null($allTeams[$i]->TotalSalary))
-    		{
-    			$allTeams[$i]->TotalSalary = PlayerManager::getInstance()->calTotalSalary($allTeams[$i]->id);
-    		}
-            
             $allTeams[$i]->paySalary($nowDate);
     		NewsManager::getInstance()->add('给球员发工资共花费了<font color=red><strong>' . $allTeams[$i]->TotalSalary . '</strong></font>万欧元', $allTeams[$i]->id, $nowDate, $allTeams[$i]->ImgSrc);
     	}
         
+		$this->flushNow('正在保存...<br>');
         TeamManager::getInstance()->saveMany($allTeams);
+		$this->flushNow('完成');
     }
     
     public function list_league_rank($leagueId)
@@ -86,7 +84,6 @@ class TeamController extends AppController
         	/*如果财政赤字则卖出队内最贵的球员*/
             if ($teams[$i]->money < 0)
             {
-				var_dump($teams[$i]);
                 $result = PlayerManager::getInstance()->sellBestPlayer($teams[$i]->id);
                 echo("<font color=blue>" . $result['name'] . "</font>被以<font color=red>" . $result['fee'] . "</font>W欧元卖出了<br>");
             }
@@ -108,72 +105,171 @@ class TeamController extends AppController
     {
     	$nowDate = SettingManager::getInstance()->getNowDate();
     	$allCanBuyPlayers = PlayerManager::getInstance()->query("select * from ypn_players where (isSelling=1 or team_id=0 or DATE_ADD('" . $nowDate . "', INTERVAL 181 DAY)>ContractEnd) and not exists(select player_id from ypn_future_contracts where ypn_future_contracts.player_id=ypn_players.id) order by ContractEnd,fee,isSelling");
-    	
-		/*获得所有电脑控制的球队*/
-	   	$allTeams = TeamManager::getInstance()->getRichComputerTeams();
-        
+	   	$richComputerTeams = TeamManager::getInstance()->getRichComputerTeams();
 	   	$lastLeagueId = -1;
-        
-        //get future contract players
-        $allFutruePlayers = FutureContractManager::getInstance()->find('all', array('fields'=>array('player_id')));
-        foreach($allFutruePlayers as $fPlayer)
-        {
-            $this->futrueContractPlayers[] = $fPlayer['FutureContract']['player_id'];
-        }
-        unset($allFutruePlayers);
-        
-        $allRetiredShirts = RetiredShirtManager::getInstance()->find('all', array(
-            'fields' => array('shirt', 'team_id'),
-            ));
-        
+		$futurePlayerIds = FutureContractManager::getInstance()->getAllPlayerIds();
+        $allRetiredShirts = RetiredShirtManager::getInstance()->find('all', array('fields' => array('shirt', 'team_id')));
         $allTeamUsedNOs = PlayerManager::getInstance()->getAllTeamUsedNOs($allRetiredShirts);
         
-    	for ($i = 0;$i < count($allTeams);$i++) //循环所有computer team
+    	for ($i = 0;$i < count($richComputerTeams);$i++) //循环所有computer team
         {
-			if ( (($allTeams[$i]->getLeagueId()) == 4) && ($allTeams[$i]->getPlayerCount() > 25) || ($allTeams[$i]->getPlayerCount() > 26) ) continue; //西甲球员上限25人，其余联赛26人
-        	if (mt_rand(1, 2) == 2)                continue;
+			if ( (($richComputerTeams[$i]->getLeagueId()) == 4) && ($richComputerTeams[$i]->getPlayerCount() > 25) || ($richComputerTeams[$i]->getPlayerCount() > 26) ) continue; //西甲球员上限25人，其余联赛26人
             
             /*如果已经切换league，则排序把本联赛球员放在名单前部*/
-        	if ($lastLeagueId <> $allTeams[$i]->getLeagueId())
+        	if ($lastLeagueId != $richComputerTeams[$i]->getLeagueId())
         	{
-        	   	$myLeaguePlayers = array();
-        		for ($k = 0;$k < count($allCanBuyPlayers);$k++)
-        		{
-        			if ($allCanBuyPlayers[$k]['league_id'] == $allTeams[$i]->getLeagueId())
-        			{
-        				$myLeaguePlayers[] = $allCanBuyPlayers[$k];
-        				unset($allCanBuyPlayers[$k]);
-        			}
-        		}
-        		
-        		$allCanBuyPlayers = array_merge($myLeaguePlayers, $allCanBuyPlayers);
-
-        		unset($myLeaguePlayers);
-        		$lastLeagueId = $allTeams[$i]->getLeagueId();
+				$allCanBuyPlayers = PlayerManager::getInstance()->sortByMyLeague($allCanBuyPlayers, $richComputerTeams[$i]->getLeagueId());
+        		$lastLeagueId = $richComputerTeams[$i]->getLeagueId();
         	} 	
 			
-            //buy suitable player
-			$this->flushNow("<br><font color=blue><strong>" . $allTeams[$i]->name . "</strong></font>正在转会<br>");
+			$this->flushNow("<br><font color=blue><strong>" . $richComputerTeams[$i]->name . "</strong></font>正在转会<br>");
 			
-			$curTeamPlayerPositions = PlayerManager::getInstance()->groupByPosition($allTeams[$i]->id);
-            TeamManager::getInstance()->buySomePlayers($allTeams[$i], $allTeamUsedNOs, $allCanBuyPlayers, $curTeamPlayerPositions);
-            unset($allTeams[$i]);
+            $this->buySomePlayers($richComputerTeams[$i], $allTeamUsedNOs, $allCanBuyPlayers, $futurePlayerIds);
+            unset($richComputerTeams[$i]);
         }
         
         /*save ypn_players*/
-        echo('正在保存数据...<br/>');flush();
-        foreach ($this->allCanBuyPlayers as $sellingPlayer)
+		$this->flushNow('正在保存数据...<br/>');
+
+		foreach ($allCanBuyPlayers as $sellingPlayer)
         {
         	if (isset($sellingPlayer['isChanged']))
         	{
-        	    if ($sellingPlayer['isChanged'])
-	        	{
-	        		$data = $sellingPlayer;
-	        		PlayerManager::getInstance()->save($data);
-	        	}
+				PlayerManager::getInstance()->save($sellingPlayer);
         	}
         }
         echo('转会结束.');
+    }
+	
+	private function buySomePlayers(&$curTeam, $allTeamUsedNOs, $allCanBuyPlayers, &$futurePlayerIds)
+    {
+        $usedNOs = array_key_exists($curTeam->id, $allTeamUsedNOs) ? $allTeamUsedNOs[$curTeam->id] : array(); //已使用的号码
+
+		$myPlayerPoses = PlayerManager::getInstance()->groupByPosition($curTeam->id);
+        foreach($curTeam->getNeedPoses() as $positionId=>$minCount) //遍历每个位置，对比标准配置数和现有数量，缺少的buy-in
+        {
+            $posCount = array_key_exists($positionId, $myPlayerPoses) ? $myPlayerPoses[$positionId] : 0;
+            if ($posCount < $minCount)
+            {
+				$newNO = $this->buySuitablePlayer($curTeam, $positionId, $usedNOs, $allCanBuyPlayers, $futurePlayerIds);
+				if ($newNO != null)
+				{
+					$usedNOs[] = $newNO;
+				}
+			}
+        }
+    }
+
+    /**
+     * 购买一名特定位置的球员
+     * @param Team $buyTeam
+     * @param int $position_id
+     * @param array $usedNOs
+     * @param array[array] $allCanBuyPlayers
+     * @return type
+     */
+    private function buySuitablePlayer(&$buyTeam, $position_id, $usedNOs, &$allCanBuyPlayers, &$futurePlayerIds)
+    {
+        $newSalary = 0;
+        $playerValue = 0;
+        $playerNO = 0;
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$newsMsg = '';
+		$transferSucess = false;
+		$playerEstimateFee = 0;
+
+        foreach ($allCanBuyPlayers as $i=>&$curPlayerArr) //traverse allplayers to transfer
+        {
+			$agreeNewSalary = mt_rand(0, 1);
+            if (in_array($curPlayerArr['id'], $futurePlayerIds) || ($curPlayerArr['team_id'] == $buyTeam->id) || ($curPlayerArr['position_id'] != $position_id) || isset($curPlayerArr['isChanged']) || $agreeNewSalary) 
+					continue;
+
+			$curPlayer = PlayerManager::getInstance()->loadOne($curPlayerArr);
+			$newSalary = $curPlayer->getExpectedSalary($nowDate);
+							
+			if ($curPlayer->team_id == 0) //free
+			{
+				$transferSucess = true;
+				$this->flushNow("<font color=green><strong>" . $curPlayerArr['name'] . "</strong></font>自由转会去了" . $buyTeam->name . "<br>");
+			}
+			else if ( ($buyTeam->money > $curPlayerArr['fee']) && $curPlayerArr['isSelling']) //normal
+			{
+				$playerEstimateFee = $curPlayer->estimateFee($nowDate);
+				if ($curPlayer->fee > $playerEstimateFee)
+				{
+					$newsMsg = $buyTeam->name . "希望通过<font color=red><strong>" . $playerEstimateFee . "</strong></font>万欧元的价格买进<font color=blue><strong>" . $curPlayer->name . "</strong></font>";
+				}
+				else if (mt_rand(1, 2) == 1)
+				{
+					$newsMsg = "<font color=green><strong>" . $curPlayer->name . "</strong></font>已经被" . $buyTeam->name . "成功引进";
+					$transferSucess = true;
+					$this->flushNow("<font color=green><strong>" . $curPlayer->name . "</strong></font>以<font color=red><strong>" . $curPlayer->fee . "</strong></font>万欧元去了" . $buyTeam->name . "<br>");
+				}
+			}
+			elseif ((date("Y-m-d", strtotime("$nowDate + 181 day")) > $curPlayerArr['ContractEnd']) && ($curPlayerArr['loyalty'] < 85)) /*last 6 month，忠诚度小于85的会自由转会*/
+			{
+				FutureContractManager::getInstance()->save(array(
+					'player_id' => $curPlayer->id,
+					'NewContractEnd' => date("Y", strtotime("$this->nowDate + " . $this->getRandom(1, 6) . " year")) . "-6-30",
+					'NewTeam_id' => $buyTeam->id,
+					'NewSalary' => $newSalary,
+					'OldContractEnd' => $curPlayer->ContractEnd
+				));
+				
+				$info = "<font color=green><strong>" . $curPlayer->name . "</strong></font>将在6个月内自由转会加盟<font color=blue>" . $buyTeam->name . "</font>";
+				$this->flushNow($info . "<br>");  
+			}
+
+			if ($newsMsg)
+			{
+				NewsManager::getInstance()->add($buyTeam['Team']['name'] . "希望通过<font color=red><strong>" . $playerEstimateFee . "</strong></font>万欧元的价格买进<font color=blue><strong>" . $allCanBuyPlayers[$i]['name'] . "</strong></font>", $allCanBuyPlayers[$i]['team_id'], $nowDate, $allCanBuyPlayers[$i]['ImgSrc']);
+			}
+
+			if ($transferSucess)
+			{
+				$buyTeam->player_count += 1;
+				$buyTeam->TotalSalary += $newSalary;
+
+				$sellTeamArr = TeamManager::getInstance()->find('first', array(
+					'fields' => array('id', 'name', 'money', 'TotalSalary', 'player_count')
+				));
+				$sellTeam = TeamManager::getInstance()->loadOne($sellTeamArr);
+				$sellTeam->player_count -= 1;
+				$sellTeam->TotalSalary -= $newSalary;
+
+				if ($curPlayer->team_id > 0)
+				{
+					$buyTeam->addMoney(-$curPlayer->fee, '买进球员' . $curPlayer->name, $nowDate);
+					$sellTeam->addMoney(-$curPlayer->fee, '卖出球员' . $curPlayer->name, $nowDate);
+				}
+				
+				TeamManager::getInstance()->save($buyTeam);
+				TeamManager::getInstance()->save($sellTeam);
+					
+				$playerNO = $curPlayer->getNewShirtNo($usedNOs);
+
+				if ($allCanBuyPlayers[$i]['league_id'] == $buyTeam->league_id)
+				{
+					$allCanBuyPlayers[$i]['cooperate'] = 90;
+				}
+				else
+				{
+					$allCanBuyPlayers[$i]['cooperate'] = 80;
+					$allCanBuyPlayers[$i]['league_id'] = $buyTeam->league_id;
+				}
+
+				$allCanBuyPlayers[$i]['team_id'] = $buyTeam->id;
+				$allCanBuyPlayers[$i]['ClubDepending'] = 80;
+				$allCanBuyPlayers[$i]['loyalty'] = 80;
+				$allCanBuyPlayers[$i]['salary'] = $newSalary;
+				$allCanBuyPlayers[$i]['ShirtNo'] = $playerNO;
+				$allCanBuyPlayers[$i]['ContractBegin'] = $nowDate;
+				$allCanBuyPlayers[$i]['ContractEnd'] = date('Y', strtotime($nowDate))+mt_rand(1, 5) . "-6-30";
+				$allCanBuyPlayers[$i]['isSelling'] = 0;
+				$allCanBuyPlayers[$i]['isChanged'] = true;
+				return $playerNO;
+			}
+        }
     }
     
     public function invite_friend_match()

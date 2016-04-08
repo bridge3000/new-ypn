@@ -67,7 +67,7 @@ class YpnController extends AppController
 			$isTransferDay = YpnManager::getInstance()->checkTransferDay($nowDate);
 			$this->doWeekdayJob($weekday, $isTransferDay, $isHoliday, $myTeamId);
 
-			$this->changeStatus('新的一天开始了.');
+			$this->flushNow('新的一天开始了.');
 
 			$this->redirect(array('controller'=>'player', 'action'=>'pay_birthday'), false); /*过生日的队员发奖金*/
 
@@ -770,39 +770,7 @@ class YpnController extends AppController
     private function resetTotalSalaryAndPlayerCount()
     {
         $this->flushNow('reset total salary');
-        $allTeamArray = TeamManager::getInstance()->find('all', array(
-            'conditions' => array('league_id<>'=>100),
-//            'fields' => array('id', 'TotalSalary')
-        ));
-        
-        $allTeams = TeamManager::getInstance()->loadData($allTeamArray);
-        
-        $allPlayers = PlayerManager::getInstance()->find('all', array(
-            'conditions' => array('team_id<>'=>0),
-            'fields' => array('id', 'team_id', 'salary')
-        ));
-        
-        for($i=0;$i<count($allTeams);$i++)
-        {
-			unset($allTeams[$i]->player_count);
-			
-            $total = 0;
-			$playerCount = 0;
-            foreach($allPlayers as $k=>$player)
-            {
-
-                if ($player['team_id'] == $allTeams[$i]->id)
-                {
-                    $total += $player['salary'];
-					$playerCount++;
-                    unset($allPlayers[$k]);
-                }
-            }
-			$allTeams[$i]->player_count = $playerCount;
-            $allTeams[$i]->TotalSalary = $total;
-        }
-        
-        TeamManager::getInstance()->saveMany($allTeams);
+		PlayerManager::getInstance()->resetTotalSalaryAndPlayerCount();
     }
     
 	/**
@@ -880,7 +848,7 @@ class YpnController extends AppController
 				/*卖出球员*/
 				if ($isTransferDay)
 				{
-					$this->changeStatus('正在进行转会交易...');
+					$this->flushNow('正在进行转会交易...');
                     $this->redirect(array('controller'=>'team', 'action'=>'sell_players'), false);
 				}
 				
@@ -894,7 +862,7 @@ class YpnController extends AppController
 				/*续约&卖出球员*/
 				if ($isTransferDay)
 				{
-					$this->changeStatus('正在续约球员，请稍候...');
+					$this->flushNow('正在续约球员，请稍候...');
                     $this->redirect(array('controller'=>'player', 'action'=>'continue_contract'), false);
 				}
 
@@ -903,34 +871,35 @@ class YpnController extends AppController
 				/*买进球员*/
 				if ($isTransferDay)
 				{
-					$this->changeStatus('正在进行转会交易...');
+					$this->flushNow('正在进行转会交易...');
                     $this->redirect(array('controller'=>'team', 'action'=>'buy_players'), false);
 				}
 				break;
 			case 3:	
-				$this->changeStatus('正在发工资...');
+				$this->flushNow('正在发工资...');
                 $this->redirect(array('controller'=>'team', 'action'=>'payoff'), false);
 				if (!$isHoliday && $isTransferDay)
 				{
-					echo('正在联系友谊赛...<br/>');flush();
+					$this->flushNow('正在联系友谊赛...<br/>');
                     $this->redirect(array('controller'=>'team', 'action'=>'invite_friend_match'), false);
 				}
 				break;
 			case 4:
+				$this->flushNow('ticket incoming...<br/>');
                 TeamManager::getInstance()->addOtherLeagueTeamSalary($myTeamId); //非意甲球队每周也有球票收入
 				$this->redirect(array('controller'=>'player', 'action'=>'drink'), false);   //增加球员个人活动的意外
                 break;
 			case 5:/*周五*/
 				if ($isTransferDay)
 				{
-					$this->changeStatus('正在检查合同是否到期，请稍候...');
+					$this->flushNow('正在检查合同是否到期，请稍候...');
                     $this->redirect(array('controller'=>'player', 'action'=>'transfer_free_agent'), false);
                 }
 				break;
 			case 6:
 				if (!$isHoliday)
 				{
-					$this->changeStatus('正在检查训练值增长，请稍候...');
+					$this->flushNow('正在检查训练值增长，请稍候...');
 					PlayerManager::getInstance()->checkTrainingAdd($nowDate);
 				}
 				break;

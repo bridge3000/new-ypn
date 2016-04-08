@@ -21,8 +21,10 @@ class PlayerController extends AppController
     {
         $nowDate = SettingManager::getInstance()->getNowDate();
         PlayerManager::getInstance()->query("update ypn_players set team_id=0,ContractBegin=null,ContractEnd=null where ContractEnd<'" . $nowDate . "'");
-        $futureContracts = FutureContractManager::getInstance()->find('all', array('conditions' => array('OldContractEnd <' => $nowDate)));
 
+		PlayerManager::getInstance()->resetTotalSalaryAndPlayerCount();
+		
+		$futureContracts = FutureContractManager::getInstance()->find('all', array('conditions' => array('OldContractEnd <' => $nowDate)));
         for ($i = 0;$i < count($futureContracts);$i++)
         {
             if (empty($futureContracts[$i]['id']))
@@ -42,7 +44,7 @@ class PlayerController extends AppController
             $retiredShirts = RetiredShirtManager::getInstance()->getByTeamId($futureContracts[$i]['NewTeam_id']);
             $usedNOs = PlayerManager::getInstance()->getUsedNOs($futureContracts[$i]['NewTeam_id']);
             
-            $targetPlayer->ShirtNo = PlayerManager::getInstance()->getPlayerNewShirtNo($targetPlayer, array_merge($retiredShirts, $usedNOs));
+            $targetPlayer->getNewShirtNo(array_merge($retiredShirts, $usedNOs));
 
             if ($buyTeam['league_id'] == $futureContracts[$i]['league_id'])
             {
@@ -177,10 +179,10 @@ class PlayerController extends AppController
 		{
 			if ($curPlayer->ClubDepending < 70)
 			{
-				echo("<font color=blue><strong>" . $curPlayer->name . "</strong></font>被卖出了<br>");flush();
+				$this->flushNow("<font color=blue><strong>" . $curPlayer->name . "</strong></font>被卖出了<br>");
 				
 				/*卖出*/
-				$this->query("update ypn_players set isSelling=1, fee=" . $curPlayer->estimateFee($nowDate) * $curPlayer->ClubDepending / 100 . " where id=" . $curPlayer->id);
+				PlayerManager::getInstance()->execute("update ypn_players set isSelling=1, fee=" . $curPlayer->estimateFee($nowDate) * $curPlayer->ClubDepending / 100 . " where id=" . $curPlayer->id);
 			}
 			else
 			{

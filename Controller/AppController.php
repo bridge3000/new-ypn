@@ -58,9 +58,4 @@ class AppController
         ob_flush();
         flush();
     }
-    
-    protected function changeStatus($str)
-    {
-        $this->flushNow($str);
-    }
 }

@@ -4,14 +4,14 @@ namespace Model\Core;
 class Team 
 {
     public $id;
-    public $money;
-    public $name;
-    public $formattion;
-    public $league_id;
-    public $manager_id;
-    public $player_count;
-    private $positionInfo;
-    private $bill;
+//    public $money;
+//    public $name;
+//    public $formattion;
+//    public $league_id;
+//    public $manager_id;
+//    public $player_count;
+//    private $positionInfo;
+//    private $bill;
     
     public function getId() {
         return $this->id;
@@ -80,7 +80,7 @@ class Team
     {
         $this->money += $num;
         
-        $this->addBill(array('info'=>$info, 'money'=>$num, 'PubTime'=>$nowDate, 'remain'=>$this->money));
+        $this->addBill(array('info'=>$info, 'money'=>$num, 'PubTime'=>strtotime($nowDate), 'remain'=>$this->money));
     }
     
     public function paySalary($nowDate)
@@ -90,17 +90,17 @@ class Team
     
     public function addBill($data)
     {
-        if ($this->bill != null)
+        if ($this->bills != null)
         {
-            $bill = json_decode($this->bill, true);
+            $bills = json_decode($this->bills, true);
         }
         else
         {
-            $bill = array();
+            $bills = array();
         }
-        $bill[] = $data;
+        $bills[] = $data;
         
-        $this->bill = json_encode($bill);
+        $this->bills = json_encode($bills);
     }
     
     public function getRndName()
@@ -115,4 +115,60 @@ class Team
         }
     }
     
+	
+	public function getNeedPoses()
+	{
+		$needPoses = array(
+//            array('positionId'=>4, 'minCount'=>3),
+			4 => 3,
+            3 => 2,
+            9 => 2,
+            10 => 2,
+            13 => 2,
+            14 => 2,
+            2 => 2,
+        );
+
+        switch ($this->formattion) 
+        {
+            case "4-4-2":
+                $needPoses[1] = 4;
+                $needPoses[8] = 2;
+                $needPoses[3] = 2;
+                break;
+            case "3-5-2":
+                $needPoses[2] = 2;
+                $needPoses[8] = 2;
+                $needPoses[1] = 4;
+                break;
+            case "5-3-2":
+                $needPoses[3] = 4;
+                $needPoses[1] = 4;
+                break;
+            case "3-4-3":
+                $needPoses[2] = 2;
+                $needPoses[5] = 2;
+                $needPoses[6] = 2;
+                $needPoses[7] = 2;
+                break;
+            case "4-3-3":
+                $needPoses[3] = 2;
+                $needPoses[5] = 2;
+                $needPoses[6] = 2;
+                $needPoses[7] = 2;
+                break;
+            case "4-5-1":
+                $needPoses[3] = 2;
+                $needPoses[7] = 2;
+                $needPoses[2] = 2;
+                $needPoses[8] = 2;
+                break;
+            case "圣诞树":
+                $needPoses[3] = 2;
+                $needPoses[8] = 4;
+                $needPoses[7] = 2;
+                break;
+        }
+		return $needPoses;
+	}
 }

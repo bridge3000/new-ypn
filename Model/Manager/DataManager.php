@@ -1,7 +1,6 @@
 <?php
 namespace Model\Manager;
 use MainConfig;
-use Model\Core\Player;
 use Util\CommonUtil;
 
 class DataManager 
@@ -83,8 +82,12 @@ class DataManager
 			{
 				$sql .= " limit " . $option['limit'];
 			}
-			
         }
+		
+		if(\MainConfig::DB_DEGUG)
+		{
+			echo $sql . "<br>";
+		}
 
         if ($type == "all")
         {
@@ -157,6 +160,10 @@ class DataManager
         $conditionStr = $this->explainCondition($conditions);
         
         $sql = "update " . MainConfig::PREFIX . $this->table . " set " . $dataStr . " where 1=1 " . $conditionStr;
+		if (\MainConfig::DB_DEGUG)
+		{
+			echo $sql . "<br>";
+		}
         DBManager::getInstance()->execute($sql);
     }
     
@@ -306,34 +313,41 @@ class DataManager
         foreach($arrObj as $i=>$obj)
         {
             $sql = $this->generateSaveSql($obj, $type);
+			echo $sql."<br/>";
             DBManager::getInstance()->execute($sql);
         }
     }
     
 	/**
 	 * 将array批量装载到obj
-	 * @param type $arrData
+	 * @param array $arrData
 	 * @return \Model\Manager\className
 	 */
     public function loadData($arrData)
     {
-        $className = str_replace("Manager", "Core", get_called_class()) ;
-        $className = substr($className, 0, strlen($className)-4);
-        
         $models = array();
         foreach ($arrData as $ap)
         {
-            $newInstance = new $className();
-            foreach($ap as $k=>$v)
-            {
-                $k = str_replace("-", "_", $k);
-                
-                $newInstance->$k = $v;
-            }
-            $models[] = $newInstance;
+            $models[] = $this->loadOne($ap);
         }
         
         return $models;
+    }
+	
+	public function loadOne($arr)
+    {
+        $className = str_replace("Manager", "Core", get_called_class()) ;
+        $className = substr($className, 0, strlen($className)-4);
+        
+		$newInstance = new $className();
+		foreach($arr as $k=>$v)
+		{
+			$k = str_replace("-", "_", $k);
+
+			$newInstance->$k = $v;
+		}
+        
+        return $newInstance;
     }
     
     public function delete($id, $asso = false)

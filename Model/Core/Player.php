@@ -287,4 +287,94 @@ class Player
 
 		$this->ShirtNo = $newNo;
 	}
+	
+	public function getNewShirtNo($usedNOs)
+    {
+    	$newNO = 30;
+    	$canUseThisNO = true;
+    	
+    	if (in_array($newNO, $usedNOs, true))
+    	{
+    		$canUseThisNO = false;
+    	}
+    	
+    	if (!$canUseThisNO)
+    	{
+    		$canUseThisNO = true;
+        	switch ($this->position_id) 
+        	{
+	    		case 1:
+		    		$newNO = 9;
+		    	break;
+	     		case 2:
+		    		$newNO = 6;
+		    	break;  
+	    		case 3:
+		    		$newNO = 4;
+		    	break; 
+	    		case 4:
+		    		$newNO = 1;
+		    	break; 	
+	    		case 5:
+		    		$newNO = 7;
+		    	break;	
+	    		case 6:
+		    		$newNO = 8;
+		    	break;
+	    		case 7:
+		    		$newNO = 9;
+		    	break;
+	    		case 8:
+		    		$newNO = 10;
+		    	break;
+	    		case 9:
+		    		$newNO = 7;
+		    	break;	
+	    		case 10:
+		    		$newNO = 8;
+		    	break;
+	    		case 13:
+		    		$newNO = 3;
+		    	break;	
+	    		case 14:
+		    		$newNO = 2;
+		    	break;
+	    		default:
+	    			$newNO = 30;
+	    		break;
+	    	}
+	    	
+        	if (in_array($newNO, $usedNOs, true))
+	    	{
+	    		$canUseThisNO = false;
+	    	}
+    	}
+    	
+    	/*如果相关位置的默认号码没有，则从12开始计算*/
+    	if (!$canUseThisNO)
+    	{
+    		if ($this->position_id == 4)
+    		{
+    			$newNO = 12;
+    		}
+    		else 
+    		{
+    			$newNO = 13;
+    		}
+
+        	while(!$canUseThisNO)
+	    	{
+	    		$canUseThisNO = true;
+                if (in_array($newNO, $usedNOs, true))
+                {
+                    $canUseThisNO = false;
+                    $newNO++;
+                    if ($newNO == 100) $newNO = 1;
+                }
+	    	}
+    	}
+		
+		$this->ShirtNo = $newNO;
+    	return $newNO;
+    }
 }
