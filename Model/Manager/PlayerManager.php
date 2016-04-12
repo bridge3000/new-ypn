@@ -881,7 +881,7 @@ class PlayerManager extends DataManager
             }
         }
         
-        $this->saveMany($players);
+//        $this->saveMany($players);
         
         return $players;
     }
@@ -898,9 +898,10 @@ class PlayerManager extends DataManager
         		$sameCount++;
                 if ($sameCount > $maxCount)
 	            {
-	                $sellPrice = round(($players[$i]->estimateFee($nowDate) * $players[$i]->ClubDepending * (70 + mt_rand(1, 60)) / 100 / 100), -1);
+	                $sellPrice = round(($players[$i]->estimateFee($nowDate) *  (70 + mt_rand(1, 60)) / 100), -1);
 	                $players[$i]->isSelling = 1;
 	                $players[$i]->fee = $sellPrice;
+					$this->update(array('isSelling'=>1, 'fee'=>$sellPrice), array('id'=>$players[$i]->id));
 	            }
         	}
         }
@@ -1191,23 +1192,45 @@ class PlayerManager extends DataManager
 	 * @param type $teamId
 	 * @return int
 	 */
-	public function groupByPosition($teamId)
+//	public function groupByPosition($teamId)
+//	{
+//		$players = $this->find('all', array(
+//			'conditions' => array('team_id'=>$teamId),
+//			'fields' => array('position_id')
+//		));
+//		
+//		$positionCountArr = array();
+//		foreach($players as $p)
+//		{
+//			if (array_key_exists($p['position_id'], $positionCountArr))
+//			{
+//				$positionCountArr[$p['position_id']]++;
+//			}
+//			else
+//			{
+//				$positionCountArr[$p['position_id']] = 1;
+//			}
+//		}
+//		return $positionCountArr;
+//	}
+	
+	public function groupAllPositionByTeamId()
 	{
 		$players = $this->find('all', array(
-			'conditions' => array('team_id'=>$teamId),
-			'fields' => array('position_id')
+			'conditions' => array('not'=>array('team_id'=>array(0,100))),
+			'fields' => array('position_id', 'team_id')
 		));
 		
 		$positionCountArr = array();
 		foreach($players as $p)
 		{
-			if (array_key_exists($p['position_id'], $positionCountArr))
+			if (isset($positionCountArr[$p['team_id']][$p['position_id']]))
 			{
-				$positionCountArr[$p['position_id']]++;
+				$positionCountArr[$p['team_id']][$p['position_id']]++;
 			}
 			else
 			{
-				$positionCountArr[$p['position_id']] = 1;
+				$positionCountArr[$p['team_id']][$p['position_id']] = 1;
 			}
 		}
 		return $positionCountArr;
@@ -1243,8 +1266,6 @@ class PlayerManager extends DataManager
             'fields' => array('id', 'team_id', 'salary')
         ));
         
-		$total = 0;
-		$playerCount = 0;
 		foreach($allPlayers as $k=>$player)
 		{
 			if(isset($allTeamPlayerData[$player['team_id']]))
@@ -1254,10 +1275,9 @@ class PlayerManager extends DataManager
 			}
 			else
 			{
-				$allTeamPlayerData[$player['team_id']] = array('id'=>$player['id'], 'player_count'=>1, 'TotalSalary'=>$player['salary']);
+				$allTeamPlayerData[$player['team_id']] = array('id'=>$player['team_id'], 'player_count'=>1, 'TotalSalary'=>$player['salary']);
 			}
 		}
-        
 		return $allTeamPlayerData;
     }
 }

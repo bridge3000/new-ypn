@@ -210,7 +210,7 @@ class DataManager
         }
         else
         {
-            if (strpos($k, '<') || strpos($k, '>'))
+            if (strpos($k, '<') || strpos($k, '>') || strpos($k, '<>'))
             {
                 $str = $k . '"' . $v . '" ';
             }
@@ -247,17 +247,24 @@ class DataManager
         {
             if (is_array($obj))
             {
-                $type = 'insert';
+				if (isset($obj['id']))
+				{
+					$type = 'update';
+				}
+				else
+				{
+					$type = 'insert';
+				}
             }
             else
             {
-                if (!isset($obj->id))
+                if (isset($obj->id))
                 {
-                    $type = 'insert';
+                    $type = 'update';
                 }
                 else
                 {
-                    $type = 'update';
+					$type = 'insert';
                 }
             }
         }
@@ -310,10 +317,13 @@ class DataManager
      */
     public function saveMany($arrObj, $type='')
     {
-        foreach($arrObj as $i=>$obj)
+        foreach($arrObj as $obj)
         {
             $sql = $this->generateSaveSql($obj, $type);
-			echo $sql."<br/>";
+			if (MainConfig::DB_DEGUG)
+			{
+				echo $sql."<br/>";
+			}
             DBManager::getInstance()->execute($sql);
         }
     }

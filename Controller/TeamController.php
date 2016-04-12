@@ -24,7 +24,7 @@ class TeamController extends AppController
     {
         $nowDate = SettingManager::getInstance()->getNowDate();
 		
-    	$conditions = array('id <>'=>100);
+    	$conditions = array('league_id <>'=>100);
     	$fields = array('id', 'name', 'ImgSrc', 'TotalSalary', 'money', 'bills');
     	$allTeamsData = TeamManager::getInstance()->find('all', compact('conditions', 'fields'));
         $allTeams = TeamManager::getInstance()->loadData($allTeamsData, 'Team');
@@ -110,6 +110,8 @@ class TeamController extends AppController
 		$futurePlayerIds = FutureContractManager::getInstance()->getAllPlayerIds();
         $allRetiredShirts = RetiredShirtManager::getInstance()->find('all', array('fields' => array('shirt', 'team_id')));
         $allTeamUsedNOs = PlayerManager::getInstance()->getAllTeamUsedNOs($allRetiredShirts);
+		
+		$allTeamPositionCount = PlayerManager::getInstance()->groupAllPositionByTeamId();
         
     	for ($i = 0;$i < count($richComputerTeams);$i++) //循环所有computer team
         {
@@ -124,7 +126,7 @@ class TeamController extends AppController
 			
 			$this->flushNow("<br><font color=blue><strong>" . $richComputerTeams[$i]->name . "</strong></font>正在转会<br>");
 			
-            $this->buySomePlayers($richComputerTeams[$i], $allTeamUsedNOs, $allCanBuyPlayers, $futurePlayerIds);
+            $this->buySomePlayers($richComputerTeams[$i], $allTeamUsedNOs, $allCanBuyPlayers, $futurePlayerIds, $allTeamPositionCount);
             unset($richComputerTeams[$i]);
         }
         
@@ -141,11 +143,11 @@ class TeamController extends AppController
         echo('转会结束.');
     }
 	
-	private function buySomePlayers(&$curTeam, $allTeamUsedNOs, $allCanBuyPlayers, &$futurePlayerIds)
+	private function buySomePlayers(&$curTeam, $allTeamUsedNOs, $allCanBuyPlayers, &$futurePlayerIds, $allTeamPositionCount)
     {
         $usedNOs = array_key_exists($curTeam->id, $allTeamUsedNOs) ? $allTeamUsedNOs[$curTeam->id] : array(); //已使用的号码
 
-		$myPlayerPoses = PlayerManager::getInstance()->groupByPosition($curTeam->id);
+		$myPlayerPoses = isset($allTeamPositionCount[$curTeam->id]) ? $allTeamPositionCount[$curTeam->id] : array();
         foreach($curTeam->getNeedPoses() as $positionId=>$minCount) //遍历每个位置，对比标准配置数和现有数量，缺少的buy-in
         {
             $posCount = array_key_exists($positionId, $myPlayerPoses) ? $myPlayerPoses[$positionId] : 0;
@@ -222,7 +224,7 @@ class TeamController extends AppController
 
 			if ($newsMsg)
 			{
-				NewsManager::getInstance()->add($buyTeam['Team']['name'] . "希望通过<font color=red><strong>" . $playerEstimateFee . "</strong></font>万欧元的价格买进<font color=blue><strong>" . $allCanBuyPlayers[$i]['name'] . "</strong></font>", $allCanBuyPlayers[$i]['team_id'], $nowDate, $allCanBuyPlayers[$i]['ImgSrc']);
+				NewsManager::getInstance()->add($newsMsg, $curPlayer->team_id, $nowDate, $curPlayer->ImgSrc);
 			}
 
 			if ($transferSucess)
@@ -230,22 +232,23 @@ class TeamController extends AppController
 				$buyTeam->player_count += 1;
 				$buyTeam->TotalSalary += $newSalary;
 
-				$sellTeamArr = TeamManager::getInstance()->find('first', array(
-					'fields' => array('id', 'name', 'money', 'TotalSalary', 'player_count')
-				));
-				$sellTeam = TeamManager::getInstance()->loadOne($sellTeamArr);
-				$sellTeam->player_count -= 1;
-				$sellTeam->TotalSalary -= $newSalary;
-
-				if ($curPlayer->team_id > 0)
+				if ($curPlayer->team_id > 0) //not free transfer
 				{
 					$buyTeam->addMoney(-$curPlayer->fee, '买进球员' . $curPlayer->name, $nowDate);
+					
+					$sellTeamArr = TeamManager::getInstance()->find('first', array(
+						'conditions' => array('id'=>$curPlayer->team_id),
+						'fields' => array('id', 'name', 'money', 'TotalSalary', 'player_count')
+					));
+					$sellTeam = TeamManager::getInstance()->loadOne($sellTeamArr);
+					$sellTeam->player_count -= 1;
+					$sellTeam->TotalSalary -= $newSalary;
 					$sellTeam->addMoney(-$curPlayer->fee, '卖出球员' . $curPlayer->name, $nowDate);
+					TeamManager::getInstance()->save($sellTeam);
 				}
 				
 				TeamManager::getInstance()->save($buyTeam);
-				TeamManager::getInstance()->save($sellTeam);
-					
+
 				$playerNO = $curPlayer->getNewShirtNo($usedNOs);
 
 				if ($allCanBuyPlayers[$i]['league_id'] == $buyTeam->league_id)
@@ -303,7 +306,7 @@ class TeamController extends AppController
 		/*循环主队*/
         $allTeamArray = TeamManager::getInstance()->find('all', array(
             'conditions' => array('league_id <>' => 100), 
-            'fields' => array('id', 'name', 'money', 'bill', 'FieldName')
+            'fields' => array('id', 'name', 'money', 'bills', 'FieldName')
             ));
         
         $allTeams = TeamManager::getInstance()->loadData($allTeamArray);
@@ -361,7 +364,7 @@ class TeamController extends AppController
 					),				
 				);
 				$contain = array();
-				$recentMatch = $Match->find('first', compact('conditions', 'contain'));
+				$recentMatch = MatchManager::getInstance()->find('first', compact('conditions', 'contain'));
 				
 				if (empty($recentMatch))
 				{

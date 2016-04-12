@@ -87,7 +87,6 @@ class YpnController extends AppController
 	private function training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate)
 	{
 		echo ("<div align=center><img src='" . MainConfig::STATIC_DIR . "img/training.jpg' width='500' /><br><br>training<img src='" . MainConfig::STATIC_DIR . "res/img/loading.gif'></div>");
-		echo ("<script>window.status='new day...'</script>");
 		flush();
 		
 		$allTeamIds = TeamManager::getInstance()->getAllTeamIds();
@@ -769,8 +768,8 @@ class YpnController extends AppController
     
     private function resetTotalSalaryAndPlayerCount()
     {
-        $this->flushNow('reset total salary');
-		PlayerManager::getInstance()->resetTotalSalaryAndPlayerCount();
+        $this->flushNow('reset total salary<br>');
+		TeamManager::getInstance()->saveMany(PlayerManager::getInstance()->resetTotalSalaryAndPlayerCount());
     }
     
 	/**

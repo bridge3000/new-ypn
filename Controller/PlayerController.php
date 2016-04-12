@@ -22,7 +22,7 @@ class PlayerController extends AppController
         $nowDate = SettingManager::getInstance()->getNowDate();
         PlayerManager::getInstance()->query("update ypn_players set team_id=0,ContractBegin=null,ContractEnd=null where ContractEnd<'" . $nowDate . "'");
 
-		PlayerManager::getInstance()->resetTotalSalaryAndPlayerCount();
+		TeamManager::getInstance()->saveMany(PlayerManager::getInstance()->resetTotalSalaryAndPlayerCount());
 		
 		$futureContracts = FutureContractManager::getInstance()->find('all', array('conditions' => array('OldContractEnd <' => $nowDate)));
         for ($i = 0;$i < count($futureContracts);$i++)
