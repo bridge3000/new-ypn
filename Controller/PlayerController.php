@@ -205,14 +205,20 @@ class PlayerController extends AppController
     
     /**
      *
-     * @param type $type 1common 2free 3all
+     * @param type $searchType 1common 2free 3all
      */
-    public function buy_list($type=1, $curPage=1)
+    public function buy_list($searchType=1, $curPage=1)
     {
 		$this->layout = 'main';
 		$perPage = 20;
+		$conditions = array();
+		$searchTypes = array(1=>'list', 2=>'free', 3=>'future');
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$d1 = new DateTime($nowDate);
+		$d1->add(new DateInterval('P6M'));
+		$sixMonthLater = $d1->format('Y-m-d');
         
-        switch ($type) 
+        switch ($searchType) 
         {
             case 1:
                 $conditions['isSelling'] = 1;
@@ -220,16 +226,18 @@ class PlayerController extends AppController
             case 2:
                 $conditions['team_id'] = 0;
                 break;
+			case 3:
+				$conditions['ContractEnd <'] = $sixMonthLater;
         }
-		
-		$conditions = array('isSelling'=>1);
         
-        $players = PlayerManager::getInstance()->find('all', array(
+        $records = PlayerManager::getInstance()->find('all', array(
             'conditions' => $conditions,
-            'fields' => array('id', 'name', 'team_id', 'position_id', 'fee', 'salary', 'popular', 'ContractBegin', 'ContractEnd'),
+            'fields' => array('id', 'name', 'team_id', 'position_id', 'fee', 'salary', 'popular', 'ContractBegin', 'ContractEnd', 'birthday'),
             'order' => array('fee'=>'desc', 'salary'=>'desc','popular'=>'desc', 'id'=>'desc'),
             'limit' => array(($curPage-1)*$perPage, $perPage)
         ));
+		
+		$players = PlayerManager::getInstance()->loadData($records);
 		
 		$recordCount = PlayerManager::getInstance()->find('count', array(
 			'conditions' => $conditions
@@ -242,6 +250,9 @@ class PlayerController extends AppController
             'fields' => array('id', 'name')
         ));
         
+		$this->set('searchTypes', $searchTypes);
+		$this->set('searchType', $searchType);
+		$this->set('nowDate', $nowDate);
         $this->set('players', $players);
         $this->set('teamList', $teamList);
 		$this->set('pageCount', $pageCount);
@@ -378,7 +389,7 @@ class PlayerController extends AppController
 			}
 			else
 			{
-				$expectedValue = $curPlayer->estimateFee($nowDate); //预估价格
+				$expectedValue = $curPlayer->estimateFee($nowDate);
 				$wave = mt_rand(1, 10);
 				if ($newPrice >= $expectedValue - $expectedSalary*$wave/100)
 				{
@@ -427,12 +438,14 @@ class PlayerController extends AppController
 			$curPlayer->ContractEnd = $d1->date;
 			PlayerManager::getInstance()->save($curPlayer, 'update');
 
-			echo 'success';
+//			echo 'success';
 		}
 		else
 		{
-			echo 'failed';
+//			echo 'failed';
 		}
+		
+		header("location:".\MainConfig::BASE_URL.'ypn/new_day');
 	}
 	
 	public function ajax_get($id)
@@ -466,5 +479,39 @@ class PlayerController extends AppController
 	{
 		PlayerManager::getInstance()->update(array('isSelling'=>1, 'fee'=>$price), array('id'=>$id));
 		echo 1;
+	}
+	
+	public function test()
+	{
+//		$id = 559; //lee
+//		$nowDate = SettingManager::getInstance()->getNowDate();
+//		$playerData = PlayerManager::getInstance()->find('first', array(
+//			'conditions' => array('id'=>$id)
+//		));
+//		$curPlayer = PlayerManager::getInstance()->loadOne($playerData);
+//		
+//		echo round(($curPlayer->estimateFee($nowDate) *  (70 + mt_rand(1, 60)) / 100), -1);
+		
+		$data = array(
+			array(
+			   'id' => '201',
+			   'isSelling' => 1,
+			   'fee' => '600'
+			),
+			array(
+			   'id' => 349 ,
+			   'isSelling' => 1,
+			   'fee' => '610'
+			),
+			array(
+			   'id' => '1168' ,
+			   'isSelling' => 1,
+			   'fee' => '602'
+			),
+		 );
+		
+		$index = 'id';
+		
+		PlayerManager::getInstance()->update_batch($data, $index);
 	}
 }

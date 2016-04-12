@@ -85,7 +85,7 @@ class TeamController extends AppController
             if ($teams[$i]->money < 0)
             {
                 $result = PlayerManager::getInstance()->sellBestPlayer($teams[$i]->id);
-                echo("<font color=blue>" . $result['name'] . "</font>被以<font color=red>" . $result['fee'] . "</font>W欧元卖出了<br>");
+                $this->flushNow("<font color=blue>" . $result['name'] . "</font>被以<font color=red>" . $result['fee'] . "</font>W欧元卖出了<br>");
             }
             
 			if ($teams[$i]->player_count > 33) //球员太多 需要减肥
@@ -93,8 +93,10 @@ class TeamController extends AppController
 				$players = PlayerManager::getInstance()->sellUnnecessaryPlayer($teams[$i]->id, $teams[$i]->formattion);
 				foreach($players as $player)
 				{
-					echo("<font color=blue>" . $player->name . "</font>被以<font color=red><strong>" . $player->fee . "</strong></font>W欧元的价格挂牌出售<br>");
-					flush();
+					if($player->isSelling == 1)
+					{
+						$this->flushNow("<font color=blue>" . $player->name . "</font>被以<font color=red><strong>" . $player->fee . "</strong></font>W欧元的价格挂牌出售<br>");
+					}
 				}
 			}
         }
@@ -143,7 +145,7 @@ class TeamController extends AppController
         echo('转会结束.');
     }
 	
-	private function buySomePlayers(&$curTeam, $allTeamUsedNOs, $allCanBuyPlayers, &$futurePlayerIds, $allTeamPositionCount)
+	private function buySomePlayers(&$curTeam, $allTeamUsedNOs, &$allCanBuyPlayers, &$futurePlayerIds, $allTeamPositionCount)
     {
         $usedNOs = array_key_exists($curTeam->id, $allTeamUsedNOs) ? $allTeamUsedNOs[$curTeam->id] : array(); //已使用的号码
 
@@ -238,7 +240,7 @@ class TeamController extends AppController
 					
 					$sellTeamArr = TeamManager::getInstance()->find('first', array(
 						'conditions' => array('id'=>$curPlayer->team_id),
-						'fields' => array('id', 'name', 'money', 'TotalSalary', 'player_count')
+						'fields' => array('id', 'name', 'money', 'TotalSalary', 'player_count', 'bills')
 					));
 					$sellTeam = TeamManager::getInstance()->loadOne($sellTeamArr);
 					$sellTeam->player_count -= 1;

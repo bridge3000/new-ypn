@@ -10,35 +10,35 @@
 		<th>合同</th>
 		<th>操作</th>
 	</tr>
-	<?php foreach ($players as $n): 	?>
+	<?php foreach ($players as $curPlayer): 	?>
 		<tr>
-			<td><?= $n['ShirtNo'] ?></td>
-			<td><a href="javascript:;" class="player_name" value="<?= $n['id'] ?>"><?= $n['name'] ?></a></td>
-			<td><?=MainConfig::$positions[$n['position_id']]?></td>
-			<td><?=$n['state']?></td>
+			<td><?= $curPlayer['ShirtNo'] ?></td>
+			<td><a href="javascript:;" class="player_name" value="<?= $curPlayer['id'] ?>"><?= $curPlayer['name'] ?></a></td>
+			<td><?=MainConfig::$positions[$curPlayer['position_id']]?></td>
+			<td><?=$curPlayer['state']?></td>
 			<td>
 			<?php
-			if ($n['sinew'] < 78) {
-				echo "<font color=red>" . $n['sinew'] . "</font>";
+			if ($curPlayer['sinew'] < 78) {
+				echo "<font color=red>" . $curPlayer['sinew'] . "</font>";
 			} else {
-				echo $n['sinew'];
+				echo $curPlayer['sinew'];
 			}
 			?>
 			</td>
-			<td><?= $n['cooperate'] ?></td>
+			<td><?= $curPlayer['cooperate'] ?></td>
 			<td>
-				<?php if (date('md', strtotime($n['birthday'])) == date('md', strtotime($nowDate))): ?>
-					<a href="javascript:;" value="<?= $n['id'] ?>" class="birthday_link">今日生日</a>
+				<?php if (date('md', strtotime($curPlayer['birthday'])) == date('md', strtotime($nowDate))): ?>
+					<a href="javascript:;" value="<?= $curPlayer['id'] ?>" class="birthday_link">今日生日</a>
 				<?php else: ?>
-					<?= $n['birthday'] ?>
+					<?= $curPlayer['birthday'] ?>
 				<?php endif; ?>
 			</td>
-			<td><?=$n['ContractBegin']?> - <?=$n['ContractEnd']?></td>
+			<td><?=$curPlayer['ContractBegin']?> - <?=$curPlayer['ContractEnd']?></td>
 			<td>
-			<?php if($n['isSelling']): ?>
-				挂牌中 <?=$n['fee']?>W
+			<?php if($curPlayer['isSelling']): ?>
+				挂牌中 <?=$curPlayer['fee']?>W
 			<?php else: ?>
-				<a href="javascript:;" class="sell_link" player_id="<?=$n['id']?>" player_name="<?=$n['name']?>">卖出</a>
+				<a href="javascript:;" class="sell_link" player_id="<?=$curPlayer['id']?>" player_name="<?=$curPlayer['name']?>">卖出</a>
 			<?php endif; ?>
 
 				<a href="">解约</a>

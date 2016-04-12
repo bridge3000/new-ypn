@@ -881,8 +881,6 @@ class PlayerManager extends DataManager
             }
         }
         
-//        $this->saveMany($players);
-        
         return $players;
     }
     
@@ -898,10 +896,11 @@ class PlayerManager extends DataManager
         		$sameCount++;
                 if ($sameCount > $maxCount)
 	            {
-	                $sellPrice = round(($players[$i]->estimateFee($nowDate) *  (70 + mt_rand(1, 60)) / 100), -1);
-	                $players[$i]->isSelling = 1;
-	                $players[$i]->fee = $sellPrice;
-					$this->update(array('isSelling'=>1, 'fee'=>$sellPrice), array('id'=>$players[$i]->id));
+					$fee = $players[$i]->getRndFee($nowDate);
+					if ($fee > 0)
+					{
+						$this->update(array('isSelling'=>1, 'fee'=>$fee), array('id'=>$players[$i]->id));
+					}
 	            }
         	}
         }

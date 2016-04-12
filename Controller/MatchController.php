@@ -9,6 +9,7 @@ use Model\Manager\SettingManager;
 use Model\Manager\PlayerManager;
 use Model\Manager\CoachManager;
 use Model\Manager\NewsManager;
+use Model\Manager\YpnManager;
 
 class MatchController extends AppController 
 {
@@ -334,25 +335,32 @@ class MatchController extends AppController
         $myTeamId = $myCoach->team_id;
 		$guestTeamId = $_POST['guest_team_id'];
 		$playDate = $_POST['play_date'];
-		
-		$guestPlayerCount = PlayerManager::getInstance()->find('count', array(
-			'conditions' => array('team_id'=>$guestTeamId)
-		));
-		
+		$nowDate = SettingManager::getInstance()->getNowDate();
 		$result = 0;
 		
-		if($guestPlayerCount > 11)
+		if(YpnManager::getInstance()->checkHoliday($nowDate))
 		{
-			$newMatch['HostTeam_id'] = $myTeamId;
-			$newMatch['GuestTeam_id'] = $guestTeamId;
-			$newMatch['PlayTime'] = $playDate;
-			$newMatch['class_id'] = 24;
-			MatchManager::getInstance()->save($newMatch, 'insert');
-			$result = 0;
+			$result = -2;
 		}
 		else
 		{
-			$result = -1;
+			$guestPlayerCount = PlayerManager::getInstance()->find('count', array(
+				'conditions' => array('team_id'=>$guestTeamId)
+			));
+
+			if($guestPlayerCount > 11)
+			{
+				$newMatch['HostTeam_id'] = $myTeamId;
+				$newMatch['GuestTeam_id'] = $guestTeamId;
+				$newMatch['PlayTime'] = $playDate;
+				$newMatch['class_id'] = 24;
+				MatchManager::getInstance()->save($newMatch, 'insert');
+				$result = 0;
+			}
+			else
+			{
+				$result = -1;
+			}
 		}
 		
 		echo json_encode(array('result'=>$result));

@@ -371,6 +371,53 @@ class DataManager
         DBManager::getInstance()->multi_execute($sql);
     }
 
-}
+	/**
+	 * Update_Batch statement
+	 *
+	 * Generates a platform-specific batch update string from the supplied data
+	 *
+	 * @access	public
+	 * @param	array	the update data
+	 * @param	array	the where clause
+	 * @return	string
+	 */
+	public function update_batch($values, $index, $where = NULL)
+	{
+		$ids = array();
+		$where = ($where != '' AND count($where) >=1) ? implode(" ", $where).' AND ' : '';
 
-?>
+		foreach ($values as $key => $val)
+		{
+			$ids[] = $val[$index];
+
+			foreach (array_keys($val) as $field)
+			{
+				if ($field != $index)
+				{
+					$final[$field][] =  'WHEN '.$index.' = '.$val[$index].' THEN '.$val[$field];
+				}
+			}
+		}
+
+		$sql = "UPDATE ".MainConfig::PREFIX . $this->table." SET ";
+		$cases = '';
+
+		foreach ($final as $k => $v)
+		{
+			$cases .= $k.' = CASE '."\n";
+			foreach ($v as $row)
+			{
+				$cases .= $row."\n";
+			}
+
+			$cases .= 'ELSE '.$k.' END, ';
+		}
+
+		$sql .= substr($cases, 0, -2);
+
+		$sql .= ' WHERE '.$where.$index.' IN ('.implode(',', $ids).')';
+
+//		return $sql;
+		DBManager::getInstance()->execute($sql);
+	}
+}

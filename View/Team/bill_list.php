@@ -6,13 +6,13 @@
 		<th>内容</th>
 		<th>余额</th>
 	</tr>
-	<?php foreach ($bills as $n): ?>
+	<?php foreach ($bills as $curPlayer): ?>
 		<tr>
-			<td><?=date('Y-m-d', $n['date']) ?></td>
-			<td><?= (($n['dir'] == 1) ? "收入" : "支出") ?></td>
-			<td><?= $n['money'] ?> </td>
-			<td><?= $n['content'] ?> </td>
-			<td><?= $n['remain'] ?> </td>
+			<td><?=date('Y-m-d', $curPlayer['date']) ?></td>
+			<td><?= (($curPlayer['dir'] == 1) ? "收入" : "支出") ?></td>
+			<td><?= $curPlayer['money'] ?> </td>
+			<td><?= $curPlayer['content'] ?> </td>
+			<td><?= $curPlayer['remain'] ?> </td>
 		</tr>
 	<?php endforeach; ?>
 </table>

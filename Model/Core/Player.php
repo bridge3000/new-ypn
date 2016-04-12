@@ -377,4 +377,15 @@ class Player
 		$this->ShirtNo = $newNO;
     	return $newNO;
     }
+	
+	/**
+	 * 售出的时候随机转会费
+	 * @param type $nowDate
+	 * @return type
+	 */
+	public function getRndFee($nowDate)
+	{
+		$price = round(($this->estimateFee($nowDate) *  (70 + mt_rand(1, 60)) / 100), -1);
+		return $price;
+	}
 }

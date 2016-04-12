@@ -16,7 +16,8 @@ class NewsManager extends DataManager
 		$newNews->PubTime = $nowDate;
 		$newNews->ImgSrc = $imgSrc;
         $newNews->isRead = $isRead;
-        self::$newArr[] = $newNews;
+//        self::$newArr[] = $newNews;
+		$this->save($newNews);
 	}
     
     public function readAll($teamId)
@@ -24,13 +25,13 @@ class NewsManager extends DataManager
         $this->query('update ypn_news set isRead=1 where team_id=' . $teamId);
     }
     
-    public function saveAllData()
-    {
-        if (!empty(self::$newArr))
-        {
-            $this->saveMany(self::$newArr);
-        }
-    }
+//    public function saveAllData()
+//    {
+//        if (!empty(self::$newArr))
+//        {
+//            $this->saveMany(self::$newArr);
+//        }
+//    }
     
     public function getUnreadNews($teamId)
     {

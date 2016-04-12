@@ -25,7 +25,12 @@ class FormHelper {
 		$selectHtml = "<select name=\"{$name}\" {$optionsStr}>";
 		foreach($data as $k=>$v)
 		{
-			$selectHtml .= "<option value=\"{$k}\">{$v}</option>";
+			$selectHtml .= "<option value=\"{$k}\"";
+			if($k == $selectValue)
+			{
+				$selectHtml .= " selected";
+			}
+			$selectHtml .= ">{$v}</option>";
 		}
 		$selectHtml .= '</select>';
 		return $selectHtml;

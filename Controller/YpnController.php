@@ -71,7 +71,7 @@ class YpnController extends AppController
 
 			$this->redirect(array('controller'=>'player', 'action'=>'pay_birthday'), false); /*过生日的队员发奖金*/
 
-			NewsManager::getInstance()->saveAllData();
+//			NewsManager::getInstance()->saveAllData();
 
 			/*列出近期新闻，如果不采用弹出窗口显示则不用列出*/
 			$this->set('news', NewsManager::getInstance()->getUnreadNews($myTeamId));
