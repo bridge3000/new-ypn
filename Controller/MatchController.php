@@ -41,7 +41,16 @@ class MatchController extends AppController
     {
 		$nowDate = SettingManager::getInstance()->getNowDate();
         $todayMatches = MatchManager::getInstance()->getTodayMatches($nowDate, 0);
-        
+		if(empty($todayMatches))
+		{
+			header("location:".MainConfig::BASE_URL.'ypn/new_day');
+			exit;
+		}
+		else
+		{
+			$this->flushCss();
+		}
+		
         $teamIds = array();
         foreach($todayMatches as $match)
         {
@@ -70,19 +79,17 @@ class MatchController extends AppController
         foreach ($todayMatches as $match)
         {
 			$this->isWatch = $match->isWatched;
-			print_r($matchTeams[$match->HostTeam_id]);exit;
             $hostPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$match->HostTeam_id], $match->class_id, $matchTeams[$match->HostTeam_id]->formattion);
-			print_r($hostPlayers);exit;
             $strHtml = '<div class="shoufa_div">';
             $strHtml .= $this->generateZhenrongHtml($hostPlayers, $matchTeams[$match->HostTeam_id]);
             $strHtml .= '</div>';
-            $this->flushNow($strHtml);
+            $this->flushMatch($strHtml);
             
             $guestPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$match->GuestTeam_id], $match->class_id, $matchTeams[$match->GuestTeam_id]->formattion);
             $strHtml = '<div class="shoufa_div">';
             $strHtml .= $this->generateZhenrongHtml($guestPlayers, $matchTeams[$match->GuestTeam_id]);
             $strHtml .= '</div><div style="clear:both"></div>';
-            $this->flushNow($strHtml);
+            $this->flushMatch($strHtml);
 			
             $this->start($match, $hostPlayers, $guestPlayers, $matchTeams[$match->HostTeam_id], $matchTeams[$match->GuestTeam_id]);
             $match->isPlayed = 1;
@@ -97,6 +104,8 @@ class MatchController extends AppController
 		
 		/*体力为0的变成伤员*/
         PlayerManager::getInstance()->update(array("condition_id"=>"4", 'InjuredDay'=>6), array('sinew <' => 0));
+		
+		$this->flushNow("<a href=\"" . MainConfig::BASE_URL . 'match/today' . "\">today match</a>");
     }
     
     private function start(&$curMatch, &$hostPlayers, &$guestPlayers, &$hostTeam, &$guestTeam)
@@ -110,7 +119,7 @@ class MatchController extends AppController
 			}
 			$this->assault($curMatch, $hostPlayers, $guestPlayers, $hostTeam, $guestTeam);
 		}
-        $this->flushNow('the match is over.<br/>');
+        $this->flushMatch('the match is over.<br/>');
         
         $this->onMatchEnd($curMatch, $hostTeam, $guestTeam);
         
@@ -173,44 +182,44 @@ class MatchController extends AppController
             $defenseTeam = $hostTeam;
         }
         
-        $this->flushNow('<br/>' . $attackTeam->name . "进攻" . $strDir[$attackDir] . '，');
+        $this->flushMatch('<br/>' . $attackTeam->name . "进攻" . $strDir[$attackDir] . '，');
         $collisionResult = PlayerManager::getInstance()->collision($attackDir, $attackPlayers['shoufa'], $defensePlayers['shoufa']);
         if ($collisionResult['result'])
         {
-            $this->flushNow($attackPlayers['shoufa'][$collisionResult['attackerIndex']]->name .  '突破成功，');
+            $this->flushMatch($attackPlayers['shoufa'][$collisionResult['attackerIndex']]->name .  '突破成功，');
             switch (mt_rand(1, 2)) 
             {
                 case 1: //pass
-                    $this->flushNow($attackPlayers['shoufa'][$collisionResult['attackerIndex']]->name .  '传球，');
+                    $this->flushMatch($attackPlayers['shoufa'][$collisionResult['attackerIndex']]->name .  '传球，');
                     $shotResult = PlayerManager::getInstance()->shot($collisionResult['attackerIndex'], $attackPlayers, $defensePlayers, $attackDir);
-                    $this->flushNow($attackPlayers['shoufa'][$shotResult['shoterIndex']]->name . '射门,');
+                    $this->flushMatch($attackPlayers['shoufa'][$shotResult['shoterIndex']]->name . '射门,');
                     
                     switch ($shotResult['result']) 
                     {
                         case 1:
-                            $this->flushNow('球进了<br/>');
-                            $curMatch->saveGoal();
+                            $this->flushMatch('球进了<br/>');
+							$this->goal($curMatch, $hostTeam, $guestTeam);
                             $needTurn = true;
                             break;
                         case 2:
-                            $this->flushNow($defensePlayers['shoufa'][$shotResult['goalkeeperIndex']]->name . '扑救成功<br/>');
-                            $this->flushNow('角球,');
+                            $this->flushMatch($defensePlayers['shoufa'][$shotResult['goalkeeperIndex']]->name . '扑救成功<br/>');
+                            $this->flushMatch('角球,');
                             $needTurn = $this->corner($attackPlayers, $defensePlayers, $attackTeam->CornerKicker_id, $curMatch);
                             break;
                         case 3:
-                            $this->flushNow($defensePlayers['shoufa'][$shotResult['goalkeeperIndex']]->name . '扑救成功<br/>');
-                            $this->flushNow('发动反击');
+                            $this->flushMatch($defensePlayers['shoufa'][$shotResult['goalkeeperIndex']]->name . '扑救成功<br/>');
+                            $this->flushMatch('发动反击');
                             break;
                     }
                     break;
                 case 2: //foul
-                    $this->flushNow($defensePlayers['shoufa'][$collisionResult['defenserIndex']]->name . '犯规,');
+                    $this->flushMatch($defensePlayers['shoufa'][$collisionResult['defenserIndex']]->name . '犯规,');
                     break;
             } 
         }
         else
         {
-            $this->flushNow($defensePlayers['shoufa'][$collisionResult['defenserIndex']]->name . 'defense succes,');
+            $this->flushMatch($defensePlayers['shoufa'][$collisionResult['defenserIndex']]->name . 'defense succes,');
         }
         
         if ($curMatch->getFaqiuquan())
@@ -234,25 +243,25 @@ class MatchController extends AppController
     {
         $needTurn = false;
         $cornerKickerIndex = PlayerManager::getInstance()->getCornerKickerIndex($attackPlayers['shoufa'], $cornerKickerId);
-        $this->flushNow($attackPlayers['shoufa'][$cornerKickerIndex]->name . ' kick corner，');
+        $this->flushMatch($attackPlayers['shoufa'][$cornerKickerIndex]->name . ' kick corner，');
         $cornerResult = PlayerManager::getInstance()->qiangdian($attackPlayers['shoufa'], $defensePlayers['shoufa'], $cornerKickerId, mt_rand(1, 4));
         switch ($cornerResult['result']) 
         {
             case 1:
-                $this->flushNow($attackPlayers['shoufa'][$cornerResult['headerIndex']]->name . ' touqiugongmen，goal.');
-                $curMatch->saveGoal();
+                $this->flushMatch($attackPlayers['shoufa'][$cornerResult['headerIndex']]->name . ' touqiugongmen，goal.');
+                $this->goal($curMatch, $hostTeam, $guestTeam);
                 $needTurn = true;
                 break;
             case 2:
-                $this->flushNow($defensePlayers['shoufa'][$cornerResult['headerIndex']]->name . ' pohuai，');
+                $this->flushMatch($defensePlayers['shoufa'][$cornerResult['headerIndex']]->name . ' pohuai，');
                 $needTurn = true;
                 break;
             case 3:
-                $this->flushNow($attackPlayers['shoufa'][$cornerResult['headerIndex']]->name . ' touqiugongmen，' . $defensePlayers['shoufa'][$cornerResult['goalkeeperIndex']]->name . ' pu chu le.');
+                $this->flushMatch($attackPlayers['shoufa'][$cornerResult['headerIndex']]->name . ' touqiugongmen，' . $defensePlayers['shoufa'][$cornerResult['goalkeeperIndex']]->name . ' pu chu le.');
                 $needTurn = true;
                 break;
             case 4:
-                $this->flushNow("nobody get the position, men qiu");
+                $this->flushMatch("nobody get the position, men qiu");
                 $needTurn = true;
                 break;
         }
@@ -273,6 +282,12 @@ class MatchController extends AppController
         
         return $str;
     }
+	
+	private function goal($curMatch, $hostTeam, $guestTeam)
+	{
+		$curMatch->saveGoal();
+		$this->flushMatch($hostTeam->name . $curMatch->HostGoals . ":" . $curMatch->GuestGoals . $guestTeam->name . "<br>");
+	}
     
     public function watch($id)
     {
@@ -280,11 +295,11 @@ class MatchController extends AppController
         echo 1;
     }
     
-    protected function flushNow($str)
+    protected function flushMatch($str)
     {
         if ($this->isWatch)
         {
-            parent::flushNow($str);
+            $this->flushNow($str);
         }
     }
 	

@@ -383,9 +383,9 @@ class Player
 	 * @param type $nowDate
 	 * @return type
 	 */
-	public function getRndFee($nowDate)
+	public function setSelling($nowDate)
 	{
-		$price = round(($this->estimateFee($nowDate) *  (70 + mt_rand(1, 60)) / 100), -1);
-		return $price;
+		$this->isSelling = 1;
+		$this->fee = round(($this->estimateFee($nowDate) *  (70 + mt_rand(1, 60)) / 100), -1);
 	}
 }

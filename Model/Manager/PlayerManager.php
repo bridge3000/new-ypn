@@ -770,15 +770,8 @@ class PlayerManager extends DataManager
         $maxIndex = -1;
         $nowDate = SettingManager::getInstance()->getNowDate();
 
-        $playerArray = $this->find('all', array(
-        	'conditions' => array(
-			'team_id' => $teamId        
-	        ),
-	        'contain' => array()
-        ));
-        
+        $playerArray = $this->find('all', array('conditions' => array('team_id' => $teamId)));
         $players = $this->loadData($playerArray);
-        
         for ($i=0;$i<count($players);$i++)
         {
             $temp = $players[$i]->estimateFee($nowDate);
@@ -790,9 +783,7 @@ class PlayerManager extends DataManager
             }
         }
 
-
-        $this->query("update ypn_players set isSelling=1,fee=" . $maxFee . " where id=" . $maxId);
-        
+		$this->update(array('isSelling'=>1, 'fee'=>$maxFee), array('id'=>$maxId));
         return array('name'=>$players[$maxIndex]->name, 'fee'=>$maxFee);
     }
     
@@ -805,102 +796,97 @@ class PlayerManager extends DataManager
     public function sellUnnecessaryPlayer($teamId, $formattion)
     {
     	$playersArray = $this->query('select * from ypn_players where team_id=' . $teamId . " and id not in (select player_id from ypn_future_contracts) order by ClubDepending desc, LastSeasonScore desc");
-        $players = $this->loadData($playersArray);
+        $curTeamPlayers = $this->loadData($playersArray);
         unset($playersArray);
         
-        $this->sellExcessPositionPlayer($players, 4, 3);
-		$this->sellExcessPositionPlayer($players, 3, 3);
-		$this->sellExcessPositionPlayer($players, 9, 3);
-		$this->sellExcessPositionPlayer($players, 10, 3);
-		$this->sellExcessPositionPlayer($players, 13, 3);
-		$this->sellExcessPositionPlayer($players, 14, 3);
-		$this->sellExcessPositionPlayer($players, 2, 3);
+        $this->sellExcessPositionPlayer($curTeamPlayers, 4, 3);
+		$this->sellExcessPositionPlayer($curTeamPlayers, 3, 3);
+		$this->sellExcessPositionPlayer($curTeamPlayers, 9, 3);
+		$this->sellExcessPositionPlayer($curTeamPlayers, 10, 3);
+		$this->sellExcessPositionPlayer($curTeamPlayers, 13, 3);
+		$this->sellExcessPositionPlayer($curTeamPlayers, 14, 3);
+		$this->sellExcessPositionPlayer($curTeamPlayers, 2, 3);
 		
     	switch ($formattion) 
 		{
 			case "4-4-2":
-				$this->sellExcessPositionPlayer($players, 1, 5);
-				$this->sellExcessPositionPlayer($players, 8, 3);
-				$this->sellExcessPositionPlayer($players, 3, 3);
-                $this->sellExcessPositionPlayer($players, 5, 0);
-                $this->sellExcessPositionPlayer($players, 6, 0);
-                $this->sellExcessPositionPlayer($players, 7, 0);
+				$this->sellExcessPositionPlayer($curTeamPlayers, 1, 5);
+				$this->sellExcessPositionPlayer($curTeamPlayers, 8, 3);
+				$this->sellExcessPositionPlayer($curTeamPlayers, 3, 3);
+                $this->sellExcessPositionPlayer($curTeamPlayers, 5, 0);
+                $this->sellExcessPositionPlayer($curTeamPlayers, 6, 0);
+                $this->sellExcessPositionPlayer($curTeamPlayers, 7, 0);
 				break;
         	case "3-5-2":
-        		$this->sellExcessPositionPlayer($players, 2, 3);
-        		$this->sellExcessPositionPlayer($players, 8, 3);
-        		$this->sellExcessPositionPlayer($players, 1, 5);
-                $this->sellExcessPositionPlayer($players, 5, 0);
-                $this->sellExcessPositionPlayer($players, 6, 0);
-                $this->sellExcessPositionPlayer($players, 7, 0);
+        		$this->sellExcessPositionPlayer($curTeamPlayers, 2, 3);
+        		$this->sellExcessPositionPlayer($curTeamPlayers, 8, 3);
+        		$this->sellExcessPositionPlayer($curTeamPlayers, 1, 5);
+                $this->sellExcessPositionPlayer($curTeamPlayers, 5, 0);
+                $this->sellExcessPositionPlayer($curTeamPlayers, 6, 0);
+                $this->sellExcessPositionPlayer($curTeamPlayers, 7, 0);
         		break;
             case "5-3-2":
-				$this->sellExcessPositionPlayer($players, 3, 5);
-				$this->sellExcessPositionPlayer($players, 1, 5);
-                $this->sellExcessPositionPlayer($players, 5, 0);
-                $this->sellExcessPositionPlayer($players, 6, 0);
-                $this->sellExcessPositionPlayer($players, 7, 0);
+				$this->sellExcessPositionPlayer($curTeamPlayers, 3, 5);
+				$this->sellExcessPositionPlayer($curTeamPlayers, 1, 5);
+                $this->sellExcessPositionPlayer($curTeamPlayers, 5, 0);
+                $this->sellExcessPositionPlayer($curTeamPlayers, 6, 0);
+                $this->sellExcessPositionPlayer($curTeamPlayers, 7, 0);
             	break;
         	case "3-4-3":
-		        $this->sellExcessPositionPlayer($players, 2, 3);
-		        $this->sellExcessPositionPlayer($players, 5, 3);
-		        $this->sellExcessPositionPlayer($players, 6, 3);
-		        $this->sellExcessPositionPlayer($players, 7, 3);
+		        $this->sellExcessPositionPlayer($curTeamPlayers, 2, 3);
+		        $this->sellExcessPositionPlayer($curTeamPlayers, 5, 3);
+		        $this->sellExcessPositionPlayer($curTeamPlayers, 6, 3);
+		        $this->sellExcessPositionPlayer($curTeamPlayers, 7, 3);
 				break;
             case "4-3-3":
-            	$this->sellExcessPositionPlayer($players, 3, 3);
-				$this->sellExcessPositionPlayer($players, 5, 3);
-		        $this->sellExcessPositionPlayer($players, 6, 3);
-		        $this->sellExcessPositionPlayer($players, 7, 3);
+            	$this->sellExcessPositionPlayer($curTeamPlayers, 3, 3);
+				$this->sellExcessPositionPlayer($curTeamPlayers, 5, 3);
+		        $this->sellExcessPositionPlayer($curTeamPlayers, 6, 3);
+		        $this->sellExcessPositionPlayer($curTeamPlayers, 7, 3);
             	break;
             case "4-5-1":
-            	$this->sellExcessPositionPlayer($players, 3, 3);	
-		        $this->sellExcessPositionPlayer($players, 7, 3);	
-		        $this->sellExcessPositionPlayer($players, 2, 3);	
-		        $this->sellExcessPositionPlayer($players, 8, 3);		
+            	$this->sellExcessPositionPlayer($curTeamPlayers, 3, 3);	
+		        $this->sellExcessPositionPlayer($curTeamPlayers, 7, 3);	
+		        $this->sellExcessPositionPlayer($curTeamPlayers, 2, 3);	
+		        $this->sellExcessPositionPlayer($curTeamPlayers, 8, 3);		
             	break;
             case "圣诞树":
-            	$this->sellExcessPositionPlayer($players, 3, 3);	
-            	$this->sellExcessPositionPlayer($players, 8, 5);		
-            	$this->sellExcessPositionPlayer($players, 7, 3);
-                $this->sellExcessPositionPlayer($players, 5, 0);
-                $this->sellExcessPositionPlayer($players, 6, 0);
-                $this->sellExcessPositionPlayer($players, 1, 0);
+            	$this->sellExcessPositionPlayer($curTeamPlayers, 3, 3);	
+            	$this->sellExcessPositionPlayer($curTeamPlayers, 8, 5);		
+            	$this->sellExcessPositionPlayer($curTeamPlayers, 7, 3);
+                $this->sellExcessPositionPlayer($curTeamPlayers, 5, 0);
+                $this->sellExcessPositionPlayer($curTeamPlayers, 6, 0);
+                $this->sellExcessPositionPlayer($curTeamPlayers, 1, 0);
 	            break;
 		}
+		
+		$data = array();
+		foreach($curTeamPlayers as $p)
+		{
+			if($p->isSelling)
+			{
+				$data[] = array('id'=>$p->id, 'isSelling'=>1, 'fee'=>$p->fee);
+			}
+		}
+		
+		PlayerManager::getInstance()->update_batch($data, 'id');
 
-        /*save*/
-        for ($i = 0;$i < count($players);$i++)
-        {
-        	if ($players[$i]->isSelling)
-        	{
-        	}
-            else
-            {
-                unset($players[$i]);
-            }
-        }
-        
-        return $players;
+        return $curTeamPlayers;
     }
     
-    private function sellExcessPositionPlayer(&$players, $position_id, $maxCount)
+    private function sellExcessPositionPlayer(&$curTeamPlayers, $position_id, $maxCount)
     {
         $nowDate = SettingManager::getInstance()->getNowDate();
         $sameCount = 0;
 
-        for ($i = 0;$i < count($players);$i++)
+        for ($i = 0;$i < count($curTeamPlayers);$i++)
         {
-        	if (($players[$i]->isSelling == 0) && ($players[$i]->position_id == $position_id))
+        	if (($curTeamPlayers[$i]->isSelling == 0) && ($curTeamPlayers[$i]->position_id == $position_id))
         	{
         		$sameCount++;
                 if ($sameCount > $maxCount)
 	            {
-					$fee = $players[$i]->getRndFee($nowDate);
-					if ($fee > 0)
-					{
-						$this->update(array('isSelling'=>1, 'fee'=>$fee), array('id'=>$players[$i]->id));
-					}
+					$curTeamPlayers[$i]->setSelling($nowDate);
 	            }
         	}
         }

@@ -65,7 +65,7 @@ class YpnController extends AppController
 			SettingManager::getInstance()->addDate();
 
 			$isTransferDay = YpnManager::getInstance()->checkTransferDay($nowDate);
-			$this->doWeekdayJob($weekday, $isTransferDay, $isHoliday, $myTeamId);
+			$this->doWeekdayTask($weekday, $isTransferDay, $isHoliday, $myTeamId);
 
 			$this->flushNow('新的一天开始了.');
 
@@ -838,7 +838,7 @@ class YpnController extends AppController
 	 * @param type $isTransferDay
 	 * @param type $isHoliday
 	 */
-    private function doWeekdayJob($weekday, $isTransferDay, $isHoliday, $myTeamId)
+    private function doWeekdayTask($weekday, $isTransferDay, $isHoliday, $myTeamId)
     {
 		$nowDate = SettingManager::getInstance()->getNowDate();
 		switch ($weekday)

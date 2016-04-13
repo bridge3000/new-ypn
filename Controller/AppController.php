@@ -58,4 +58,9 @@ class AppController
         ob_flush();
         flush();
     }
+	
+	public function flushCss()
+	{
+		$this->flushNow("<link type=\"text/css\" rel=\"stylesheet\" href=\"" . \MainConfig::BASE_URL . "res/css/main.css\" />");
+	}
 }

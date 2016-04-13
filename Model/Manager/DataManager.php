@@ -381,7 +381,7 @@ class DataManager
 	 * @param	array	the where clause
 	 * @return	string
 	 */
-	public function update_batch($values, $index, $where = NULL)
+	public function update_batch($values, $index='id', $where = NULL)
 	{
 		$ids = array();
 		$where = ($where != '' AND count($where) >=1) ? implode(" ", $where).' AND ' : '';
@@ -394,7 +394,8 @@ class DataManager
 			{
 				if ($field != $index)
 				{
-					$final[$field][] =  'WHEN '.$index.' = '.$val[$index].' THEN '.$val[$field];
+//					$final[$field][] =  'WHEN '.$index.' = '.$val[$index].' THEN '.$val[$field];
+					$final[$field][] =  'WHEN '.$index.' = '.$val[$index].' THEN \''.$val[$field] . '\'';
 				}
 			}
 		}

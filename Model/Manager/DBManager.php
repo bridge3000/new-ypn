@@ -24,6 +24,11 @@ class DBManager
     
     public function execute($sql)
     {
+		if(MainConfig::DB_DEGUG)
+		{
+			echo $sql . '<br>';
+		}
+		
         $result = mysqli_query(DBManager::getInstance()->conn, $sql);
         if (mysqli_error(DBManager::getInstance()->conn))
         {

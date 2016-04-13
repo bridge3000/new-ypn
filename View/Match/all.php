@@ -7,9 +7,6 @@ function watchMatch(match_id)
 	
 }
 </script>
-<?php 
-//print_r($allTeams);
-?>
 <span id="spTest">today match</span>
 <?php 
 if (count($matches) == 0)
@@ -43,7 +40,13 @@ else
         <td><?php echo $match['PlayTime']; ?></td>
         <td><?php echo MainConfig::$matchClasses[$match['class_id']]; ?></td>
 		<td align="right" bgcolor="#FFFFFF"><?php echo $match['HostGoaler_ids']; ?><?php echo  $allTeams[$match['HostTeam_id']]; ?>		</td>
-		<td><?php echo $match['HostGoals']; ?>：<?php echo $match['GuestGoals']; ?></td>
+		<td>
+		<?php if($match['isPlayed']): ?>
+			<?=$match['HostGoals']?>：<?=$match['GuestGoals']?>
+		<?php else: ?>
+			-:-
+		<?php endif; ?>
+		</td>
 		<td align="left" bgcolor="#FFFFFF"><?php echo  $allTeams[$match['GuestTeam_id']]; ?><?php echo $match['GuestGoaler_ids']; ?></td>
 		<td>
 	<?php

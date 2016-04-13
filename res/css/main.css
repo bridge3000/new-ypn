@@ -62,9 +62,9 @@ td,th, div, span, body {
 
 #tibu li {
 	list-style-image:url(../img/chair.gif);
- }
- 
- #player_div {
+}
+
+#player_div {
 	padding: 5px;
 	position: absolute;
 	top: 200px;
@@ -72,9 +72,9 @@ td,th, div, span, body {
 	z-index: 2;
 	background-color: #ffffff;
 	display: none;
- }
- 
- #full_bg {
+}
+
+#full_bg {
     background-color: #000;
 	width: 100%;
     height: 100%;
@@ -94,7 +94,7 @@ td,th, div, span, body {
 	border:1px #666666 solid;
 }
 
- #player_sell_div {
+#player_sell_div {
 	padding: 5px;
 	position: absolute;
 	top: 200px;
@@ -102,15 +102,42 @@ td,th, div, span, body {
 	z-index: 2;
 	background-color: #ffffff;
 	display: none;
- }
- 
- .shoufa_div {
-	 float: left;
-	 padding:10px;
-	 border: 1px activeborder solid;
- }
- 
- .shoufa_div .title {
-	 text-align:center;
-	 font-weight:bold;
- }
+}
+
+.shoufa_div {
+	float: left;
+	padding:10px;
+	border: 1px activeborder solid;
+}
+
+.shoufa_div .title {
+	text-align:center;
+	font-weight:bold;
+}
+
+.blue_normal_span {
+	color: #0000FF;
+}
+
+.red_normal_span {
+	color: #ff0000;
+}
+
+.blue_bold_span {
+	color: #0000FF;
+	font-weight: bold;
+}
+
+.red_bold_span {
+	color: #ff0000;
+	font-weight: bold;
+}
+
+.green_normal_span {
+	color: green;
+}
+
+.green_bold_span {
+	color: green;
+	font-weight: bold;
+}

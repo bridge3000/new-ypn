@@ -86,7 +86,7 @@ class TeamManager extends DataManager
      * 获取有钱的电脑队
      * @return array(Team) $computerTeams
      */
-    public function getRichComputerTeams()
+    public function getComputerLeagueTeams()
     {
         $records = $this->find('all', array(
             'fields' => array('id', 'money', 'name', 'formattion', 'league_id', 'manager_id', 'player_count', 'bills', 'TotalSalary'),
