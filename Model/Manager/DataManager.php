@@ -418,7 +418,20 @@ class DataManager
 
 		$sql .= ' WHERE '.$where.$index.' IN ('.implode(',', $ids).')';
 
-//		return $sql;
+		DBManager::getInstance()->execute($sql);
+	}
+	
+	public function insertBatch($keys, $values)
+	{
+		$sql = "insert into " . MainConfig::PREFIX . $this->table . "(" . join(",",$keys) . ") values";
+		
+		$arr = array();
+		foreach($values as $v)
+		{
+			$arr[] = "(" . join(",", $v) . ")";
+		}
+		
+		$sql .= join(",", $arr);
 		DBManager::getInstance()->execute($sql);
 	}
 }

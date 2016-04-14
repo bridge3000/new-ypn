@@ -52,10 +52,10 @@ class MatchController extends AppController
 		}
 		
         $teamIds = array();
-        foreach($todayMatches as $match)
+        foreach($todayMatches as $curMatch)
         {
-            $teamIds[] = $match->HostTeam_id;
-            $teamIds[] = $match->GuestTeam_id;
+            $teamIds[] = $curMatch->HostTeam_id;
+            $teamIds[] = $curMatch->GuestTeam_id;
         }
         $matchPlayers = PlayerManager::getInstance()->getHealthyPlayers($teamIds);
         foreach($matchPlayers as $k=>$v)
@@ -76,26 +76,26 @@ class MatchController extends AppController
         
         //play
         $playedMatchClasses = array();
-        foreach ($todayMatches as $match)
+        foreach ($todayMatches as $curMatch)
         {
-			$this->isWatch = $match->isWatched;
-            $hostPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$match->HostTeam_id], $match->class_id, $matchTeams[$match->HostTeam_id]->formattion);
+			$this->isWatch = $curMatch->isWatched;
+            $hostPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->HostTeam_id], $curMatch->class_id, $matchTeams[$curMatch->HostTeam_id]->formattion);
             $strHtml = '<div class="shoufa_div">';
-            $strHtml .= $this->generateZhenrongHtml($hostPlayers, $matchTeams[$match->HostTeam_id]);
+            $strHtml .= $this->generateZhenrongHtml($hostPlayers, $matchTeams[$curMatch->HostTeam_id]);
             $strHtml .= '</div>';
             $this->flushMatch($strHtml);
             
-            $guestPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$match->GuestTeam_id], $match->class_id, $matchTeams[$match->GuestTeam_id]->formattion);
+            $guestPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->GuestTeam_id], $curMatch->class_id, $matchTeams[$curMatch->GuestTeam_id]->formattion);
             $strHtml = '<div class="shoufa_div">';
-            $strHtml .= $this->generateZhenrongHtml($guestPlayers, $matchTeams[$match->GuestTeam_id]);
+            $strHtml .= $this->generateZhenrongHtml($guestPlayers, $matchTeams[$curMatch->GuestTeam_id]);
             $strHtml .= '</div><div style="clear:both"></div>';
             $this->flushMatch($strHtml);
 			
-            $this->start($match, $hostPlayers, $guestPlayers, $matchTeams[$match->HostTeam_id], $matchTeams[$match->GuestTeam_id]);
-            $match->isPlayed = 1;
-            if (!in_array($match->class_id, $playedMatchClasses, true))
+            $this->start($curMatch, $hostPlayers, $guestPlayers, $matchTeams[$curMatch->HostTeam_id], $matchTeams[$curMatch->GuestTeam_id]);
+            $curMatch->isPlayed = 1;
+            if (!in_array($curMatch->class_id, $playedMatchClasses, true))
             {
-                $playedMatchClasses[] = $match->class_id;
+                $playedMatchClasses[] = $curMatch->class_id;
             }
         }
         
@@ -294,6 +294,13 @@ class MatchController extends AppController
         MatchManager::getInstance()->watch($id);
         echo 1;
     }
+	
+	public function watch_today()
+	{
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		MatchManager::getInstance()->watchByDay($nowDate);
+		header("location:" . MainConfig::BASE_URL . "match/today");
+	}
     
     protected function flushMatch($str)
     {

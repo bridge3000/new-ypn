@@ -377,10 +377,12 @@ class PlayerManager extends DataManager
 		$max = 0;
 		$tacklerIndex = -1;
 		$defensePower = 0;
+		$tmp = array(); //临时测试用
 		for ($i = 0;$i < count($defensePlayers);$i++)
 		{
 			if (in_array($defensePlayers[$i]->position_id, $defenserPoses, true))
 			{
+				$tmp[] = $defensePlayers[$i];
                 $defensePower += $defensePlayers[$i]->getDefensePower($defenseDirField);
 				$temp = $defensePlayers[$i]->getTackleRate($defenseDirField);
 				if ($temp > $max)
@@ -389,6 +391,12 @@ class PlayerManager extends DataManager
 					$tacklerIndex = $i;
 				}
 			}
+		}
+		
+		if ($tacklerIndex == -1)
+		{
+			print_r($tmp);
+			print_r($defenserPoses);
 		}
         
         $result = ($attackPower > $defensePower);

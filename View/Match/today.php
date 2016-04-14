@@ -7,9 +7,6 @@ function watchMatch(match_id)
 	});
 }
 </script>
-<?php 
-//print_r($allTeams);
-?>
 <span id="spTest">today match</span>
 <?php 
 if (count($matches) == 0)
@@ -21,7 +18,7 @@ if (count($matches) == 0)
 else
 {
 ?>
-	<div align=center><a href="watch/">全选</a></div>
+	<div align=center><a href="<?=  MainConfig::BASE_URL?>match/watch_today">全选</a></div>
 	<table border="0" align="center" cellpadding="3" cellspacing="1" bgcolor="silver">
 	<tr bgcolor="whitesmoke">
 		<th>比赛</th>

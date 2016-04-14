@@ -79,16 +79,17 @@ class MatchManager extends DataManager
 
     public function resetMatches()
     {
-//        ExecuteTime::getInstance()->start();
         $ignoreFields = array();
         DBManager::getInstance()->copyTable(MainConfig::PREFIX . 'bak_matches', MainConfig::PREFIX . $this->table, $ignoreFields);
-        
-//        ExecuteTime::getInstance()->end();
     }
     
     public function watch($id)
     {
         $this->update(array('isWatched'=>1), array('id'=>$id));
     }
+	
+	public function watchByDay($playDate)
+	{
+		$this->update(array('isWatched'=>1), array('PlayTime'=>$playDate));
+	}
 }
-?>

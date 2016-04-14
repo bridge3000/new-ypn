@@ -28,15 +28,18 @@ class TeamController extends AppController
     	$fields = array('id', 'name', 'ImgSrc', 'TotalSalary', 'money', 'bills');
     	$allTeamsData = TeamManager::getInstance()->find('all', compact('conditions', 'fields'));
         $allTeams = TeamManager::getInstance()->loadData($allTeamsData, 'Team');
+		$changeData = array();
         for ($i = 0;$i < count($allTeams);$i++)
     	{
             $allTeams[$i]->paySalary($nowDate);
     		NewsManager::getInstance()->add('给球员发工资共花费了<font color=red><strong>' . $allTeams[$i]->TotalSalary . '</strong></font>万欧元', $allTeams[$i]->id, $nowDate, $allTeams[$i]->ImgSrc);
+			
+			$changeData[] = array('id'=>$allTeams[$i]->id, 'money'=>$allTeams[$i]->money, 'bills'=>$allTeams[$i]->bills);
     	}
         
 		$this->flushNow('正在保存...<br>');
-        TeamManager::getInstance()->saveMany($allTeams);
-		$this->flushNow('完成');
+        TeamManager::getInstance()->update_batch($changeData);
+		$this->flushNow('完成<br>');
     }
     
     public function list_league_rank($leagueId)
@@ -296,31 +299,10 @@ class TeamController extends AppController
         $myCoach = CoachManager::getInstance()->getMyCoach();
         $myTeamId = $myCoach->team_id;
                
-        //traverse all teams, sum all player count
-        $teamPlayerCount = array();
-        $allPlayers = PlayerManager::getInstance()->find('all', array(
-            'conditions'=>array('league_id<>'=>0),
-            'fields'=>array('team_id')
-            ));
-        
-        foreach($allPlayers as $player)
-        {
-            $teamId = $player['team_id'];
-            if (array_key_exists($teamId, $teamPlayerCount))
-            {
-                $teamPlayerCount[$teamId]++;
-            }
-            else
-            {
-                $teamPlayerCount[$teamId] = 1;
-            }
-        }
-        unset($allPlayers);
-								
 		/*循环主队*/
         $allTeamArray = TeamManager::getInstance()->find('all', array(
             'conditions' => array('league_id <>' => 100), 
-            'fields' => array('id', 'name', 'money', 'bills', 'FieldName')
+            'fields' => array('id', 'name', 'money', 'bills', 'FieldName', 'player_count', 'ImgSrc')
             ));
         
         $allTeams = TeamManager::getInstance()->loadData($allTeamArray);
@@ -328,8 +310,7 @@ class TeamController extends AppController
         shuffle($allTeams);
 		for ($i = 0;$i < count($allTeams);$i++)
 		{
-			if ($allTeams[$i]->money < 0) continue;
-			if ($teamPlayerCount[$allTeams[$i]->id] < 15) continue; //如果主队不足15人则无法打比赛
+			if ( ($allTeams[$i]->money < 0) || ($allTeams[$i]->player_count < 15) ) continue;
 			
 			$invitePlayTime = date('Y-m-d', mktime(0, 0, 0, date("m", strtotime($nowDate))  , date("d", strtotime($nowDate))+mt_rand(1, 7), date("Y", strtotime($nowDate))));
 			
@@ -363,11 +344,8 @@ class TeamController extends AppController
 			{
 				/*随机选择客队*/
 				$inviteTeam = $allTeams[mt_rand(0, count($allTeams)-1)];
-				if ($inviteTeam->id == $allTeams[$i]->id) continue;
+				if ( ($inviteTeam->id == $allTeams[$i]->id) || ($inviteTeam->player_count < 15) ) continue;
 				
-				/*如果客队不足15人则无法打比赛*/
-                if ($teamPlayerCount[$inviteTeam->id] < 15)                    continue;
-
 				/*如果近期客队没有比赛，则友谊赛预约成功*/
 				$conditions = array(
 					'PlayTime >' => date('Y-m-d', mktime(0, 0, 0, date("m", strtotime($invitePlayTime))  , date("d", strtotime($invitePlayTime))-4, date("Y", strtotime($invitePlayTime)))),
@@ -382,24 +360,22 @@ class TeamController extends AppController
 				
 				if (empty($recentMatch))
 				{
-					if ($myTeamId == $inviteTeam->id)
+
+					$inviteTeam->addMoney(5, '邀请友谊赛', $nowDate);
+					TeamManager::getInstance()->save($inviteTeam);
+
+					$newMatch = new Match();
+					$newMatch->HostTeam_id = $allTeams[$i]->id;
+					$newMatch->GuestTeam_id = $inviteTeam->id;
+					$newMatch->PlayTime = $invitePlayTime;
+					$newMatch->class_id = 24;
+					MatchManager::getInstance()->save($newMatch);
+
+					$this->flushNow('<span class="blue_bold_span">' . $allTeams[$i]->name . '</span>与<span class="blue_bold_span">' . $inviteTeam->name . '</span>将于'. $invitePlayTime . '在'. $allTeams[$i]->FieldName . '进行了友谊赛<br>');
+					
+					if ($myTeamId == $inviteTeam->id) //是主队
 					{
-						/*跟主队约友谊赛并且正是主动权的人，做弹出窗口*/
-						echo ("<script>window.showModalDialog('../matches/invite_me/" . $allTeams[$i]->id . "/" . $myTeamId . '/' . $invitePlayTime . "','','dialogHeight:400px;dialogWidth:400px;dialogLeft:200px;dialogTop:200px;');</script>");flush();
-					}
-					else
-					{
-                        $inviteTeam->addMoney(5, '邀请友谊赛', $nowDate);
-                        TeamManager::getInstance()->save($inviteTeam);
-                        
-                        $newMatch = new Match();
-                        $newMatch->HostTeam_id = $allTeams[$i]->id;
-                        $newMatch->GuestTeam_id = $inviteTeam->id;
-                        $newMatch->PlayTime = $invitePlayTime;
-                        $newMatch->class_id = 24;
-                        MatchManager::getInstance()->save($newMatch);
-                        
-						echo('<font color=blue><strong>' . $allTeams[$i]->name . '</strong></font>与<font color=blue><strong>' . $inviteTeam->name . '</strong></font>将于'. $invitePlayTime . '在'. $allTeams[$i]->FieldName . '进行了友谊赛<br>');flush();
+						NewsManager::getInstance()->add($allTeams[$i]->name . "邀请了友谊赛", $inviteTeam->id, $nowDate, $allTeams[$i]->ImgSrc);
 					}
 				}
 			}
