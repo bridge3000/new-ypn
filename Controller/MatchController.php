@@ -78,25 +78,35 @@ class MatchController extends AppController
         $playedMatchClasses = array();
         foreach ($todayMatches as $curMatch)
         {
+			$curMatch->hostTeam = $matchTeams[$curMatch->HostTeam_id];
+			$curMatch->guestTeam = $matchTeams[$curMatch->GuestTeam_id];
+			
 			$this->isWatch = $curMatch->isWatched;
-            $hostPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->HostTeam_id], $curMatch->class_id, $matchTeams[$curMatch->HostTeam_id]->formattion);
+            $curMatch->hostPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->HostTeam_id], $curMatch->class_id, $curMatch->hostTeam->formattion);
             $strHtml = '<div class="shoufa_div">';
-            $strHtml .= $this->generateZhenrongHtml($hostPlayers, $matchTeams[$curMatch->HostTeam_id]);
+            $strHtml .= $this->generateZhenrongHtml($curMatch->hostPlayers, $curMatch->hostTeam);
             $strHtml .= '</div>';
             $this->flushMatch($strHtml);
             
-            $guestPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->GuestTeam_id], $curMatch->class_id, $matchTeams[$curMatch->GuestTeam_id]->formattion);
+            $curMatch->guestPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->GuestTeam_id], $curMatch->class_id, $curMatch->guestTeam->formattion);
             $strHtml = '<div class="shoufa_div">';
-            $strHtml .= $this->generateZhenrongHtml($guestPlayers, $matchTeams[$curMatch->GuestTeam_id]);
+            $strHtml .= $this->generateZhenrongHtml($curMatch->guestPlayers, $curMatch->guestTeam);
             $strHtml .= '</div><div style="clear:both"></div>';
             $this->flushMatch($strHtml);
 			
-            $this->start($curMatch, $hostPlayers, $guestPlayers, $matchTeams[$curMatch->HostTeam_id], $matchTeams[$curMatch->GuestTeam_id]);
+            $this->start($curMatch);
             $curMatch->isPlayed = 1;
             if (!in_array($curMatch->class_id, $playedMatchClasses, true))
             {
                 $playedMatchClasses[] = $curMatch->class_id;
             }
+			
+			PlayerManager::getInstance()->saveMatchResult($curMatch->hostPlayers['shoufa'], $curMatch->guestPlayers['shoufa']);
+			
+			unset($curMatch->hostTeam);
+			unset($curMatch->guestTeam);
+			unset($curMatch->hostPlayers);
+			unset($curMatch->guestPlayers);
         }
         
         //save
@@ -108,57 +118,27 @@ class MatchController extends AppController
 		$this->flushNow("<a href=\"" . MainConfig::BASE_URL . 'match/today' . "\">today match</a>");
     }
     
-    private function start(&$curMatch, &$hostPlayers, &$guestPlayers, &$hostTeam, &$guestTeam)
+    private function start(&$curMatch)
     {
-        $assaultCount = ($hostTeam->attack + $guestTeam->attack) / 15;
+        $assaultCount = ($curMatch->hostTeam->attack + $curMatch->guestTeam->attack) / 15;
 		for ($i = 0; $i < $assaultCount; $i++)
 		{
 			if ($i == $assaultCount - 1)
 			{
 				$this->lastAttack = true;
 			}
-			$this->assault($curMatch, $hostPlayers, $guestPlayers, $hostTeam, $guestTeam);
+			$this->assault($curMatch);
 		}
         $this->flushMatch('the match is over.<br/>');
+		$this->flushMatch($curMatch->hostTeam->name . $curMatch->HostGoals . ":" . $curMatch->GuestGoals . $curMatch->guestTeam->name . "<br>");
         
-        $this->onMatchEnd($curMatch, $hostTeam, $guestTeam);
+        $this->onMatchEnd($curMatch);
         
-        TeamManager::getInstance()->saveMatchInfo($hostTeam);
-        TeamManager::getInstance()->saveMatchInfo($guestTeam);
+        TeamManager::getInstance()->saveMatchInfo($curMatch->hostTeam);
+        TeamManager::getInstance()->saveMatchInfo($curMatch->guestTeam);
     }
     
-    private function onMatchEnd(&$curMatch, &$hostTeam, &$guestTeam)
-    {
-        if (in_array($curMatch->class_id, array(1, 31)))
-        {
-            $hostTeam->goals += $curMatch->HostGoals;
-            $hostTeam->lost += $curMatch->GuestGoals;
-            $guestTeam->goals += $curMatch->GuestGoals;
-            $guestTeam->lost += $curMatch->HostGoals;
-            
-            if ($curMatch->HostGoals > $curMatch->GuestGoals)
-            {
-                $hostTeam->score += 3;
-                $hostTeam->win++;
-                $guestTeam->lose++;
-            }
-            else if ($curMatch->HostGoals < $curMatch->GuestGoals)
-            {
-                $guestTeam->score += 3;
-                $hostTeam->lose++;
-                $guestTeam->win++;
-            }
-            else
-            {
-                $hostTeam->score += 1;
-                $guestTeam->score += 1;
-                $hostTeam->draw++;
-                $guestTeam->draw++;
-            }
-        }
-    }
-    
-    private function assault(&$curMatch, &$hostPlayers, &$guestPlayers, $hostTeam, $guestTeam)
+    private function assault(&$curMatch)
     {
         $strDir = array('1'=>'left side', '2'=>'middle', '3'=>'right side');
         $attackDir = mt_rand(1, 3);
@@ -169,73 +149,133 @@ class MatchController extends AppController
         $needTurn = false;
         if ($curMatch->getFaqiuquan())
         {
-            $attackPlayers = $hostPlayers;
-            $defensePlayers = $guestPlayers;
-            $attackTeam = $hostTeam;
-            $defenseTeam = $guestTeam;
+            $attackPlayers = $curMatch->hostPlayers;
+            $defensePlayers = $curMatch->guestPlayers;
+            $attackTeam = $curMatch->hostTeam;
+            $defenseTeam = $curMatch->guestTeam;
         }
         else
         {
-            $attackPlayers = $guestPlayers;
-            $defensePlayers = $hostPlayers;
-            $attackTeam = $guestTeam;
-            $defenseTeam = $hostTeam;
+            $attackPlayers = $curMatch->guestPlayers;
+            $defensePlayers = $curMatch->hostPlayers;
+            $attackTeam = $curMatch->guestTeam;
+            $defenseTeam = $curMatch->hostTeam;
         }
         
         $this->flushMatch('<br/>' . $attackTeam->name . "进攻" . $strDir[$attackDir] . '，');
-        $collisionResult = PlayerManager::getInstance()->collision($attackDir, $attackPlayers['shoufa'], $defensePlayers['shoufa']);
-        if ($collisionResult['result'])
+        $collisionResult = PlayerManager::getInstance()->collision($attackDir, $attackPlayers['shoufa'], $defensePlayers['shoufa'], $curMatch->class_id);
+        if ($collisionResult['result'] == 1)
         {
-            $this->flushMatch($attackPlayers['shoufa'][$collisionResult['attackerIndex']]->name .  '突破成功，');
-            switch (mt_rand(1, 2)) 
-            {
-                case 1: //pass
-                    $this->flushMatch($attackPlayers['shoufa'][$collisionResult['attackerIndex']]->name .  '传球，');
-                    $shotResult = PlayerManager::getInstance()->shot($collisionResult['attackerIndex'], $attackPlayers, $defensePlayers, $attackDir);
-                    $this->flushMatch($attackPlayers['shoufa'][$shotResult['shoterIndex']]->name . '射门,');
-                    
-                    switch ($shotResult['result']) 
-                    {
-                        case 1:
-                            $this->flushMatch('球进了<br/>');
-							$this->goal($curMatch, $hostTeam, $guestTeam);
-                            $needTurn = true;
-                            break;
-                        case 2:
-                            $this->flushMatch($defensePlayers['shoufa'][$shotResult['goalkeeperIndex']]->name . '扑救成功<br/>');
-                            $this->flushMatch('角球,');
-                            $needTurn = $this->corner($attackPlayers, $defensePlayers, $attackTeam->CornerKicker_id, $curMatch);
-                            break;
-                        case 3:
-                            $this->flushMatch($defensePlayers['shoufa'][$shotResult['goalkeeperIndex']]->name . '扑救成功<br/>');
-                            $this->flushMatch('发动反击');
-                            break;
-                    }
-                    break;
-                case 2: //foul
-                    $this->flushMatch($defensePlayers['shoufa'][$collisionResult['defenserIndex']]->name . '犯规,');
-                    break;
+            $this->flushMatch($attackPlayers['shoufa'][$collisionResult['attackerIndex']]->name .  '突破成功后传球，');
+			$shotResult = PlayerManager::getInstance()->shot($collisionResult['attackerIndex'], $attackPlayers, $defensePlayers, $attackDir, $curMatch->class_id);
+			$this->flushMatch($attackPlayers['shoufa'][$shotResult['shoterIndex']]->name . '射门,');
+
+			switch ($shotResult['result']) 
+			{
+				case 1:
+					$this->flushMatch('球进了<br/>');
+					$this->goal($curMatch);
+					$attackPlayers['shoufa'][$collisionResult['attackerIndex']]->addAssist($curMatch->class_id);
+					$needTurn = TRUE;
+					break;
+				case 2:
+					$this->flushMatch($defensePlayers['shoufa'][$shotResult['goalkeeperIndex']]->name . '扑救成功<br/>');
+					$this->flushMatch('角球,');
+					$needTurn = $this->corner($attackPlayers, $defensePlayers, $attackTeam->CornerKicker_id, $curMatch);
+					break;
+				case 3:
+					$this->flushMatch($defensePlayers['shoufa'][$shotResult['goalkeeperIndex']]->name . '扑救成功<br/>');
+					$this->flushMatch('发动反击');
+					$needTurn = TRUE;
+					break;
             } 
         }
+		else if ($collisionResult['result'] == 2)
+		{
+			$this->flushMatch($defensePlayers['shoufa'][$collisionResult['defenserIndex']]->name . '犯规,');
+			$foulResult = $defensePlayers['shoufa'][$collisionResult['defenserIndex']]->foul($curMatch->class_id);
+			if($foulResult == 1)
+			{
+				$this->flushMatch('get yellow card<br>');
+			}
+			else if($foulResult == 2)
+			{
+				$this->flushMatch('get 2 yellow card,out<br>');
+				unset($defensePlayers['shoufa'][$collisionResult['defenserIndex']]);
+			}
+			else if($foulResult == 3)
+			{
+				$this->flushMatch('get red card, out<br>');
+				unset($defensePlayers['shoufa'][$collisionResult['defenserIndex']]);
+			}
+			
+			if(mt_rand(1,20) == 1)
+			{
+				$penaltyResult = PlayerManager::getInstance()->penalty($attackPlayers['shoufa'], $defensePlayers['shoufa'], $attackTeam->PenaltyKicker_id, $curMatch->class_id);
+				$this->flushMatch($penaltyResult['penalty_kicker']->name . 'shot');
+				if($penaltyResult['result'] == 1)
+				{
+					$this->flushMatch('goal<br>');
+					$this->goal($curMatch);
+				}
+				else
+				{
+					$this->flushMatch($penaltyResult['goal_keeper']->name . 'saved<br>');
+				}
+				$needTurn = TRUE;
+			}
+		}
         else
         {
             $this->flushMatch($defensePlayers['shoufa'][$collisionResult['defenserIndex']]->name . 'defense succes,');
+			$needTurn = TRUE;
         }
         
         if ($curMatch->getFaqiuquan())
         {
-            $hostPlayers = $attackPlayers;
-            $guestPlayers = $defensePlayers;
+            $curMatch->hostPlayers = $attackPlayers;
+            $curMatch->guestPlayers = $defensePlayers;
         }
         else
         {
-            $guestPlayers = $attackPlayers;
-            $hostPlayers = $defensePlayers;
+            $curMatch->guestPlayers = $attackPlayers;
+            $curMatch->hostPlayers = $defensePlayers;
         }
         
         if ($needTurn)
         {
             $curMatch->turnFaqiuquan();
+        }
+    }
+	
+	private function onMatchEnd(&$curMatch)
+    {
+        if (in_array($curMatch->class_id, array(1, 31)))
+        {
+            $curMatch->hostTeam->goals += $curMatch->HostGoals;
+            $curMatch->hostTeam->lost += $curMatch->GuestGoals;
+            $curMatch->guestTeam->goals += $curMatch->GuestGoals;
+            $curMatch->guestTeam->lost += $curMatch->HostGoals;
+            
+            if ($curMatch->HostGoals > $curMatch->GuestGoals)
+            {
+                $curMatch->hostTeam->score += 3;
+                $curMatch->hostTeam->win++;
+                $curMatch->guestTeam->lose++;
+            }
+            else if ($curMatch->HostGoals < $curMatch->GuestGoals)
+            {
+                $curMatch->guestTeam->score += 3;
+                $curMatch->hostTeam->lose++;
+                $curMatch->guestTeam->win++;
+            }
+            else
+            {
+                $curMatch->hostTeam->score += 1;
+                $curMatch->guestTeam->score += 1;
+                $curMatch->hostTeam->draw++;
+                $curMatch->guestTeam->draw++;
+            }
         }
     }
     
@@ -249,7 +289,7 @@ class MatchController extends AppController
         {
             case 1:
                 $this->flushMatch($attackPlayers['shoufa'][$cornerResult['headerIndex']]->name . ' touqiugongmen，goal.');
-                $this->goal($curMatch, $hostTeam, $guestTeam);
+                $this->goal($curMatch);
                 $needTurn = true;
                 break;
             case 2:
@@ -283,10 +323,10 @@ class MatchController extends AppController
         return $str;
     }
 	
-	private function goal($curMatch, $hostTeam, $guestTeam)
+	private function goal($curMatch)
 	{
 		$curMatch->saveGoal();
-		$this->flushMatch($hostTeam->name . $curMatch->HostGoals . ":" . $curMatch->GuestGoals . $guestTeam->name . "<br>");
+		$this->flushMatch($curMatch->hostTeam->name . $curMatch->HostGoals . ":" . $curMatch->GuestGoals . $curMatch->guestTeam->name . "<br>");
 	}
     
     public function watch($id)

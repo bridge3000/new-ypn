@@ -4,14 +4,6 @@ namespace Model\Core;
 class Team 
 {
     public $id;
-//    public $money;
-//    public $name;
-//    public $formattion;
-//    public $league_id;
-//    public $manager_id;
-//    public $player_count;
-//    private $positionInfo;
-//    private $bill;
     
     public function getId() {
         return $this->id;
@@ -88,7 +80,7 @@ class Team
         $this->addMoney(-($this->TotalSalary), 'pay salary', $nowDate);
     }
     
-    public function addBill($data)
+    private function addBill($data)
     {
         if ($this->bills != null)
         {

@@ -16,6 +16,7 @@ use \DateInterval;
 class PlayerController extends AppController
 {
     public $name = 'Player';
+	public $layout = "main";
     
     public function transfer_free_agent()
     {
@@ -456,8 +457,6 @@ class PlayerController extends AppController
 	
 	public function my_list() 
 	{
-		$this->layout = 'main';
-
         $myCoach = CoachManager::getInstance()->getMyCoach();
 		$nowDate = SettingManager::getInstance()->getNowDate();
 		
@@ -513,5 +512,37 @@ class PlayerController extends AppController
 		$index = 'id';
 		
 		PlayerManager::getInstance()->update_batch($data, $index);
+	}
+	
+	public function training_list()
+	{
+		$myCoach = CoachManager::getInstance()->getMyCoach();
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		
+		$players = PlayerManager::getInstance()->find('all', array(
+				'conditions' => array('team_id' => $myCoach->team_id),
+				'order' => array('ShirtNo'=>'asc'),
+			)
+		);
+		
+		$traingList = array(
+			array('title'=>'shot', 'field'=>'ShotAccurate', 'experience'=>'ShotAccurateExperience'),
+			array('title'=>'pass', 'field'=>'pass', 'experience'=>'PassExperience'),			
+			array('title'=>'tackle', 'field'=>'tackle', 'experience'=>'TackleExperience'),
+			array('title'=>'head', 'field'=>'header', 'experience'=>'HeaderExperience'),
+			array('title'=>'control', 'field'=>'BallControl', 'experience'=>'BallControlExperience'),
+			array('title'=>'beat', 'field'=>'beat', 'experience'=>'BeatExperience'),
+			array('title'=>'save', 'field'=>'save', 'experience'=>'SaveExperience'),
+			array('title'=>'sinew', 'field'=>'sinew', 'experience'=>'SinewMaxExperience'),
+			array('title'=>'qiangdian', 'field'=>'qiangdian', 'experience'=>'QiangdianExperience'),
+		);
+		
+        $positions = MainConfig::$positions;
+		$this->set('positions', $positions);
+		$this->set('players', $players);
+		$this->set('nowDate', $nowDate);
+		$this->set('trainingList', $traingList);
+        
+        $this->render('training_list');
 	}
 }

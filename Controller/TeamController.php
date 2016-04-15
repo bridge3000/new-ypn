@@ -410,10 +410,11 @@ class TeamController extends AppController
     
     public function get_young_players()
     {
-		$this->changeStatus('转会期已经结束了，各个俱乐部正在抽调年轻球员，请稍候...');
+		$this->flushCss();
+		$this->flushNow('转会期已经结束了，各个俱乐部正在抽调年轻球员，请稍候...<br>');
         
+		$nowDate = SettingManager::getInstance()->getNowDate();
         $allPlayers = PlayerManager::getInstance()->getAllPlayers();
-        
         $teamPositionInfos = array();
         $teamShirtNos = array();
         foreach($allPlayers as $player)
@@ -449,32 +450,42 @@ class TeamController extends AppController
         $firstNames = FirstNameManager::getInstance()->getFirstNames();
         $familyNames = FamilyNameManager::getInstance()->getFamilyNames();
         $countries = CountryManager::getInstance()->find('all');
-        $nowDate = SettingManager::getInstance()->getNowDate();
         $theCoach = new Coach();
-        for ($i = 0;$i < count($allComputerTeams);$i++)
+        foreach ($allComputerTeams as &$curTeam)
         {
-            if ($allComputerTeams[$i]->getPlayerCount() < 22)
+            if ($curTeam->getPlayerCount() < 22)
             {
-                $positionInfo = isset($teamPositionInfos[$allComputerTeams[$i]->getId()]) ? $teamPositionInfos[$allComputerTeams[$i]->getId()] : array();
-                $allComputerTeams[$i]->setPositionInfo($positionInfo);
+                $positionInfo = isset($teamPositionInfos[$curTeam->getId()]) ? $teamPositionInfos[$curTeam->getId()] : array();
+                $curTeam->setPositionInfo($positionInfo);
                 $theCoach = clone $theCoach;
-                $theCoach->setTeam($allComputerTeams[$i]);
-                $shirtNos = isset($teamShirtNos[$allComputerTeams[$i]->getId()]) ? $teamShirtNos[$allComputerTeams[$i]->getId()] : array();
+                $theCoach->setTeam($curTeam);
+                $shirtNos = isset($teamShirtNos[$curTeam->getId()]) ? $teamShirtNos[$curTeam->getId()] : array();
                 $extractInfo = $theCoach->getYoungPlayers($allRetiredShirts, $allPlayers, $shirtNos); //获取需要抽取的名单信息
                 $usedNOs = $extractInfo['used_nos'];
                 foreach($extractInfo['positions'] as $positionId => $count) //按position_id遍历
                 {
-                    $names = PlayerManager::getInstance()->getLeastYoungPlayers($positionId, $count, $firstNames, $familyNames, $countries, $usedNOs, $allComputerTeams[$i]->getLeagueId(), $allComputerTeams[$i]->getId(), $nowDate, $existPlayerNames);
+                    $names = PlayerManager::getInstance()->getLeastYoungPlayers($positionId, $count, $firstNames, $familyNames, $countries, $usedNOs, $curTeam->getLeagueId(), $curTeam->getId(), $nowDate, $existPlayerNames);
                     foreach($names as $n)
                     {
-                        echo ($allComputerTeams[$i]->getName() . "在二线队抽调了<font color=blue><strong>" . $n . "</strong></font>到一线队<br>");
+                        $this->flushNow("在二线队抽调了<span=\"blue_bold_span\">" . $curTeam->getName() . "</span>在二线队抽调了<span=\"green_bold_span\">" . $n . "</span>到一线队<br>");
+	
+						$curTeam->addMoney(-5, '抽调新队员', $nowDate);
+						$curTeam->player_count++;
+						$curTeam->isChanged = TRUE;
                     }
-                    flush();
                 }
             }
         }
         
         PlayerManager::getInstance()->saveAllData();
+		foreach($allComputerTeams as $curTeam)
+		{
+			if(isset($curTeam->isChanged))
+			{
+				unset($curTeam->isChanged);
+				TeamManager::getInstance()->save($curTeam);
+			}
+		}
     }
 	
 	public function ajax_change_attack($attack)

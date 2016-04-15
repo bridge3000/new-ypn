@@ -193,6 +193,8 @@ class PlayerManager extends DataManager
         
         foreach($players as $player)
         {
+			$player->score = 0;
+			$player->yellow_today = 0;
             if ($player->condition_id == 1)
             {
                 $matchPlayers['shoufa'][] = $player;
@@ -322,13 +324,13 @@ class PlayerManager extends DataManager
     }
     
     /**
-     *
+     * 对抗
      * @param type $attackDir
-     * @param type $attackPlayers
-     * @param type $defensePlayers 
-     * @return array('result'=>1, 'playerIndex'=>58)
+     * @param type $attackShoufaPlayers
+     * @param type $defenseShoufaPlayers 
+     * @return array('result'=>1射门 2犯规 3防守成功, 'playerIndex'=>58)
      */
-    public function collision($attackDir, $attackPlayers, $defensePlayers)
+    public function collision($attackDir, &$attackShoufaPlayers, &$defenseShoufaPlayers, $matchClassId)
     {
         switch ($attackDir)
 		{
@@ -359,12 +361,12 @@ class PlayerManager extends DataManager
         $max = 0;
 		$passerIndex = -1;
         $attackPower = 0;
-		for ($i = 0;$i < count($attackPlayers);$i++)
+		for ($i = 0;$i < count($attackShoufaPlayers);$i++)
 		{
-			if (in_array($attackPlayers[$i]->position_id, $attackPoses, true))
+			if (in_array($attackShoufaPlayers[$i]->position_id, $attackPoses))
 			{
-                $attackPower += $attackPlayers[$i]->getAttackPower($attackDirField);
-				$temp = $attackPlayers[$i]->getPassRate($attackDirField);
+                $attackPower += $attackShoufaPlayers[$i]->getAttackPower($attackDirField);
+				$temp = $attackShoufaPlayers[$i]->getPassRate($attackDirField);
 				if ($temp > $max)
 				{
 					$max = $temp;
@@ -377,14 +379,12 @@ class PlayerManager extends DataManager
 		$max = 0;
 		$tacklerIndex = -1;
 		$defensePower = 0;
-		$tmp = array(); //临时测试用
-		for ($i = 0;$i < count($defensePlayers);$i++)
+		for ($i = 0;$i < count($defenseShoufaPlayers);$i++)
 		{
-			if (in_array($defensePlayers[$i]->position_id, $defenserPoses, true))
+			if (in_array($defenseShoufaPlayers[$i]->position_id, $defenserPoses))
 			{
-				$tmp[] = $defensePlayers[$i];
-                $defensePower += $defensePlayers[$i]->getDefensePower($defenseDirField);
-				$temp = $defensePlayers[$i]->getTackleRate($defenseDirField);
+                $defensePower += $defenseShoufaPlayers[$i]->getDefensePower($defenseDirField);
+				$temp = $defenseShoufaPlayers[$i]->getTackleRate($defenseDirField);
 				if ($temp > $max)
 				{
 					$max = $temp;
@@ -393,13 +393,16 @@ class PlayerManager extends DataManager
 			}
 		}
 		
-		if ($tacklerIndex == -1)
+		if($attackPower > $defensePower)
 		{
-			print_r($tmp);
-			print_r($defenserPoses);
+			$result = mt_rand(1, 2);
 		}
-        
-        $result = ($attackPower > $defensePower);
+		else
+		{
+			$result = 3;
+			$defenseShoufaPlayers[$tacklerIndex]->addTackle($matchClassId);
+		}
+		
         return array('result'=>$result, 'attackerIndex'=>$passerIndex, 'defenserIndex'=>$tacklerIndex);
     }
     
@@ -632,11 +635,12 @@ class PlayerManager extends DataManager
      * @param type $attackDir
      * @return array(result 1goal 2corner 3tanchu)
      */
-    public function shot($passerIndex, &$attackPlayers, &$defensePlayers, $attackDir)
+    public function shot($passerIndex, &$attackPlayers, &$defensePlayers, $attackDir, $matchClassId)
     {
         $shoterIndex = -1;
         $goalkeeperIndex = -1;
         $max = 0;
+		
         for($i=0;$i<count($attackPlayers['shoufa']);$i++)
         {
             if ($i == $passerIndex)                continue;
@@ -662,6 +666,7 @@ class PlayerManager extends DataManager
         if ($attackPlayers['shoufa'][$shoterIndex]->getShotValue($attackDir) > $defensePlayers['shoufa'][$goalkeeperIndex]->getSaveValue())
         {
             $result['result'] = 1;
+			$attackPlayers['shoufa'][$shoterIndex]->addGoal($matchClassId);
         }
         else
         {
@@ -969,194 +974,20 @@ class PlayerManager extends DataManager
      */
 	public function getLeastYoungPlayers($position_id, $needPosCount, $firstNames, $familyNames, $countries, &$usedNOs, $leagueId, $teamId, $nowDate, &$existPlayerNames)
 	{
-        $newPlayer = array();
         $names = array();
         for ($i = 0; $i < ($needPosCount); $i++)
         {
-            $newPlayer = $this->getYoung($leagueId, $teamId, $position_id, $firstNames, $familyNames, $countries, $usedNOs, $nowDate, $existPlayerNames);
+			$newPlayer = new Player();
+            $newPlayer->setYoung($leagueId, $teamId, $position_id, $firstNames, $familyNames, $countries, $usedNOs, $nowDate, $existPlayerNames);
             
-            $names[] = $newPlayer['name'];
-            $usedNOs[] = $newPlayer['ShirtNo'];
+            $names[] = $newPlayer->name;
+            $usedNOs[] = $newPlayer->ShirtNo;
+			
+			self::$youngPlayers[] = $newPlayer;
         }
         return $names;
 	}
 	
-	private function getYoung($league_id, $team_id, $position_id, $firstNames, $familyNames, $countries, &$usedNOs, $nowDate, &$existPlayerNames)
-	{
-        $fullName = "";
-        $isNameExist = true;
-		$thisYear = date('Y', strtotime($nowDate));
-        
-		shuffle($countries);
-
-        while ($isNameExist)
-        {
-        	$isNameExist = false;			
-            $fullName = $firstNames[mt_rand(0, 59)]['title'] . "·" . $familyNames[mt_rand(0, 59)]['title'];
-
-            if (in_array($fullName, $existPlayerNames, TRUE))
-            {
-                $isNameExist = true;
-            }
-            
-            if ($isNameExist)
-            {
-            	$isNameExist = false;
-                $fullName = chr(64+mt_rand(1, 26)) . "·" . $fullName;
-                if (in_array($fullName, $existPlayerNames, TRUE))
-                {
-                    $isNameExist = true;
-                }
-            }
-        }
-        
-        $existPlayerNames[] = $fullName;
-		        
-        $imgSrc = '/img/DefaultPlayer.jpg';
-        $imgSrc = str_replace("ypn_img", "", $imgSrc);
-        
-        /*获得号码，调用getNewNumber*/
-        $newPlayer['position_id'] = $position_id;
-        $newPlayer['team_id'] = $team_id;
-
-        /*已经获得名字和号码开始签合同，随机生成生日、合同，角球位随机*/
-        $newPlayer['name'] = $fullName;
-        $newPlayer['league_id'] = $league_id;
-
-        $newPlayer['country_id'] = $countries[5]['id'];
-		$newPlayer['country'] = $countries[5]['title'];
-        $newPlayer['CornerPosition_id'] = mt_rand(1, 4);
-        $newPlayer['birthday'] = ($thisYear - mt_rand(16, 20)) . "-" . mt_rand(1, 12) . "-" . mt_rand(1,28);
-        $newPlayer['ContractBegin'] = $nowDate;
-        $newPlayer['ContractEnd'] = ($thisYear+mt_rand(1,5)) . "-6-30";
-
-        /*公用的*/
-        $newPlayer['ImgSrc'] = $imgSrc;
-        
-        $newPlayer['creativation'] = 73 + mt_rand(1, 10);
-        $newPlayer['pass'] = 73 + mt_rand(1, 8);
-        $newPlayer['speed'] = 75 + mt_rand(1, 10);
-        $newPlayer['ShotDesire'] = 75 + mt_rand(0, 6);
-        $newPlayer['ShotPower'] = 78 + mt_rand(0, 21);
-        $newPlayer['ShotAccurate'] = 74 + mt_rand(0, 4);
-        $newPlayer['agility'] = 75 + mt_rand(1, 10);
-        $newPlayer['SinewMax'] = 78 + mt_rand(0, 19);
-        $newPlayer['cooperate'] = 80;
-        $newPlayer['ShirtNo'] = $this->getPlayerNewShirtNo($newPlayer, $usedNOs);
-        $newPlayer['arc'] = 73 + mt_rand(0, 26);
-        
-        /*写入新闻*/
-//        $News->add1('我们已从二线队抽调了' . '<font color=green><strong>' . $fullName . '</strong></font>', $team_id, $nowDate, $imgSrc);
-
-        /*根据不同位置获得不同的训练方式*/
-        switch ($position_id)
-        {
-            case 1: //forward
-                $newPlayer['ShotDesire'] = 80 + mt_rand(1, 10);
-                $newPlayer['ShotPower'] = 80 + mt_rand(1, 10);
-                $newPlayer['ShotAccurate'] = 76 + mt_rand(1, 10);
-                $newPlayer['qiangdian'] = 70 + mt_rand(1, 10);
-                $newPlayer['training_id'] = 1;
-                break;
-            case 2://dm
-                $newPlayer['tackle'] = 76 + mt_rand(1, 10); 
-                $newPlayer['pinqiang'] = 76 + mt_rand(1, 10); 
-                $newPlayer['scope'] = 70 + mt_rand(1, 10); 
-                $newPlayer['close-marking'] = 75 + mt_rand(0, 10); 
-                $newPlayer['training_id'] = 3;
-                break;
-            case 3: //cb
-                $newPlayer['tackle'] = 73 + mt_rand(1, 10); 
-                $newPlayer['header'] = 74 + mt_rand(1, 10); 
-                $newPlayer['height'] = 185 + mt_rand(1, 10); 
-                $newPlayer['weight'] = 75 + mt_rand(1, 10); 
-                $newPlayer['close-marking'] = 75 + mt_rand(0, 10); 
-                $newPlayer['training_id'] = 3;
-                break;
-            case 4://gk
-                $newPlayer['ShotDesire'] = 30;
-                $newPlayer['save'] = 78 + mt_rand(1, 5);
-                $newPlayer['BallControl'] = 74 + mt_rand(1, 10);
-                $newPlayer['height'] = 185 + mt_rand(1, 10);
-                $newPlayer['weight'] = 75 + mt_rand(1, 10); 
-                $newPlayer['training_id'] = 7;
-                break;
-            case 7: //cf
-                $newPlayer['ShotDesire'] = 80 + mt_rand(1, 10);
-                $newPlayer['ShotPower'] = 80 + mt_rand(1, 10);
-                $newPlayer['ShotAccurate'] = 70 + mt_rand(1, 10);
-                $newPlayer['header'] = 78 + mt_rand(1, 10);
-                $newPlayer['qiangdian'] = 74 + mt_rand(1, 10);
-                $newPlayer['height'] = 185 + mt_rand(1, 10);
-                $newPlayer['weight'] = 75 + mt_rand(1, 10); 
-                $newPlayer['training_id'] = 4;
-                break;
-            case 8: //am
-                $newPlayer['ShotDesire'] = 73 + mt_rand(1, 10);
-                $newPlayer['ShotPower'] = 80 + mt_rand(1, 10);
-                $newPlayer['ShotAccurate'] = 76 + mt_rand(0, 4);
-                $newPlayer['pass'] = 78 + mt_rand(1, 10);
-                $newPlayer['training_id'] = 2;
-                $newPlayer['arc'] = 76 + mt_rand(0, 23);
-                break;
-            case 9: //lm
-            case 13: //lb
-                $newPlayer['beat'] = 73 + mt_rand(1, 10); 
-                $newPlayer['BallControl'] = 73 + mt_rand(1, 10); 
-                $newPlayer['tackle'] = 73 + mt_rand(1, 10); 
-                $newPlayer['close-marking'] = 75 + mt_rand(0, 10); 
-                $newPlayer['speed'] = 78 + mt_rand(1, 10); 
-                $newPlayer['pass'] = 73 + mt_rand(1, 10);
-                $newPlayer['LeftProperties'] = 100;
-                $newPlayer['MidProperties'] = 95;
-                $newPlayer['RightProperties'] = 90;
-                $newPlayer['training_id'] = 6;
-                break;
-            case 10: //rm
-            case 14: //rb
-                $newPlayer['beat'] = 73 + mt_rand(1, 10); 
-                $newPlayer['BallControl'] = 73 + mt_rand(1, 10); 
-                $newPlayer['tackle'] = 73 + mt_rand(1, 10); 
-                $newPlayer['close-marking'] = 75 + mt_rand(0, 10); 
-                $newPlayer['speed'] = 78 + mt_rand(1, 10); 
-                $newPlayer['pass'] = 73 + mt_rand(1, 10);
-                $newPlayer['MidProperties'] = 90;
-                $newPlayer['training_id'] = 6; 
-                break;
-            case 5: //lw
-                $newPlayer['ShotDesire'] = 77 + mt_rand(1, 10);
-                $newPlayer['ShotPower'] = 80 + mt_rand(1, 10);
-                $newPlayer['ShotAccurate'] = 76 + mt_rand(0, 4);
-                $newPlayer['speed'] = 80 + mt_rand(1, 10);
-                $newPlayer['beat'] = 80 + mt_rand(1, 10);
-                $newPlayer['LeftProperties'] = 100;
-                $newPlayer['MidProperties'] = 90;
-                $newPlayer['RightProperties'] = 95;
-                $newPlayer['training_id'] = 6;
-                break;
-            case 6: //rw
-                $newPlayer['ShotDesire'] = 77 + mt_rand(1, 10);
-                $newPlayer['ShotPower'] = 80 + mt_rand(1, 10);
-                $newPlayer['ShotAccurate'] = 76 + mt_rand(0, 4);
-                $newPlayer['speed'] = 80 + mt_rand(1, 10);
-                $newPlayer['beat'] = 80 + mt_rand(1, 10);
-                $newPlayer['training_id'] = 6;
-                break;
-        }
-            
-		$this->addNew($newPlayer);
-		
-        /*抽调一名年轻球员减5W欧元*/
-//        $this->writeJournal($team_id, 2, 5, '抽调新队员');
-
-        return $newPlayer;
-	}
-    
-    public function addNew($newPlayer)
-    {
-        self::$youngPlayers[] = $newPlayer;
-    }
-    
     public function saveAllData()
     {
         if (!empty(self::$youngPlayers))
@@ -1273,4 +1104,80 @@ class PlayerManager extends DataManager
 		}
 		return $allTeamPlayerData;
     }
+	
+	public function saveMatchResult($hostShoufaPlayers, $guestShoufaPlayers)
+	{
+		$keys = array('id', 'Goal1Count', 'Penalty1Count', 'Assist1Count', 'Tackle1Count', 'Punish1Count', 'ShotAccurateExperience', 'PassExperience', 'YellowCard1Count', 'RedCard1Count');
+		$values = array();
+		$shoufaPlayers = array_merge($hostShoufaPlayers, $guestShoufaPlayers);
+		foreach($shoufaPlayers as $p)
+		{
+			$v = array();
+			foreach($keys as $k)
+			{
+				$v[$k] = $p->$k;
+			}
+			$v['total_score'] = $p->total_score + $p->score;
+			$v['all_matches_count'] = $p->all_matches_count + 1;
+			$values[] = $v;
+		}
+		$this->update_batch($values);
+	}
+	
+	/**
+	 * 
+	 * @param type $attackShoufaPlayers
+	 * @param type $defenseShoufaPlayers
+	 * @param type $teamPenaltyKickerId
+	 * @param int $matchClassId
+	 * @return int 1goal 2save
+	 */
+	public function penalty(&$attackShoufaPlayers, &$defenseShoufaPlayers, $teamPenaltyKickerId, $matchClassId)
+	{
+		$result = 1;
+		$max = 0;
+		$penaltyKicker = NULL;
+		foreach($attackShoufaPlayers as &$p)
+		{
+			if($p->id == $teamPenaltyKickerId)
+			{
+				$penaltyKicker = $p;
+				break;
+			}
+			else
+			{
+				if($p->getPenaltyWeight() > $max)
+				{
+					$max = $p->getPenaltyWeight();
+					$penaltyKicker = $p;
+				}
+			}
+		}
+		
+		//goalkeeper
+		$goalKeeper = NULL;
+		foreach($defenseShoufaPlayers as &$p)
+		{
+			if($p->position_id == 4)
+			{
+				$goalKeeper = $p;
+				break;
+			}
+		}
+		
+		if($penaltyKicker->getPenaltyValue() > $goalKeeper->getPenaltySaveValue())
+		{
+			$result = 1;
+			$penaltyKicker->addGoal($matchClassId);
+			$penaltyKicker->addPenalty($matchClassId);
+		}
+		else
+		{
+			$result = 2;
+			$goalKeeper->score += 4;
+			$goalKeeper->SaveExperience += 4;
+		}
+		
+		return array('result'=>$result, 'penalty_kicker'=>$penaltyKicker, 'goal_keeper'=>$goalKeeper) ;
+	}
 }

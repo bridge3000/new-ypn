@@ -215,7 +215,7 @@ class YpnController extends AppController
         $plTeams = TeamManager::getInstance()->find('all', compact('conditions', 'order', 'limit', 'contain'));
 
         /*当年的FIFA足球先生*/
-        $mvps = PlayerManager::getInstance()->query('SELECT `Player`.`id`, `Player`.`name`, ScoreAll/all_matches_count as pingjun FROM `ypn_players` AS `Player`   WHERE `all_matches_count` > 9   ORDER BY `pingjun` desc  LIMIT 1 ');
+        $mvps = PlayerManager::getInstance()->query('SELECT `Player`.`id`, `Player`.`name`, total_score/all_matches_count as pingjun FROM `ypn_players` AS `Player`   WHERE `all_matches_count` > 9   ORDER BY `pingjun` desc  LIMIT 1 ');
         if ($mvps != null)
         {
             $mvp = $mvps[0];
