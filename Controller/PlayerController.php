@@ -525,24 +525,34 @@ class PlayerController extends AppController
 			)
 		);
 		
-		$traingList = array(
-			array('title'=>'shot', 'field'=>'ShotAccurate', 'experience'=>'ShotAccurateExperience'),
-			array('title'=>'pass', 'field'=>'pass', 'experience'=>'PassExperience'),			
-			array('title'=>'tackle', 'field'=>'tackle', 'experience'=>'TackleExperience'),
-			array('title'=>'head', 'field'=>'header', 'experience'=>'HeaderExperience'),
-			array('title'=>'control', 'field'=>'BallControl', 'experience'=>'BallControlExperience'),
-			array('title'=>'beat', 'field'=>'beat', 'experience'=>'BeatExperience'),
-			array('title'=>'save', 'field'=>'save', 'experience'=>'SaveExperience'),
-			array('title'=>'sinew', 'field'=>'sinew', 'experience'=>'SinewMaxExperience'),
-			array('title'=>'qiangdian', 'field'=>'qiangdian', 'experience'=>'QiangdianExperience'),
-		);
+//		$traingList = array(
+//			array('title'=>'shot', 'field'=>'ShotAccurate', 'experience'=>'ShotAccurateExperience'),
+//			array('title'=>'pass', 'field'=>'pass', 'experience'=>'PassExperience'),			
+//			array('title'=>'tackle', 'field'=>'tackle', 'experience'=>'TackleExperience'),
+//			array('title'=>'head', 'field'=>'header', 'experience'=>'HeaderExperience'),
+//			array('title'=>'control', 'field'=>'BallControl', 'experience'=>'BallControlExperience'),
+//			array('title'=>'beat', 'field'=>'beat', 'experience'=>'BeatExperience'),
+//			array('title'=>'save', 'field'=>'save', 'experience'=>'SaveExperience'),
+//			array('title'=>'sinew', 'field'=>'sinew', 'experience'=>'SinewMaxExperience'),
+//			array('title'=>'qiangdian', 'field'=>'qiangdian', 'experience'=>'QiangdianExperience'),
+//		);
+		
 		
         $positions = MainConfig::$positions;
 		$this->set('positions', $positions);
 		$this->set('players', $players);
 		$this->set('nowDate', $nowDate);
-		$this->set('trainingList', $traingList);
+		$this->set('trainingList', MainConfig::$trainings);
         
         $this->render('training_list');
+	}
+	
+	public function ajax_change_training()
+	{
+		$playerId = $_POST['player_id'];
+		$trainingId = $_POST['training_id'];
+		PlayerManager::getInstance()->update(array('training_id'=>$trainingId), array('id'=>$playerId));
+		
+		echo json_encode(array('status'=>0));
 	}
 }

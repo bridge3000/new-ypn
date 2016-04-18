@@ -800,12 +800,10 @@ class YpnController extends AppController
 		$this->flushNow('球队更新完成！<br>');
 		
 		/*更新欧冠分组*/
-		YpnManager::getInstance()->query('delete from ypn_uclgroups');
         UclGroupManager::getInstance()->resetUclGroup();
 		$this->flushNow('欧冠分组更新完成！<br>');
 		
 		/*更新欧联分组*/
-		YpnManager::getInstance()->query('delete from ypn_elgroups');
         ElGroupManager::getInstance()->resetElGroup();
 		$this->flushNow('欧联分组更新完成！<br>');
 		

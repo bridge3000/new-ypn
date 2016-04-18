@@ -1,7 +1,6 @@
 <?php
 namespace Model\Manager;
 use MainConfig;
-use Model\Manager\CoachManager;
 use Model\Core\ElGroup;
 
 class ElGroupManager extends DataManager
@@ -10,9 +9,8 @@ class ElGroupManager extends DataManager
     
     public function resetElGroup()
     {
-        $allUclgroupArray = $this->query('select * from ' . MainConfig::PREFIX . 'elgroups');
-        $this->saveMany($this->loadData($allUclgroupArray), 'insert');
+		$this->query('delete from '.$this->table);
+		$fields = array();
+        DBManager::getInstance()->copyTable(MainConfig::PREFIX . 'bak_elgroups', MainConfig::PREFIX . $this->table, $fields);
     }
 }
-
-?>
