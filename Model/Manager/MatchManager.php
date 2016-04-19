@@ -92,4 +92,5 @@ class MatchManager extends DataManager
 	{
 		$this->update(array('isWatched'=>1), array('PlayTime'=>$playDate));
 	}
+	
 }

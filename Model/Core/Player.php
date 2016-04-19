@@ -664,4 +664,19 @@ class Player
 		}
 		$this->$penaltyField++;
 	}
+	
+	public function getFreeWeight()
+	{
+		return $this->ShotAccurate + $this->arc + $this->ShotPower;
+	}
+	
+	public function getFreeValue()
+	{
+		return $this->ShotPower + $this->ShotAccurate + $this->arc + mt_rand(1,10);
+	}
+	
+	public function getFreeSaveValue()
+	{
+		return $this->height/2 + $this->save + $this->agility + mt_rand(1,10);
+	}
 }

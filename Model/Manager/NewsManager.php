@@ -19,7 +19,7 @@ class NewsManager extends DataManager
 		$this->save($newNews);
 	}
 	
-	public function push($content, $team_id, $nowDate, $imgSrc, $isRead = 0)
+	public function push($content, $team_id, $nowDate, $imgSrc)
 	{
         $newNews = array();
         $newNews['content'] = $content;

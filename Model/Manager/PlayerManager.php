@@ -1180,4 +1180,60 @@ class PlayerManager extends DataManager
 		
 		return array('result'=>$result, 'penalty_kicker'=>$penaltyKicker, 'goal_keeper'=>$goalKeeper) ;
 	}
+	
+	/**
+	 * 
+	 * @param type $attackShoufaPlayers
+	 * @param type $defenseShoufaPlayers
+	 * @param type $teamFreeKickerId
+	 * @param int $matchClassId
+	 * @return int 1goal 2save
+	 */
+	public function free(&$attackShoufaPlayers, &$defenseShoufaPlayers, $teamFreeKickerId, $matchClassId)
+	{
+		$result = 1;
+		$max = 0;
+		$freeKicker = NULL;
+		foreach($attackShoufaPlayers as &$p)
+		{
+			if($p->id == $teamFreeKickerId)
+			{
+				$freeKicker = $p;
+				break;
+			}
+			else
+			{
+				if($p->getFreeWeight() > $max)
+				{
+					$max = $p->getFreeWeight();
+					$freeKicker = $p;
+				}
+			}
+		}
+		
+		//goalkeeper
+		$goalKeeper = NULL;
+		foreach($defenseShoufaPlayers as &$p)
+		{
+			if($p->position_id == 4)
+			{
+				$goalKeeper = $p;
+				break;
+			}
+		}
+		
+		if($freeKicker->getFreeValue() > $goalKeeper->getFreeSaveValue())
+		{
+			$result = 1;
+			$freeKicker->addGoal($matchClassId);
+		}
+		else
+		{
+			$result = 2;
+			$goalKeeper->score += 2;
+			$goalKeeper->SaveExperience += 4;
+		}
+		
+		return array('result'=>$result, 'free_kicker'=>$freeKicker, 'goal_keeper'=>$goalKeeper);
+	}
 }
