@@ -8,14 +8,13 @@ class NewsManager extends DataManager
     public $table = "news";
     private static $newArr = array();
 
-    public function add($content, $team_id, $nowDate, $imgSrc, $isRead = 0)
+    public function add($content, $team_id, $nowDate, $imgSrc)
 	{
         $newNews = new News();
         $newNews->content = $content;
 		$newNews->team_id = $team_id;
 		$newNews->PubTime = $nowDate;
 		$newNews->ImgSrc = $imgSrc;
-        $newNews->isRead = $isRead;
 		$this->save($newNews);
 	}
 	
@@ -26,7 +25,6 @@ class NewsManager extends DataManager
 		$newNews['team_id'] = $team_id;
 		$newNews['PubTime'] = $nowDate;
 		$newNews['ImgSrc'] = $imgSrc;
-        $newNews['isRead'] = $isRead;
         self::$newArr[] = $newNews;
 	}
 	

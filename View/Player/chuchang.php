@@ -33,9 +33,9 @@ foreach ($players as $curPlayer):
 						<td>
 	<?php
 	if ($curPlayer['condition_id'] == 4) {
-		echo ("<img src='" . IMG_DIR . "/img/injured.gif'> " . $curPlayer['InjuredDay'] . "天");
+		echo ("<img src='" . MainConfig::BASE_URL . "/res/img/injured.gif'> " . $curPlayer['InjuredDay'] . "天");
 	} else if ($curPlayer[$fieldPunish] > 0) {
-		echo("<img src='" . IMG_DIR . "/img/RedCard.gif' />停赛" . $curPlayer[$fieldPunish] . "场");
+		echo("<img src='" . MainConfig::BASE_URL . "/res/img/RedCard.gif' />停赛" . $curPlayer[$fieldPunish] . "场");
 	} else {
 		?>
 								<select name="select" id="select" onchange="changeCondition(<?php echo $curPlayer['id']; ?>, this.value)">

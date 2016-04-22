@@ -8,6 +8,7 @@ use Util\ExecuteTime;
 class MatchManager extends DataManager
 {
     public $table = "matches";
+	static $matches = array();
     
     public function today()
     {
@@ -93,4 +94,58 @@ class MatchManager extends DataManager
 		$this->update(array('isWatched'=>1), array('PlayTime'=>$playDate));
 	}
 	
+	public function push($hostTeamId, $guestTeamId, $classId, $playDate)
+	{
+		self::$matches[] = array('HostTeam_id'=>$hostTeamId, 'GuestTeam_id'=>$guestTeamId, 'class_id'=>$classId, 'PlayTime'=>$playDate);
+	}
+	
+	public function insertBatch($keys=array(), $values=array())
+	{
+		if (!empty(self::$matches))
+		{
+			$keys = array_keys(self::$matches[0]);
+			foreach(self::$matches as $n)
+			{
+				$v = array();
+				foreach($keys as $k)
+				{
+					$v[] = "'" . $n[$k] . "'";
+				}
+				$values[] = $v;
+			}
+		}
+		parent::insertBatch($keys, $values);
+	}
+	
+	/**
+	 * 主客场比赛对比
+	 * @param array $match1
+	 * @param array $match2
+	 * @return int
+	 */
+	public function diff($match1, $match2)
+	{
+		$winTeamId = 0;
+		if( ($match1['HostGoals']+$match2['GuestGoals']) > ($match1['GuestGoals']+$match2['HostGoals']) )
+		{
+			$winTeamId = $match1['HostTeam_id'];
+		}
+		else if( ($match1['HostGoals']+$match2['GuestGoals']) < ($match1['GuestGoals']+$match2['HostGoals']) )
+		{
+			$winTeamId = $match1['GuestTeam_id'];
+		}
+		else
+		{
+			if($match1['GuestGoals'] > $match2['GuestGoals'])
+			{
+				$winTeamId = $match1['HostTeam_id'];
+			}
+			else
+			{
+				$winTeamId = $match1['GuestTeam_id'];
+			}
+		}
+		
+		return $winTeamId;
+	}
 }

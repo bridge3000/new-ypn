@@ -54,7 +54,8 @@ class AppController
     
     protected function flushNow($str)
     {
-        echo str_pad('<span>' . $str . '</span>', 4096);
+//        echo str_pad('<span>' . $str . '</span>', 4096);
+		echo $str;
         ob_flush();
         flush();
     }
@@ -62,5 +63,10 @@ class AppController
 	public function flushCss()
 	{
 		$this->flushNow("<link type=\"text/css\" rel=\"stylesheet\" href=\"" . \MainConfig::BASE_URL . "res/css/main.css\" />");
+	}
+	
+	public function flushJs()
+	{
+		$this->flushNow("<script src=\"" . \MainConfig::BASE_URL . "res/js/jquery.js\"  type=\"text/javascript\"></script>");
 	}
 }

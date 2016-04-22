@@ -11,6 +11,7 @@ use Model\Manager\CoachManager;
 use Model\Manager\NewsManager;
 use Model\Manager\YpnManager;
 use Model\Manager\UclGroupManager;
+use Model\Manager\ElGroupManager;
 
 class MatchController extends AppController 
 {
@@ -52,21 +53,19 @@ class MatchController extends AppController
 			$this->flushCss();
 		}
 		
-        $teamIds = array();
+        $todayMatchTeamIds = array();
+		$matchClassIds = array();
         foreach($todayMatches as $curMatch)
         {
-            $teamIds[] = $curMatch->HostTeam_id;
-            $teamIds[] = $curMatch->GuestTeam_id;
+            $todayMatchTeamIds[] = $curMatch->HostTeam_id;
+            $todayMatchTeamIds[] = $curMatch->GuestTeam_id;
+			if(!in_array($curMatch->class_id, $matchClassIds))
+			{
+				$matchClassIds[] = $curMatch->class_id;
+			}
         }
-        $matchPlayers = PlayerManager::getInstance()->getHealthyPlayers($teamIds);
-        foreach($matchPlayers as $k=>$v)
-        {
-            if (in_array($v->condition_id, array(1, 2)))
-            {
-                $matchPlayers[$k]->condition_id = 3;
-            }
-        }
-        $matchTeams = TeamManager::getInstance()->getTeams($teamIds);
+        $matchPlayers = PlayerManager::getInstance()->getHealthyPlayers($todayMatchTeamIds);
+        $matchTeams = TeamManager::getInstance()->getTeams($todayMatchTeamIds);
         
         $teamPlayers = array();
         foreach($matchPlayers as $player)
@@ -76,45 +75,31 @@ class MatchController extends AppController
         }
         
         //play
-        $playedMatchClasses = array();
         foreach ($todayMatches as $curMatch)
         {
 			$curMatch->hostTeam = $matchTeams[$curMatch->HostTeam_id];
 			$curMatch->guestTeam = $matchTeams[$curMatch->GuestTeam_id];
 			
 			$this->isWatch = $curMatch->isWatched;
-            $curMatch->hostPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->HostTeam_id], $curMatch->class_id, $curMatch->hostTeam->formattion);
+            $curMatch->hostPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->HostTeam_id], $curMatch->class_id, $curMatch->hostTeam->formattion, $curMatch->hostTeam->isAutoFormat);
             $strHtml = '<div class="shoufa_div">';
             $strHtml .= $this->generateZhenrongHtml($curMatch->hostPlayers, $curMatch->hostTeam);
             $strHtml .= '</div>';
             $this->flushMatch($strHtml);
             
-            $curMatch->guestPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->GuestTeam_id], $curMatch->class_id, $curMatch->guestTeam->formattion);
+            $curMatch->guestPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->GuestTeam_id], $curMatch->class_id, $curMatch->guestTeam->formattion, $curMatch->guestTeam->isAutoFormat);
             $strHtml = '<div class="shoufa_div">';
             $strHtml .= $this->generateZhenrongHtml($curMatch->guestPlayers, $curMatch->guestTeam);
             $strHtml .= '</div><div style="clear:both"></div>';
             $this->flushMatch($strHtml);
 			
+			PlayerManager::getInstance()->clearPunish(array($curMatch->HostTeam_id,$curMatch->GuestTeam_id), $curMatch->class_id);
+			
             $this->start($curMatch);
-            $curMatch->isPlayed = 1;
-            if (!in_array($curMatch->class_id, $playedMatchClasses, true))
-            {
-                $playedMatchClasses[] = $curMatch->class_id;
-            }
-			
-			PlayerManager::getInstance()->saveMatchResult($curMatch->hostPlayers['shoufa'], $curMatch->guestPlayers['shoufa']);
-			
-			unset($curMatch->hostTeam);
-			unset($curMatch->guestTeam);
-			unset($curMatch->hostPlayers);
-			unset($curMatch->guestPlayers);
+			$this->onMatchEnd($curMatch);
         }
         
-        //save
-        MatchManager::getInstance()->saveMany($todayMatches);
-		
-		/*体力为0的变成伤员*/
-        PlayerManager::getInstance()->update(array("condition_id"=>"4", 'InjuredDay'=>6), array('sinew <' => 0));
+        PlayerManager::getInstance()->update(array("condition_id"=>"4", 'InjuredDay'=>6), array('sinew <' => 0)); //体力为0的变成伤员
 		
 		$this->flushNow("<a href=\"" . MainConfig::BASE_URL . 'match/today' . "\">today match</a>");
     }
@@ -130,13 +115,114 @@ class MatchController extends AppController
 			}
 			$this->assault($curMatch);
 		}
-        $this->flushMatch('the match is over.<br/>');
-		$this->flushMatch($curMatch->hostTeam->name . $curMatch->HostGoals . ":" . $curMatch->GuestGoals . $curMatch->guestTeam->name . "<br>");
-        
-        $this->onMatchEnd($curMatch);
-        
-        TeamManager::getInstance()->saveMatchInfo($curMatch->hostTeam);
-        TeamManager::getInstance()->saveMatchInfo($curMatch->guestTeam);
+		$this->flushMatch('the match is over, ' . $curMatch->hostTeam->name . $curMatch->HostGoals . ":" . $curMatch->GuestGoals . $curMatch->guestTeam->name . "<br>");
+    }
+	
+	private function onMatchEnd(&$curMatch)
+    {
+		$curMatch->isPlayed = 1;
+
+		foreach($curMatch->hostPlayers['shoufa'] as &$p)
+		{
+			$p->sinew -= 30;
+		}
+		
+		foreach($curMatch->guestPlayers['shoufa'] as &$p)
+		{
+			$p->sinew -= 30;
+		}
+		
+		PlayerManager::getInstance()->saveMatchResult($curMatch->hostPlayers['shoufa'], $curMatch->guestPlayers['shoufa']);
+		
+		$result = 0; //1host win 2guestwin 3draw 
+		if ($curMatch->HostGoals > $curMatch->GuestGoals)
+		{
+			$result = 1;
+		}
+		else if ($curMatch->HostGoals < $curMatch->GuestGoals)
+		{
+			$result = 2;
+		}
+		else
+		{
+			$result = 3;
+		}
+			
+        if (in_array($curMatch->class_id, array(1, 31))) //league
+        {
+            $curMatch->hostTeam->goals += $curMatch->HostGoals;
+            $curMatch->hostTeam->lost += $curMatch->GuestGoals;
+            $curMatch->guestTeam->goals += $curMatch->GuestGoals;
+            $curMatch->guestTeam->lost += $curMatch->HostGoals;
+            
+            if ($result == 1)
+            {
+                $curMatch->hostTeam->score += 3;
+                $curMatch->hostTeam->win++;
+                $curMatch->guestTeam->lose++;
+            }
+            else if ($result == 2)
+            {
+                $curMatch->guestTeam->score += 3;
+                $curMatch->hostTeam->lose++;
+                $curMatch->guestTeam->win++;
+            }
+            else
+            {
+                $curMatch->hostTeam->score += 1;
+                $curMatch->guestTeam->score += 1;
+                $curMatch->hostTeam->draw++;
+                $curMatch->guestTeam->draw++;
+            }
+			
+			TeamManager::getInstance()->saveMatchInfo($curMatch->hostTeam);
+			TeamManager::getInstance()->saveMatchInfo($curMatch->guestTeam);	
+        }
+		else if ($curMatch->class_id == 3) //ucl
+		{
+			UclGroupManager::getInstance()->saveResult($curMatch->hostTeam->id, $curMatch->guestTeam->id, $result);
+		}
+		else if ($curMatch->class_id == 12) //el
+		{
+			ElGroupManager::getInstance()->saveResult($curMatch->hostTeam->id, $curMatch->guestTeam->id, $result);
+		}
+		
+		unset($curMatch->hostTeam);
+		unset($curMatch->guestTeam);
+		unset($curMatch->hostPlayers);
+		unset($curMatch->guestPlayers);
+		
+		MatchManager::getInstance()->save($curMatch);
+		
+		$count = MatchManager::getInstance()->find('count', array(
+			'conditions' => array(
+				'class_id'=>$curMatch->class_id,
+				'isPlayed'=>0
+				)
+		));
+		
+		if($count == 0)
+		{
+			switch ($curMatch->class_id) 
+			{
+				case 1: //league over
+				case 31:
+					$this->onLeagueEnd($curMatch->class_id);
+					break;
+				case 3: //ucl
+					$this->onUclTeamEnd();
+					break;
+				case 12: //el
+					$this->onElTeamEnd();
+					break;
+				case 36: //亚冠半决
+					$this->onAfcHalfEnd();
+					break;
+				case 37: 
+					$this->onAfcFinalEnd();
+					break;
+			}
+		}
     }
     
     private function assault(&$curMatch)
@@ -264,80 +350,6 @@ class MatchController extends AppController
         }
     }
 	
-	private function onMatchEnd(&$curMatch)
-    {
-		$result = 0; //1host win 2guestwin 3draw 
-		if ($curMatch->HostGoals > $curMatch->GuestGoals)
-		{
-			$result = 1;
-		}
-		else if ($curMatch->HostGoals < $curMatch->GuestGoals)
-		{
-			$result = 2;
-		}
-		else
-		{
-			$result = 3;
-		}
-			
-        if (in_array($curMatch->class_id, array(1, 31))) //league
-        {
-            $curMatch->hostTeam->goals += $curMatch->HostGoals;
-            $curMatch->hostTeam->lost += $curMatch->GuestGoals;
-            $curMatch->guestTeam->goals += $curMatch->GuestGoals;
-            $curMatch->guestTeam->lost += $curMatch->HostGoals;
-            
-            if ($result == 1)
-            {
-                $curMatch->hostTeam->score += 3;
-                $curMatch->hostTeam->win++;
-                $curMatch->guestTeam->lose++;
-            }
-            else if ($result == 2)
-            {
-                $curMatch->guestTeam->score += 3;
-                $curMatch->hostTeam->lose++;
-                $curMatch->guestTeam->win++;
-            }
-            else
-            {
-                $curMatch->hostTeam->score += 1;
-                $curMatch->guestTeam->score += 1;
-                $curMatch->hostTeam->draw++;
-                $curMatch->guestTeam->draw++;
-            }
-        }
-		else if ($curMatch->class_id == 3) //ucl
-		{
-			UclGroupManager::getInstance()->saveResult($curMatch->hostTeam->id, $curMatch->guestTeam->id, $result);
-		}
-		else if ($curMatch->class_id == 12) //el
-		{
-			ElGroupManager::getInstance()->saveResult($curMatch->hostTeam->id, $curMatch->guestTeam->id, $result);
-		}
-		
-		$count = MatchManager::getInstance()->find('count', array(
-			'conditions' => array('class_id'=>$curMatch->class_id)
-		));
-		
-		if($count == 0)
-		{
-			switch ($curMatch->class_id) 
-			{
-				case 1: //league over
-				case 31:
-					$this->onLeagueEnd($classId);
-					break;
-				case 3: //ucl
-					$this->onUclTeamEnd();
-					break;
-				case 12: //el
-					$this->onElTeamEnd();
-					break;
-			}
-		}
-    }
-	
 	private function onLeagueEnd($classId)
 	{
 		$nowDate = SettingManager::getInstance()->getNowDate();
@@ -366,27 +378,136 @@ class MatchController extends AppController
 	
 	private function onUclTeamEnd()
 	{
-		$groups = array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h');
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$nextYear = date('Y', strtotime($nowDate)) + 1;
+		$groups = array('a'=>0, 'b'=>1, 'c'=>2, 'd'=>3, 'e'=>4, 'f'=>5, 'g'=>6, 'h'=>7);
 		$uclGroupTeams = UclGroupManager::getInstance()->find('all', array(
 			'order' => array('score'=>'desc')
 		));
-		$teamIds = array();
+		$alTeamIds = array();
+		$successTeamIds = array();
 		foreach($uclGroupTeams as $u)
 		{
-			$teamIds[$u['GroupName']][] = $u['team_id'];
+			$alTeamIds[$groups[$u['GroupName']]][] = $u['team_id'];
 		}
 		
+		$reward = 350;
 		$nextMatchClassId = 4;
-		$nextPlayTime = array();
+		$matchPairs = array();
 		for($i=0;$i<4;$i+=2)
 		{
-			$hostTeamId = $teamIds[$i][0];
-			$guestTeamId = $teamIds[($i+1)][1];
-			
-			
-			$hostTeamId = $teamIds[$i][1];
-			$guestTeamId = $teamIds[($i+1)][0];
+			$matchPairs[] = array(array($alTeamIds[$i][0], $alTeamIds[($i+1)][1]), array($alTeamIds[$i][1], $alTeamIds[($i+1)][0])); //两match一组，同日进行
+			array_push($successTeamIds, $alTeamIds[$i][0], $alTeamIds[($i+1)][1], $alTeamIds[$i][1], $alTeamIds[($i+1)][0]);
 		}
+		
+		foreach($matchPairs as $k=>$mp)
+		{
+			$playDate1 = $nextYear . '-' . MainConfig::$uclPlayoffDates[8][$k][0];
+			$playDate2 = $nextYear . '-' . MainConfig::$uclPlayoffDates[8][$k][1];
+			
+			$hostTeamId = $mp[0][0];
+			$guestTeamId = $mp[0][1];
+			MatchManager::getInstance()->push($hostTeamId, $guestTeamId, $nextMatchClassId, $playDate1);
+			MatchManager::getInstance()->push($guestTeamId, $hostTeamId, $nextMatchClassId, $playDate2);
+			
+			$hostTeamId = $mp[1][0];
+			$guestTeamId = $mp[1][1];
+			MatchManager::getInstance()->push($hostTeamId, $guestTeamId, $nextMatchClassId, $playDate1);
+			MatchManager::getInstance()->push($guestTeamId, $hostTeamId, $nextMatchClassId, $playDate2);
+		}
+		
+		MatchManager::getInstance()->insertBatch();
+		
+		//reward and news
+		$msg = '晋级16，prize=' . $reward . 'W';
+		
+		foreach($successTeamIds as $teamId)
+		{
+			NewsManager::getInstance()->push($msg, $teamId, $nowDate, '/res/img/EuroChampion.jpg');
+		}
+		
+		$successTeamArr = TeamManager::getInstance()->find('all', array(
+			'conditions' => array('id'=>$successTeamIds),
+			'fields' => array('id', 'money', 'bills')
+		));
+		
+		$successTeams = TeamManager::getInstance()->loadData($successTeamArr);
+		foreach($successTeams as $t)
+		{
+			$t->addMoney($reward, "欧冠晋级16强", $nowDate);
+		}
+		TeamManager::getInstance()->saveMany($successTeams);
+	}
+	
+	private function onAfcHalfEnd()
+	{
+		$finalTimes = array('11-19', '11-26');
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$thisYear = date('Y', strtotime($nowDate));
+		$finalClassId = 37;
+		$matches = MatchManager::getInstance()->find('all', array(
+			'conditions' => array('class_id'=>36)
+		));
+		
+		$winTeams = array();
+		foreach($matches as $m1)
+		{
+			if(in_array($m1['HostTeam_id'], $winTeams) || in_array($m1['GuestTeam_id'], $winTeams))
+			{
+				continue;
+			}
+			
+			foreach($matches as $m2)
+			{
+				if($m2['GuestTeam_id'] == $m1['HostTeam_id'])
+				{
+					$winTeams[] = MatchManager::getInstance()->diff($m1, $m2);
+					break;
+				}
+			}
+		}
+		
+		MatchManager::getInstance()->push($winTeams[0], $winTeams[1], $finalClassId, $thisYear . '-' . $finalTimes[0]);
+		MatchManager::getInstance()->push($winTeams[1], $winTeams[0], $finalClassId, $thisYear . '-' . $finalTimes[1]);
+		MatchManager::getInstance()->insertBatch();
+		
+		$msg = '晋级亚冠决赛了';
+		
+		foreach($winTeams as $teamId)
+		{
+			NewsManager::getInstance()->push($msg, $teamId, $nowDate, '/res/img/afc.jpg');
+		}
+	}
+	
+	private function onAfcFinalEnd()
+	{
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$matches = MatchManager::getInstance()->find('all', array(
+			'conditions' => array('class_id'=>37)
+		));
+		
+		$winReward = 300;
+		$loseReward = 150;
+		
+		$winTeamId = MatchManager::getInstance()->diff($matches[0], $matches[1]);
+		$loseTeamId = ($matches[0]['HostTeam_id'] == $winTeamId) ? $matches[0]['GuestTeam_id'] : $matches[0]['HostTeam_id'];
+		
+		$winTeam = TeamManager::getInstance()->findById($winTeamId, array(
+			'fields' => array('id', 'money', 'bills', 'popular')
+		));
+		$winTeam->popular += 2;
+		$winTeam->addMoney($winReward, '亚冠冠军奖金', $nowDate);
+		MatchManager::getInstance()->save($winTeam);
+		
+		$loseTeam = TeamManager::getInstance()->findById($loseTeamId, array(
+			'fields' => array('id', 'money', 'bills', 'popular')
+		));
+		$loseTeam->popular += 1;
+		$loseTeam->addMoney($loseReward, '亚冠亚军奖金', $nowDate);
+		MatchManager::getInstance()->save($loseTeam);
+		
+		NewsManager::getInstance()->add('亚冠联赛冠军', $winTeamId, $nowDate, '/res/img/afc.jpg');
+		NewsManager::getInstance()->add('亚冠联赛亚军', $loseTeamId, $nowDate, '/res/img/afc.jpg');
 	}
 	
 	private function onElTeamEnd()
@@ -399,7 +520,7 @@ class MatchController extends AppController
         $needTurn = false;
         $cornerKickerIndex = PlayerManager::getInstance()->getCornerKickerIndex($attackPlayers['shoufa'], $cornerKickerId);
         $this->flushMatch($attackPlayers['shoufa'][$cornerKickerIndex]->name . ' kick corner，');
-        $cornerResult = PlayerManager::getInstance()->qiangdian($attackPlayers['shoufa'], $defensePlayers['shoufa'], $cornerKickerId, mt_rand(1, 4));
+        $cornerResult = PlayerManager::getInstance()->qiangdian($attackPlayers['shoufa'], $defensePlayers['shoufa'], $attackPlayers['shoufa'][$cornerKickerIndex]->id, mt_rand(1, 4));
         switch ($cornerResult['result']) 
         {
             case 1:

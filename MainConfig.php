@@ -103,4 +103,12 @@ class MainConfig
     const STATIC_DIR = "http://ypn.com/";
 	
 	const BASE_URL = "http://ypn.com/";
+	
+	
+	static $uclPlayoffDates = array(
+		'8' => array(array('2-17','2-24'),array('2-18','2-25'),array('3-10','3-17'), array('3-9','3-16')), //八分之一
+		'4' => array(array('4-6','4-14'),array('4-7','4-13')),
+		'half' => array(array('4-27','5-5'),array('4-28','5-4')),
+		'final' => '5-29'
+	);
 }

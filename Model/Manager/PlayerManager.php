@@ -41,10 +41,11 @@ class PlayerManager extends DataManager
     {
         return $this->loadData($arrPlayers, 'Player');
     }
-        
-    public function setShoufa($players, $matchClassId, $formattion)
-    {
-        switch ($matchClassId)
+	
+	public function getPunishFieldByMatchClassId($matchClassId)
+	{
+		$punishField = '';
+		switch ($matchClassId)
         {
             case 1:
             case 31:
@@ -74,7 +75,70 @@ class PlayerManager extends DataManager
             	$punishField = "Punish2Count";
                 break;
         }
-
+		return $punishField;
+	}
+        
+    public function setShoufa($players, $matchClassId, $formattion, $isAutoFormat)
+    {
+		$punishField = $this->getPunishFieldByMatchClassId($matchClassId);
+		
+		if($isAutoFormat)
+		{
+			$this->autoSetShoufa($players, $matchClassId, $formattion, $punishField);
+		}
+		
+		/*ClubDepending 首发+1,场外-1*/
+		for ($i = 0;$i < count($players);$i++)
+		{
+			if ($players[$i]->condition_id == 1)
+			{
+				if ($players[$i]->ClubDepending < 100)
+				{
+					$players[$i]->ClubDepending += 1;
+				}
+				
+				if ($players[$i]->loyalty < 100)
+				{
+					$players[$i]->loyalty += 1;
+				}
+			}
+			
+			if ( ($players[$i]->condition_id == 3) && ($players[$i]->ClubDepending > 30) && ($players[$i]->state > 95) && ($players[$i]->sinew > 78) && ($players[$i]->$punishField == 0) )
+			{
+				$players[$i]->ClubDepending -= 1;
+				$players[$i]->loyalty -= 1;
+			}
+		}
+        
+        $matchPlayers = array();
+        
+        foreach($players as $player)
+        {
+			$player->score = 0;
+			$player->yellow_today = 0;
+            if ($player->condition_id == 1)
+            {
+                $matchPlayers['shoufa'][] = $player;
+            }
+            else if ($player->condition_id == 2)
+            {
+                $matchPlayers['bandeng'][] = $player;
+            }
+        }
+        
+        return $matchPlayers;
+    }
+	
+	private function autoSetShoufa(&$players, $matchClassId, $formattion, $punishField)
+	{
+		foreach($players as &$player)
+        {
+            if (in_array($player->condition_id, array(1, 2)))
+            {
+                $player->condition_id = 3;
+            }
+        }
+		
         /*公共的 门将 左右前卫 左右后卫*/
         $this->online2(13, $punishField, $players, $matchClassId);
         $this->online2(14, $punishField, $players, $matchClassId);
@@ -165,48 +229,7 @@ class PlayerManager extends DataManager
                 	
         	if ($j == 4 && $isGetKeeper) break;
         }
-        
-		/*ClubDepending 首发+1,场外-1*/
-		for ($i = 0;$i < count($players);$i++)
-		{
-			if ($players[$i]->condition_id == 1)
-			{
-				if ($players[$i]->ClubDepending < 100)
-				{
-					$players[$i]->ClubDepending += 1;
-				}
-				
-				if ($players[$i]->loyalty < 100)
-				{
-					$players[$i]->loyalty += 1;
-				}
-			}
-			
-			if ( ($players[$i]->condition_id == 3) && ($players[$i]->ClubDepending > 30) && ($players[$i]->state > 95) && ($players[$i]->sinew > 78) && ($players[$i]->$punishField == 0) )
-			{
-				$players[$i]->ClubDepending -= 1;
-				$players[$i]->loyalty -= 1;
-			}
-		}
-        
-        $matchPlayers = array();
-        
-        foreach($players as $player)
-        {
-			$player->score = 0;
-			$player->yellow_today = 0;
-            if ($player->condition_id == 1)
-            {
-                $matchPlayers['shoufa'][] = $player;
-            }
-            else if ($player->condition_id == 2)
-            {
-                $matchPlayers['bandeng'][] = $player;
-            }
-        }
-        
-        return $matchPlayers;
-    }
+	}
     
     private function online2($position_id, $punish, &$players, $matchClassId)
     {		        
@@ -468,7 +491,7 @@ class PlayerManager extends DataManager
         }
         $fields = array('id', 'name', 'ImgSrc', 'ShotAccurateExperience', 'ShotAccurate', 'PassExperience', 'pass', 'TackleExperience', 'tackle',
             'BallControlExperience', 'BallControl', 'BeatExperience', 'beat', 'SaveExperience', 'save', 'SinewMaxExperience', 'SinewMax',
-            'QiangdianExperience', 'qiangdian', 'HeaderExperience', 'header', 'position_id');
+            'QiangdianExperience', 'qiangdian', 'HeaderExperience', 'header', 'position_id', 'training_id');
         $allPlayers = $this->find('all', compact('conditions', 'fields'));    
             
 		foreach ($trainings as $id=>$t)
@@ -676,13 +699,13 @@ class PlayerManager extends DataManager
         return $result;
     }
     
-    public function getCornerKickerIndex($attackPlayers, $cornerKickerId)
+    public function getCornerKickerIndex($attackShoufaPlayers, $cornerKickerId)
     {
         $cornerKickerIndex = -1;
         $isGetCornerKicker = false;
-        for($i=0;$i<count($attackPlayers);$i++)
+        for($i=0;$i<count($attackShoufaPlayers);$i++)
         {
-            if ($attackPlayers[$i]->id == $cornerKickerId)
+            if ($attackShoufaPlayers[$i]->id == $cornerKickerId)
             {
                 $cornerKickerIndex = $i;
                 $isGetCornerKicker = true;
@@ -694,10 +717,10 @@ class PlayerManager extends DataManager
         {
             $max = 0;
             $maxIndex = -1;
-            $attackPlayerCount = count($attackPlayers);
+            $attackPlayerCount = count($attackShoufaPlayers);
             for($i=0;$i<$attackPlayerCount;$i++)
             {
-                $cornerValue = $attackPlayers[$i]->getCornerValue();
+                $cornerValue = $attackShoufaPlayers[$i]->getCornerValue();
                 if ($cornerValue > $max)
                 {
                     $max = $cornerValue;
@@ -720,7 +743,7 @@ class PlayerManager extends DataManager
         for($i=0;$i<count($attackPlayers);$i++)
         {
             if ($attackPlayers[$i]->id == $cornerKickerId)                continue;
-            if ($attackPlayers[$i]->CornerPosition_id == $cornerPosition)
+            if (($attackPlayers[$i]->CornerPosition_id == $cornerPosition) && ($attackPlayers[$i]->position_id != 4) )
             {
                 $qiangdianValue = $attackPlayers[$i]->getQiangdianValue();
                 if ($qiangdianValue > $max)
@@ -1107,7 +1130,7 @@ class PlayerManager extends DataManager
 	
 	public function saveMatchResult($hostShoufaPlayers, $guestShoufaPlayers)
 	{
-		$keys = array('id', 'Goal1Count', 'Penalty1Count', 'Assist1Count', 'Tackle1Count', 'Punish1Count', 'ShotAccurateExperience', 'PassExperience', 'YellowCard1Count', 'RedCard1Count');
+		$keys = array('id', 'Goal1Count', 'Penalty1Count', 'Assist1Count', 'Tackle1Count', 'Punish1Count', 'ShotAccurateExperience', 'PassExperience', 'YellowCard1Count', 'RedCard1Count', 'sinew');
 		$values = array();
 		$shoufaPlayers = array_merge($hostShoufaPlayers, $guestShoufaPlayers);
 		foreach($shoufaPlayers as $p)
@@ -1235,5 +1258,11 @@ class PlayerManager extends DataManager
 		}
 		
 		return array('result'=>$result, 'free_kicker'=>$freeKicker, 'goal_keeper'=>$goalKeeper);
+	}
+	
+	public function clearPunish($teamIds, $matchClassId)
+	{
+		$punishField = $this->getPunishFieldByMatchClassId($matchClassId);
+		$this->update(array($punishField=>$punishField.'-1'), array($punishField.' >'=>0, 'team_id'=>$teamIds));
 	}
 }

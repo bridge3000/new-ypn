@@ -49,16 +49,14 @@ class TeamManager extends DataManager
 			'fields' => array('id','money','TicketPrice','seats'),
 			));
 		
+		$values = array();
 		foreach($otherLeagueTeams as $t)
 		{
-			if ($t['id'] == $myTeamId)
-			{
-				continue;
-			}
-			
 			$money =  $t['money'] + ($t['TicketPrice'] * $t['seats'] * (50 + mt_rand(1, 50)) / (100 * 10000) );
-			$this->update(array('money' => $money), array('id'=>$t['id']));
+			$values[] = array('id'=>$t['id'], 'money'=>$money);
 		}
+		
+		$this->update_batch($values);
     }
     
     public function resetTeams()

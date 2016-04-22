@@ -71,8 +71,6 @@ class YpnController extends AppController
 
 			$this->redirect(array('controller'=>'player', 'action'=>'pay_birthday'), false); /*过生日的队员发奖金*/
 
-//			NewsManager::getInstance()->saveAllData();
-
 			/*列出近期新闻，如果不采用弹出窗口显示则不用列出*/
 			$this->set('news', NewsManager::getInstance()->getUnreadNews($myTeamId));
 			NewsManager::getInstance()->readAll($myTeamId);
@@ -80,14 +78,15 @@ class YpnController extends AppController
 			PlayerManager::getInstance()->doNormal(); //球员日常变化
 
 			echo "<a href=\"" . MainConfig::BASE_URL . "match/today\">today match</a>";
+			echo "<script>$(\"#loading\").remove();</script>";
 //			echo "<script>location.href = 'index.php?c=match&a=today';</script>";
 		}
 	}
 	
 	private function training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate)
 	{
-		echo ("<div align=center><img src='" . MainConfig::STATIC_DIR . "img/training.jpg' width='500' /><br><br>training<img src='" . MainConfig::STATIC_DIR . "res/img/loading.gif'></div>");
-		flush();
+		$this->flushJs();
+		$this->flushNow("<div align=center><img id='training' src='" . MainConfig::STATIC_DIR . "img/training.jpg' width='500' /><br><br>training<img id='loading' src='" . MainConfig::STATIC_DIR . "res/img/loading.gif'></div>");
 		
 		$allTeamIds = TeamManager::getInstance()->getAllTeamIds();
 		$noMatchTeamIds = array_diff($allTeamIds, $todayMatchTeamIds); //今日没有比赛的球队ID

@@ -2,22 +2,22 @@
 namespace Controller;
 use Controller\AppController;
 use Model\Manager\TeamManager;
-use Model\Manager\UclGroupManager;
+use Model\Manager\ElGroupManager;
 use MainConfig;
 
 /**
- * Description of UclGroupController
+ * Description of ElGroupController
  *
  * @author qiaoliang
  */
-class UclGroupController extends AppController 
+class ElGroupController extends AppController 
 {
-	public $name = 'UclGroup';
+	public $name = 'ElGroup';
 	public $layout = "main";
 	
 	public function index()
 	{
-		$groups = UclGroupManager::getInstance()->find('all', array(
+		$groups = ElGroupManager::getInstance()->find('all', array(
 			'order' => array('score'=>'desc')
 		));
 		$groupTeamIds = array();
