@@ -492,19 +492,21 @@ class MatchController extends AppController
 		$winTeamId = MatchManager::getInstance()->diff($matches[0], $matches[1]);
 		$loseTeamId = ($matches[0]['HostTeam_id'] == $winTeamId) ? $matches[0]['GuestTeam_id'] : $matches[0]['HostTeam_id'];
 		
-		$winTeam = TeamManager::getInstance()->findById($winTeamId, array(
+		$winTeamArr = TeamManager::getInstance()->findById($winTeamId, array(
 			'fields' => array('id', 'money', 'bills', 'popular')
 		));
+		$winTeam = TeamManager::getInstance()->loadOne($winTeamArr);
 		$winTeam->popular += 2;
 		$winTeam->addMoney($winReward, '亚冠冠军奖金', $nowDate);
-		MatchManager::getInstance()->save($winTeam);
+		TeamManager::getInstance()->save($winTeam);
 		
-		$loseTeam = TeamManager::getInstance()->findById($loseTeamId, array(
+		$loseTeamArr = TeamManager::getInstance()->findById($loseTeamId, array(
 			'fields' => array('id', 'money', 'bills', 'popular')
 		));
+		$loseTeam = TeamManager::getInstance()->loadOne($loseTeamArr);
 		$loseTeam->popular += 1;
 		$loseTeam->addMoney($loseReward, '亚冠亚军奖金', $nowDate);
-		MatchManager::getInstance()->save($loseTeam);
+		TeamManager::getInstance()->save($loseTeam);
 		
 		NewsManager::getInstance()->add('亚冠联赛冠军', $winTeamId, $nowDate, '/res/img/afc.jpg');
 		NewsManager::getInstance()->add('亚冠联赛亚军', $loseTeamId, $nowDate, '/res/img/afc.jpg');

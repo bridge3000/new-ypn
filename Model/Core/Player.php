@@ -4,12 +4,6 @@ namespace Model\Core;
 class Player
 {
     public $id;
-    public $name;
-    public $alias;
-    public $ShirtNo;
-    public $team_id;
-    public $position_id;
-	public $birthday;
     
     public function getId() {
         return $this->id;

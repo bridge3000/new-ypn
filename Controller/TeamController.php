@@ -32,7 +32,6 @@ class TeamController extends AppController
         for ($i = 0;$i < count($allTeams);$i++)
     	{
             $allTeams[$i]->paySalary($nowDate);
-    		NewsManager::getInstance()->add('给球员发工资共花费了<font color=red><strong>' . $allTeams[$i]->TotalSalary . '</strong></font>万欧元', $allTeams[$i]->id, $nowDate, $allTeams[$i]->ImgSrc);
 			
 			$changeData[] = array('id'=>$allTeams[$i]->id, 'money'=>$allTeams[$i]->money, 'bills'=>$allTeams[$i]->bills);
     	}

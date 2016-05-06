@@ -395,7 +395,7 @@ class DataManager
 				if ($field != $index)
 				{
 //					$final[$field][] =  'WHEN '.$index.' = '.$val[$index].' THEN '.$val[$field];
-					$final[$field][] =  'WHEN '.$index.' = '.$val[$index].' THEN \''.$val[$field] . '\'';
+					$final[$field][] =  'WHEN '.$index.' = \''.$val[$index].'\' THEN \''.$val[$field] . '\'';
 				}
 			}
 		}

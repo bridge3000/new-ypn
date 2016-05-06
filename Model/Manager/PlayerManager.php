@@ -491,9 +491,10 @@ class PlayerManager extends DataManager
         }
         $fields = array('id', 'name', 'ImgSrc', 'ShotAccurateExperience', 'ShotAccurate', 'PassExperience', 'pass', 'TackleExperience', 'tackle',
             'BallControlExperience', 'BallControl', 'BeatExperience', 'beat', 'SaveExperience', 'save', 'SinewMaxExperience', 'SinewMax',
-            'QiangdianExperience', 'qiangdian', 'HeaderExperience', 'header', 'position_id', 'training_id');
+            'QiangdianExperience', 'qiangdian', 'HeaderExperience', 'header', 'position_id', 'training_id', 'birthday');
         $allPlayers = $this->find('all', compact('conditions', 'fields'));    
             
+		$changedPlayers = array();
 		foreach ($trainings as $id=>$t)
 		{
 			for ($i = 0;$i < count($allPlayers);$i++)
@@ -503,13 +504,15 @@ class PlayerManager extends DataManager
                     $imgSrc = $allPlayers[$i]['ImgSrc'];
                     $updateMsg = "<font color=green><strong>" . $allPlayers[$i]['name'] . "</strong></font>的<font color=red><strong>" . $t['title'] . "</strong></font>提高了";
     //				$News->Add1($updateMsg, $players[$j]['team_id'], $nowDate, $imgSrc);
-                    $this->changeTrainingState($allPlayers[$i]);
+                    $this->changeTrainingState($allPlayers[$i], $nowDate, $changedPlayers);
                 }
                 
 			}
 			$this->query("update ypn_players set " . $t['experience'] . "=" . $t['experience'] . "-100, `" . $t["skill"] . "`=`" . $t["skill"] . "`+1 where " . $t['experience'] . " > 99 and `" . $t["skill"] . "` <99");
 			$this->query("update ypn_players set " . $t['experience'] . "=0 where `" . $t["skill"] . "` >98");
 		}
+		
+		$this->update_batch($changedPlayers);
 	}
     
 	/**
@@ -517,11 +520,10 @@ class PlayerManager extends DataManager
 	 * @param type $playerData 单个player数据
 	 * @param type $trainingList 
 	 */
-    public function changeTrainingState($playerData)
+    public function changeTrainingState($playerData, $nowDate, &$changedPlayers)
 	{
         $curPlayers = $this->loadPlayers(array($playerData));
 		$curPlayer = $curPlayers[0];
-        $nowDate = SettingManager::getInstance()->getNowDate();
 		$isChanged = false;
 		
 		switch ($playerData['position_id']) 
@@ -568,7 +570,7 @@ class PlayerManager extends DataManager
 		{
 	        for ($i = 0; $i < count($trainingIds); $i++)
             {
-				if ( ($curPlayer->$allTrainings[$trainingIds[$i]]['skill'] < 85) && ($curPlayer->training_id != $trainingIds[$i]) )
+				if ( (\MainConfig::$trainings[$trainingIds[$i]]['skill'] < 85) && ($curPlayer->training_id != $trainingIds[$i]) )
 				{   
 					$isChanged = true;
 					$curPlayer->training_id = $trainingIds[$i];
@@ -579,7 +581,7 @@ class PlayerManager extends DataManager
 		
 		if ($isChanged)
 		{
-			$this->save($curPlayer);
+			$changedPlayers[] = array('id'=>$curPlayer->id, 'training_id'=>$curPlayer->training_id);
 		}
 	}
     
