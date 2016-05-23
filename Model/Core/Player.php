@@ -673,4 +673,31 @@ class Player
 	{
 		return $this->height/2 + $this->save + $this->agility + mt_rand(1,10);
 	}
+	
+	/**
+	 * 
+	 * @return int 0
+	 */
+	public function getTransferType($nowDate)
+	{
+		$date = new DateTime($this->ContractEnd);
+		$date->add(new DateInterval('P6M'));
+		$next6MDay = $date->format('Y-m-d');
+
+		$transferType = 0;
+		if ($this->isSelling)
+		{
+			$transferType = 1;
+		}
+		else if($this->team_id == 0)
+		{
+			$transferType = 2;
+		}
+		else if($next6MDay > $nowDate)
+		{
+			$transferType = 3;
+		}
+		
+		return $transferType;
+	}
 }

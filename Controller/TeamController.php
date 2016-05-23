@@ -227,7 +227,7 @@ class TeamController extends AppController
 			{
 				FutureContractManager::getInstance()->save(array(
 					'player_id' => $curPlayer->id,
-					'NewContractEnd' => date("Y", strtotime("$this->nowDate + " . $this->getRandom(1, 6) . " year")) . "-6-30",
+					'NewContractEnd' => date("Y", strtotime("$nowDate + " . mt_rand(1, 6) . " year")) . "-6-30",
 					'NewTeam_id' => $buyTeam->id,
 					'NewSalary' => $newSalary,
 					'OldContractEnd' => $curPlayer->ContractEnd

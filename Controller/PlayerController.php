@@ -376,7 +376,7 @@ class PlayerController extends AppController
 		$curPlayerArray = PlayerManager::getInstance()->findById($playerId);
 		$arr = PlayerManager::getInstance()->loadData(array($curPlayerArray));
 		$curPlayer = $arr[0];
-		$isSuccess = FALSE;
+		$isSalaryAgreed = FALSE;
 		
 		$expectedSalary = $curPlayer->getExpectedSalary($nowDate);
 		if ($newSalary >= $expectedSalary) //player salary同意
@@ -385,7 +385,7 @@ class PlayerController extends AppController
 		
 			if ( ($curPlayer->team_id == 0) || ($contractRemainMonth <= 6) )//free transfer
 			{
-				$isSuccess = TRUE;
+				$isSalaryAgreed = TRUE;
 				NewsManager::getInstance()->add("买进{$curPlayer->name}成功", $buyTeamId, $nowDate, '', 0);
 			}
 			else
@@ -394,11 +394,11 @@ class PlayerController extends AppController
 				$wave = mt_rand(1, 10);
 				if ($newPrice >= $expectedValue - $expectedSalary*$wave/100)
 				{
-					$isSuccess = TRUE;
+					$isSalaryAgreed = TRUE;
 				}
 				else
 				{
-					$isSuccess = FALSE;
+					$isSalaryAgreed = FALSE;
 					NewsManager::getInstance()->add('fee error, expected ' . $expectedValue, $buyTeamId, $nowDate, '', 0);
 				}
 			}
@@ -408,7 +408,7 @@ class PlayerController extends AppController
 			NewsManager::getInstance()->add('salaray error, expected ' . $expectedSalary, $buyTeamId, $nowDate, '', 0);
 		}
 		
-		if ($isSuccess)
+		if ($isSalaryAgreed)
 		{
 			//reset total salary
 			if ($curPlayer->team_id)
