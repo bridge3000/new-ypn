@@ -18,7 +18,7 @@ class UclGroupController extends AppController
 	public function index()
 	{
 		$groups = UclGroupManager::getInstance()->find('all', array(
-			'order' => array('score'=>'desc')
+			'order' => array('GroupName'=>'asc', 'score'=>'desc')
 		));
 		$groupTeamIds = array();
 		foreach($groups as $g)

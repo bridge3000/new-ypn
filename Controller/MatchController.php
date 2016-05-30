@@ -394,7 +394,7 @@ class MatchController extends AppController
 		$reward = 350;
 		$nextMatchClassId = 4;
 		$matchPairs = array();
-		for($i=0;$i<4;$i+=2)
+		for($i=0;$i<8;$i+=2)
 		{
 			$matchPairs[] = array(array($alTeamIds[$i][0], $alTeamIds[($i+1)][1]), array($alTeamIds[$i][1], $alTeamIds[($i+1)][0])); //两match一组，同日进行
 			array_push($successTeamIds, $alTeamIds[$i][0], $alTeamIds[($i+1)][1], $alTeamIds[$i][1], $alTeamIds[($i+1)][0]);
