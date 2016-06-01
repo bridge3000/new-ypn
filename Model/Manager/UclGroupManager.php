@@ -32,4 +32,22 @@ class UclGroupManager extends DataManager
 			$this->update(array("score"=>"+1","draw"=>"+1"), array('team_id'=>$guestTeamId));
 		}
 	}
+	
+	public function getThirdTeamIds()
+	{
+		$groups = array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h');
+		$uclGroupTeams = $this->find('all', array('order' => array('score'=>'desc')));
+		$alTeamIds = array();
+		foreach($uclGroupTeams as $u)
+		{
+			$alTeamIds[$u['GroupName']][] = $u['team_id']; //按组为键，把teamid存入数组
+		}
+		
+		$thirdTeams = array();
+		foreach($groups as $k)
+		{
+			$thirdTeams[] = $alTeamIds[$k][2];
+		}
+		return $thirdTeams;
+	}
 }

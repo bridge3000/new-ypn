@@ -142,7 +142,7 @@ class TeamManager extends DataManager
 	 */
 	public function changeMoney($teamId, $dir, $money, $nowDate, $content)
 	{
-		$curTeam = TeamManager::getInstance()->findById($teamId);
+		$curTeam = $this->findById($teamId);
 		if ($dir == 1)
 		{
 			$curTeam['money'] += $money;
@@ -155,5 +155,21 @@ class TeamManager extends DataManager
 		$bills[] = array('dir' => $dir, 'money' => $money, 'remain' => $curTeam['money'], 'content' => $content, 'date'=>strtotime($nowDate));
 		$curTeam['bills'] = json_encode($bills);
 		$this->save($curTeam, 'update');
+	}
+	
+	public function addMoneyBatch($teamIds, $money, $msg, $nowDate)
+	{
+		$successTeamArr = $this->find('all', array(
+			'options' => array('id'=>$teamIds),
+			'fields' => array('money','bills')
+		));
+		
+		$successTeams = $this->loadData($successTeamArr);
+		foreach($successTeams as $t)
+		{
+			$t->addMoney($money, $msg, $nowDate);
+		}
+
+		TeamManager::getInstance()->saveMany($successTeams);
 	}
 }

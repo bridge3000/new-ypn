@@ -18,7 +18,7 @@ class ElGroupController extends AppController
 	public function index()
 	{
 		$groups = ElGroupManager::getInstance()->find('all', array(
-			'order' => array('score'=>'desc')
+			'order' => array('GroupName'=>'asc', 'score'=>'desc')
 		));
 		$groupTeamIds = array();
 		foreach($groups as $g)

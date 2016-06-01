@@ -111,4 +111,12 @@ class MainConfig
 		'half' => array(array('4-27','5-5'),array('4-28','5-4')),
 		'final' => '5-29'
 	);
+	
+	static $elPlayoffDates = array(
+		'16' => array(array('2-18','2-25'),array('2-19','2-26')),
+		'8' => array(array('3-11','3-18')), //八分之一
+		'4' => array(array('4-8','4-15')),
+		'half' => array(array('4-29','5-6')),
+		'final' => '5-19'
+	);
 }

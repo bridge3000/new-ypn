@@ -221,6 +221,12 @@ class MatchController extends AppController
 				case 37: 
 					$this->onAfcFinalEnd();
 					break;
+				case 20: //世俱半决
+					$this->onFcwcHalfEnd();
+					break;
+				case 22: //世俱决
+					$this->onFcwcFinalEnd();
+					break;
 			}
 		}
     }
@@ -382,8 +388,9 @@ class MatchController extends AppController
 		$nextYear = date('Y', strtotime($nowDate)) + 1;
 		$groups = array('a'=>0, 'b'=>1, 'c'=>2, 'd'=>3, 'e'=>4, 'f'=>5, 'g'=>6, 'h'=>7);
 		$uclGroupTeams = UclGroupManager::getInstance()->find('all', array(
-			'order' => array('score'=>'desc')
-		));
+				'order' => array('score'=>'desc')
+			)				
+		);
 		$alTeamIds = array();
 		$successTeamIds = array();
 		foreach($uclGroupTeams as $u)
@@ -437,6 +444,54 @@ class MatchController extends AppController
 			$t->addMoney($reward, "欧冠晋级16强", $nowDate);
 		}
 		TeamManager::getInstance()->saveMany($successTeams);
+	}
+	
+	private function onUclEighthFinalEnd()
+	{
+		$finalTimes = array('11-19', '11-26');
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$thisYear = date('Y', strtotime($nowDate));
+		$forthFinalClassId = 5;
+		$matches = MatchManager::getInstance()->find('all', array(
+			'conditions' => array('class_id'=>4)
+		));
+		
+		$winTeamIds = array(); //8team
+		foreach($matches as $m1)
+		{
+			if(in_array($m1['HostTeam_id'], $winTeamIds) || in_array($m1['GuestTeam_id'], $winTeamIds))
+			{
+				continue;
+			}
+			
+			foreach($matches as $m2)
+			{
+				if($m2['GuestTeam_id'] == $m1['HostTeam_id'])
+				{
+					$winTeamIds[] = MatchManager::getInstance()->diff($m1, $m2);
+					break;
+				}
+			}
+		}
+		
+		$winTeamCount = count($winTeamIds);
+		for($i=0;$i<$winTeamCount;$i+=2)
+		{
+			MatchManager::getInstance()->push($winTeamIds[$i], $winTeamIds[$i+1], $forthFinalClassId, $thisYear . '-' . MainConfig::$uclPlayoffDates[4][floor($i/4)][0]);
+			MatchManager::getInstance()->push($winTeamIds[$i+1], $winTeamIds[$i], $forthFinalClassId, $thisYear . '-' . MainConfig::$uclPlayoffDates[4][floor($i/4)][1]);
+		}
+		
+		MatchManager::getInstance()->insertBatch();
+		
+		$reward = 390;
+		$moneyMsg = "欧冠晋级16强";
+		TeamManager::getInstance()->addMoneyBatch($winTeamIds, $reward, $moneyMsg, $nowDate);
+		
+		$newsMsg = '晋级欧冠四分之一决赛了';
+		foreach($winTeamIds as $teamId)
+		{
+			NewsManager::getInstance()->push($newsMsg, $teamId, $nowDate, '/res/img/EuroChampion.jpg');
+		}
 	}
 	
 	private function onAfcHalfEnd()
@@ -512,9 +567,146 @@ class MatchController extends AppController
 		NewsManager::getInstance()->add('亚冠联赛亚军', $loseTeamId, $nowDate, '/res/img/afc.jpg');
 	}
 	
+	private function onFcwcHalfEnd()
+	{
+		$finalTime = '12-20'; //final和third final都是同一天
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$thisYear = date('Y', strtotime($nowDate));
+		$finalClassId = 22;
+		$thirdFinalClassId = 21;
+		$matches = MatchManager::getInstance()->find('all', array(
+			'conditions' => array('class_id'=>20)
+		));
+		
+		$winTeams = array();
+		$loseTeams = array();
+		foreach($matches as $m1)
+		{
+			if($m1['HostGoals'] > $m1['GuestGoals'])
+			{
+				$winTeams[] = $m1['HostTeam_id'];
+				$loseTeams[] = $m1['GuestTeam_id'];
+			}
+			else
+			{
+				$winTeams[] = $m1['GuestTeam_id'];
+				$loseTeams[] = $m1['HostTeam_id'];
+			}
+		}
+		
+		MatchManager::getInstance()->push($winTeams[0], $winTeams[1], $finalClassId, $thisYear . '-' . $finalTime);
+		MatchManager::getInstance()->push($loseTeams[0], $loseTeams[1], $thirdFinalClassId, $thisYear . '-' . $finalTime);
+		MatchManager::getInstance()->insertBatch();
+		
+		$msg = '晋级世俱杯决赛了';
+		foreach($winTeams as $teamId)
+		{
+			NewsManager::getInstance()->push($msg, $teamId, $nowDate, '/res/img/afc.jpg');
+		}
+	}
+	
+	private function onFcwcFinalEnd()
+	{
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$matches = MatchManager::getInstance()->find('all', array(
+			'conditions' => array('class_id'=>22)
+		));
+		
+		$winReward = 300;
+		$loseReward = 150;
+		
+		if($matches[0]['HostGoals'] > $matches[0]['GuestGoals'])
+		{
+			$winTeamId = $matches[0]['HostTeam_id'];
+			$loseTeamId = $matches[0]['GuestTeam_id'];
+		}
+		else
+		{
+			$winTeamId = $matches[0]['GuestTeam_id'];
+			$loseTeamId = $matches[0]['HostTeam_id'];
+		}
+		
+		$winTeamArr = TeamManager::getInstance()->findById($winTeamId, array(
+			'fields' => array('id', 'money', 'bills', 'popular')
+		));
+		$winTeam = TeamManager::getInstance()->loadOne($winTeamArr);
+		$winTeam->popular += 5;
+		$winTeam->addMoney($winReward, '世俱杯冠军奖金', $nowDate);
+		TeamManager::getInstance()->save($winTeam);
+		
+		$loseTeamArr = TeamManager::getInstance()->findById($loseTeamId, array(
+			'fields' => array('id', 'money', 'bills', 'popular')
+		));
+		$loseTeam = TeamManager::getInstance()->loadOne($loseTeamArr);
+		$loseTeam->popular += 1;
+		$loseTeam->addMoney($loseReward, '世俱杯亚军奖金', $nowDate);
+		TeamManager::getInstance()->save($loseTeam);
+		
+		NewsManager::getInstance()->add('世俱杯冠军', $winTeamId, $nowDate, '/res/img/fifa.gif');
+		NewsManager::getInstance()->add('世俱杯亚军', $loseTeamId, $nowDate, '/res/img/fifa.gif');
+	}
+	
 	private function onElTeamEnd()
 	{
-		//
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$nextYear = date('Y', strtotime($nowDate)) + 1;
+		$groups = array('a'=>0, 'b'=>1, 'c'=>2, 'd'=>3, 'e'=>4, 'f'=>5, 'g'=>6, 'h'=>7, 'i'=>8, 'j'=>9, 'k'=>10, 'l'=>11);
+		$elGroupTeams = ElGroupManager::getInstance()->find('all', array(
+			'order' => array('score'=>'desc')
+		));
+		$alTeamIds = array();
+		$successTeamIds = array();
+		foreach($elGroupTeams as $u)
+		{
+			$alTeamIds[$groups[$u['GroupName']]][] = $u['team_id']; //按组为键，把teamid存入数组
+		}
+		
+		$reward = 35;
+		$nextMatchClassId = 13;
+		
+		foreach($alTeamIds as $groupTeamIds)
+		{
+			$successTeamIds[] = $groupTeamIds[0];
+			$successTeamIds[] = $groupTeamIds[1];
+		}
+		
+		//ucl 的第三
+		$uclThirdTeamIds = UclGroupManager::getInstance()->getThirdTeamIds();
+		$successTeamIds = array_merge($successTeamIds, $uclThirdTeamIds);
+		$successTeamCount = count($successTeamIds);
+		
+		for($i=0;$i<$successTeamCount;$i+=2)
+		{
+			$playDate1 = $nextYear . '-' . MainConfig::$elPlayoffDates[16][floor($i*2/$successTeamCount)][0];
+			$playDate2 = $nextYear . '-' . MainConfig::$elPlayoffDates[16][floor($i*2/$successTeamCount)][1];
+			
+			$hostTeamId = $successTeamIds[$i];
+			$guestTeamId = $successTeamIds[$i+1];
+			MatchManager::getInstance()->push($hostTeamId, $guestTeamId, $nextMatchClassId, $playDate1);
+			MatchManager::getInstance()->push($guestTeamId, $hostTeamId, $nextMatchClassId, $playDate2);
+		}
+		
+		MatchManager::getInstance()->insertBatch();
+		
+		//reward and news
+		$msg = '欧联杯晋级32，prize=' . $reward . 'W';
+		
+		foreach($successTeamIds as $teamId)
+		{
+			NewsManager::getInstance()->push($msg, $teamId, $nowDate, '/res/img/EuroChampion.jpg');
+		}
+		
+		$successTeamArr = TeamManager::getInstance()->find('all', array(
+			'conditions' => array('id'=>$successTeamIds),
+			'fields' => array('id', 'money', 'bills')
+		));
+		
+		$successTeams = TeamManager::getInstance()->loadData($successTeamArr);
+		foreach($successTeams as $t)
+		{
+			$t->addMoney($reward, "欧联杯晋级32强", $nowDate);
+		}
+		TeamManager::getInstance()->saveMany($successTeams);
 	}
     
     private function corner(&$attackPlayers, &$defensePlayers, $cornerKickerId, &$curMatch)
