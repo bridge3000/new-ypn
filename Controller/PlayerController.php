@@ -10,6 +10,7 @@ use Model\Manager\CoachManager;
 use Model\Manager\TeamManager;
 use Model\Manager\MatchManager;
 use Model\Manager\NewsManager;
+use Model\Manager\YpnManager;
 use \DateTime;
 use \DateInterval;
 
@@ -215,49 +216,56 @@ class PlayerController extends AppController
 		$conditions = array();
 		$searchTypes = array(1=>'list', 2=>'free', 3=>'future');
 		$nowDate = SettingManager::getInstance()->getNowDate();
-		$d1 = new DateTime($nowDate);
-		$d1->add(new DateInterval('P6M'));
-		$sixMonthLater = $d1->format('Y-m-d');
-        
-        switch ($searchType) 
-        {
-            case 1:
-                $conditions['isSelling'] = 1;
-                break;
-            case 2:
-                $conditions['team_id'] = 0;
-                break;
-			case 3:
-				$conditions['ContractEnd <'] = $sixMonthLater;
-        }
-        
-        $records = PlayerManager::getInstance()->find('all', array(
-            'conditions' => $conditions,
-            'fields' => array('id', 'name', 'team_id', 'position_id', 'fee', 'salary', 'popular', 'ContractBegin', 'ContractEnd', 'birthday'),
-            'order' => array('fee'=>'desc', 'salary'=>'desc','popular'=>'desc', 'id'=>'desc'),
-            'limit' => array(($curPage-1)*$perPage, $perPage)
-        ));
+		$isTransferDay = YpnManager::getInstance()->checkTransferDay($nowDate);
 		
-		$players = PlayerManager::getInstance()->loadData($records);
+		if($isTransferDay)
+		{
+			$d1 = new DateTime($nowDate);
+			$d1->add(new DateInterval('P6M'));
+			$sixMonthLater = $d1->format('Y-m-d');
+
+			switch ($searchType) 
+			{
+				case 1:
+					$conditions['isSelling'] = 1;
+					break;
+				case 2:
+					$conditions['team_id'] = 0;
+					break;
+				case 3:
+					$conditions['ContractEnd <'] = $sixMonthLater;
+			}
+
+			$records = PlayerManager::getInstance()->find('all', array(
+				'conditions' => $conditions,
+				'fields' => array('id', 'name', 'team_id', 'position_id', 'fee', 'salary', 'popular', 'ContractBegin', 'ContractEnd', 'birthday'),
+				'order' => array('fee'=>'desc', 'salary'=>'desc','popular'=>'desc', 'id'=>'desc'),
+				'limit' => array(($curPage-1)*$perPage, $perPage)
+			));
+
+			$players = PlayerManager::getInstance()->loadData($records);
+
+			$recordCount = PlayerManager::getInstance()->find('count', array(
+				'conditions' => $conditions
+			));
+
+			$pageCount = ceil($recordCount / $perPage);
+
+			$teamList = TeamManager::getInstance()->find('list', array(
+				'conditions' => array('league_id<>'=>100),
+				'fields' => array('id', 'name')
+			));
+
+			$this->set('searchTypes', $searchTypes);
+			$this->set('searchType', $searchType);
+			$this->set('nowDate', $nowDate);
+			$this->set('players', $players);
+			$this->set('teamList', $teamList);
+			$this->set('pageCount', $pageCount);
+			$this->set('curPage', $curPage);
+		}
 		
-		$recordCount = PlayerManager::getInstance()->find('count', array(
-			'conditions' => $conditions
-		));
-		
-		$pageCount = ceil($recordCount / $perPage);
-        
-        $teamList = TeamManager::getInstance()->find('list', array(
-            'conditions' => array('league_id<>'=>100),
-            'fields' => array('id', 'name')
-        ));
-        
-		$this->set('searchTypes', $searchTypes);
-		$this->set('searchType', $searchType);
-		$this->set('nowDate', $nowDate);
-        $this->set('players', $players);
-        $this->set('teamList', $teamList);
-		$this->set('pageCount', $pageCount);
-		$this->set('curPage', $curPage);
+		$this->set('isTransferDay', $isTransferDay);
         $this->render('buy_list');
     }
     
@@ -438,8 +446,6 @@ class PlayerController extends AppController
 			
 			$curPlayer->ContractEnd = $d1->date;
 			PlayerManager::getInstance()->save($curPlayer, 'update');
-
-//			echo 'success';
 		}
 		else
 		{
@@ -474,44 +480,34 @@ class PlayerController extends AppController
         $this->render('my_list');
 	}
 	
+	public function sell_list() 
+	{
+        $myCoach = CoachManager::getInstance()->getMyCoach();
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$isTransferDay = YpnManager::getInstance()->checkTransferDay($nowDate);
+		
+		if ($isTransferDay)
+		{
+			$players = PlayerManager::getInstance()->find('all', array(
+					'conditions' => array('team_id' => $myCoach->team_id),
+					'order' => array('ShirtNo'=>'asc'),
+				)
+			);
+
+			$positions = MainConfig::$positions;
+			$this->set('positions', $positions);
+			$this->set('players', $players);
+			$this->set('nowDate', $nowDate);
+		}
+
+		$this->set('isTransferDay', $isTransferDay);
+        $this->render('sell_list');
+	}
+	
 	public function ajax_sell($id, $price)
 	{
 		PlayerManager::getInstance()->update(array('isSelling'=>1, 'fee'=>$price), array('id'=>$id));
 		echo 1;
-	}
-	
-	public function test()
-	{
-//		$id = 559; //lee
-//		$nowDate = SettingManager::getInstance()->getNowDate();
-//		$playerData = PlayerManager::getInstance()->find('first', array(
-//			'conditions' => array('id'=>$id)
-//		));
-//		$curPlayer = PlayerManager::getInstance()->loadOne($playerData);
-//		
-//		echo round(($curPlayer->estimateFee($nowDate) *  (70 + mt_rand(1, 60)) / 100), -1);
-		
-		$data = array(
-			array(
-			   'id' => '201',
-			   'isSelling' => 1,
-			   'fee' => '600'
-			),
-			array(
-			   'id' => 349 ,
-			   'isSelling' => 1,
-			   'fee' => '610'
-			),
-			array(
-			   'id' => '1168' ,
-			   'isSelling' => 1,
-			   'fee' => '602'
-			),
-		 );
-		
-		$index = 'id';
-		
-		PlayerManager::getInstance()->update_batch($data, $index);
 	}
 	
 	public function training_list()
@@ -524,19 +520,6 @@ class PlayerController extends AppController
 				'order' => array('ShirtNo'=>'asc'),
 			)
 		);
-		
-//		$traingList = array(
-//			array('title'=>'shot', 'field'=>'ShotAccurate', 'experience'=>'ShotAccurateExperience'),
-//			array('title'=>'pass', 'field'=>'pass', 'experience'=>'PassExperience'),			
-//			array('title'=>'tackle', 'field'=>'tackle', 'experience'=>'TackleExperience'),
-//			array('title'=>'head', 'field'=>'header', 'experience'=>'HeaderExperience'),
-//			array('title'=>'control', 'field'=>'BallControl', 'experience'=>'BallControlExperience'),
-//			array('title'=>'beat', 'field'=>'beat', 'experience'=>'BeatExperience'),
-//			array('title'=>'save', 'field'=>'save', 'experience'=>'SaveExperience'),
-//			array('title'=>'sinew', 'field'=>'sinew', 'experience'=>'SinewMaxExperience'),
-//			array('title'=>'qiangdian', 'field'=>'qiangdian', 'experience'=>'QiangdianExperience'),
-//		);
-		
 		
         $positions = MainConfig::$positions;
 		$this->set('positions', $positions);
