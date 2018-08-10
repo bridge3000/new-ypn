@@ -26,9 +26,6 @@ class SettingManager extends DataManager
     
     public function getFifaDates()
     {
-//        $data = $this->getData();
-//        return explode(",", $data['FifaDates']);
-        
         return MainConfig::$bakFifaDates;
     }
     
@@ -36,10 +33,7 @@ class SettingManager extends DataManager
     {
         $data = $this->getData();
         $tomorrow = date('Y-m-d', strtotime($data['today'] . ' +1 day'));
-//        $tomorrow = date('Y-m-d', strtotime($data['today'])+24*3600) ;
         $data['today'] = $tomorrow;
         $this->update(array('today'=>$tomorrow), array());
     }
 }
-
-?>

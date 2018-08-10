@@ -1,9 +1,7 @@
 <?php
 namespace Model\Manager;
 use MainConfig;
-use Model\Manager\CoachManager;
 use Model\Core\Match;
-use Util\ExecuteTime;
 
 class MatchManager extends DataManager
 {

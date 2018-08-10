@@ -101,7 +101,7 @@
 
 		<script>
 			$.get("<?=MainConfig::BASE_URL?>match/ajax_get_my_next", {}, function(msg){
-				$("#board").text(msg);
+				$("#board").html(msg);
 			});
 		</script>
 

@@ -100,10 +100,8 @@ class MainConfig
         4 => '禁区外'
     );
     
-    const STATIC_DIR = "http://ypn.com/";
-	
-	const BASE_URL = "http://ypn.com/";
-	
+    const STATIC_DIR = "http://test.ypn.com/";
+	const BASE_URL = "http://test.ypn.com/";
 	
 	static $uclPlayoffDates = array(
 		'8' => array(array('2-17','2-24'),array('2-18','2-25'),array('3-10','3-17'), array('3-9','3-16')), //八分之一

@@ -58,17 +58,19 @@ if (isset($_GET['c'])) //问号传参
 else if (!empty($slashParams)) //根据斜线分割
 {
 	$tmpArr = explode("/", $slashParams[0]);
-	$controller = $tmpArr[1];
-	if(isset($tmpArr[2]))
+//	print_r($tmpArr);exit;
+	
+	$controller = $tmpArr[0];
+	if(isset($tmpArr[1]))
 	{
-		$action = $tmpArr[2];
+		$action = $tmpArr[1];
 	}
 	else
 	{
 		$action = 'index';
 	}
 	
-	for($i=3;$i<count($tmpArr);$i++)
+	for($i=2;$i<count($tmpArr);$i++)
 	{
 		$params[] = $tmpArr[$i];
 	}
@@ -78,6 +80,9 @@ else
 	$controller = 'match';
 	$action = 'today';
 }
+
+//print_r($_GET);exit;
+//var_dump($controller, $action);exit;
 
 $firstLetter = substr($controller, 0, 1);
 $ClassName = "Controller\\" . str_replace($firstLetter, strtoupper($firstLetter), $controller). "Controller";

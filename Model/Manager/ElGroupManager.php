@@ -9,9 +9,9 @@ class ElGroupManager extends DataManager
     
     public function resetElGroup()
     {
-		$this->query('delete from '.$this->table);
+		$this->query('DELETE FROM '.MainConfig::PREFIX . $this->table);
 		$fields = array();
-        DBManager::getInstance()->copyTable(MainConfig::PREFIX . 'bak_elgroups', MainConfig::PREFIX . $this->table, $fields);
+        DBManager::getInstance()->copyTable(MainConfig::PREFIX . 'bakelgroups', MainConfig::PREFIX . $this->table, $fields);
     }
 	
 	public function saveResult($hostTeamId, $guestTeamId, $result)

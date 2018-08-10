@@ -9,9 +9,9 @@ class UclGroupManager extends DataManager
     
     public function resetUclGroup()
     {
-		$this->query('delete from '.$this->table);
+		$this->query('DELETE FROM '.MainConfig::PREFIX . $this->table);
 		$fields = array();
-        DBManager::getInstance()->copyTable(MainConfig::PREFIX . 'bak_uclgroups', MainConfig::PREFIX . $this->table, $fields);
+        DBManager::getInstance()->copyTable(MainConfig::PREFIX . 'bakuclgroups', MainConfig::PREFIX . $this->table, $fields);
     }
 	
 	public function saveResult($hostTeamId, $guestTeamId, $result)

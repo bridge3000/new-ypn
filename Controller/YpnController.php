@@ -110,7 +110,7 @@ class YpnController extends AppController
 				}
 				unset($wcTeams);
 
-				$myInjuredPlayers = PlayerManager::getInstance()->training($noMatchTeamIds, $myTeamId);
+				$myInjuredPlayers = PlayerManager::getInstance()->train($noMatchTeamIds, $myTeamId);
 			}
 			else if (YpnManager::getInstance()->checkEuroCupDay($nowDate))
 			{
@@ -780,7 +780,6 @@ class YpnController extends AppController
         $this->autoRender = false;
         $this->flushNow('start new game<br>');
                 
-//		YpnManager::getInstance()->multi_execute('TRUNCATE TABLE ypn_news;TRUNCATE TABLE ypn_honours;TRUNCATE TABLE ypn_fifa_dates;TRUNCATE TABLE ypn_matches;TRUNCATE TABLE ypn_teams;TRUNCATE TABLE ypn_players'); /*删除新闻、FIFA-DATE,honour*/
 		YpnManager::getInstance()->query('TRUNCATE TABLE ypn_news;'); 
 		YpnManager::getInstance()->query('TRUNCATE TABLE ypn_fifa_dates;');
 		YpnManager::getInstance()->query('TRUNCATE TABLE ypn_teams');
@@ -788,7 +787,7 @@ class YpnController extends AppController
 		YpnManager::getInstance()->query('TRUNCATE TABLE ypn_honours');
 		YpnManager::getInstance()->query('TRUNCATE TABLE ypn_players');
 				
-		YpnManager::getInstance()->query("update ypn_settings set today='2015-7-2'"); //更新现在日期
+		YpnManager::getInstance()->query("update ypn_settings set today='2018-7-2'"); //更新现在日期
 		
         FifaDateManager::getInstance()->updateFifaDate();
 		

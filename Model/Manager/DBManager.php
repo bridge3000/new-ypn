@@ -113,7 +113,7 @@ class DBManager
         
     public function copyTable($oldTable, $newTable, $ignoreFields)
     {
-        $sql = 'SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE table_name = "' . $oldTable . '"';
+        $sql = 'SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE table_name = "' . $oldTable . '"  and `TABLE_SCHEMA`="' . MainConfig::DB_NAME . '"';
         $data = $this->fetch($sql);
 
         $fields = array();
@@ -121,7 +121,7 @@ class DBManager
         {
             if (!in_array($d['COLUMN_NAME'], $ignoreFields, true))
             {
-                $fields[] = $d['COLUMN_NAME'];
+                $fields[] = '`'.$d['COLUMN_NAME'].'`';
             }
         }
         
