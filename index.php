@@ -81,8 +81,13 @@ else
 	$action = 'today';
 }
 
-//print_r($_GET);exit;
-//var_dump($controller, $action);exit;
+if(preg_match("/cli/i", php_sapi_name()))
+{
+	$controller = $argv[1];
+	$action = $argv[2];
+	$params = [];
+	
+}
 
 $firstLetter = substr($controller, 0, 1);
 $ClassName = "Controller\\" . str_replace($firstLetter, strtoupper($firstLetter), $controller). "Controller";

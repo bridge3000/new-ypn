@@ -1,5 +1,6 @@
 <?php
 namespace Controller;
+
 use Controller\AppController;
 use Model\Manager\MatchManager;
 use Model\Manager\CoachManager;
@@ -8,7 +9,6 @@ use Model\Manager\YpnManager;
 use Model\Manager\TeamManager;
 use Model\Manager\PlayerManager;
 use Model\Manager\NewsManager;
-use Model\Manager\FutrueContractManager;
 use Model\Manager\FifaDateManager;
 use Model\Manager\UclGroupManager;
 use Model\Manager\ElGroupManager;
@@ -26,6 +26,7 @@ class YpnController extends AppController
         $myCoach = CoachManager::getInstance()->getMyCoach();
         $myTeamId = $myCoach->team_id;
 		$nowDate = SettingManager::getInstance()->getNowDate();
+		
 		$thisYear = date('Y', strtotime($nowDate));
 		$weekday = date("w", strtotime($nowDate));
 		$isHoliday = YpnManager::getInstance()->checkHoliday($nowDate);
@@ -836,6 +837,7 @@ class YpnController extends AppController
 	 */
     private function doWeekdayTask($weekday, $isTransferDay, $isHoliday, $myTeamId)
     {
+//		var_dump($weekday, $isTransferDay);exit;
 		$nowDate = SettingManager::getInstance()->getNowDate();
 		switch ($weekday)
 		{
@@ -900,15 +902,36 @@ class YpnController extends AppController
 				break;
 		}
     }
+	
+	protected function getRedisInstance()
+	{
+		$redis = new \Redis();
+		$redis->connect(\MainConfig::REDIS_HOST, \MainConfig::REDIS_PORT);
+		return $redis;
+	}
     
 	public function test()
 	{
-		$nowDate = SettingManager::getInstance()->getNowDate();
-		$playerId = 11082;
-		$arr = PlayerManager::getInstance()->findById($playerId);
-		$players = PlayerManager::getInstance()->loadData(array($arr));
-		$curPlayer = $players[0];
-		print_r($curPlayer);
-		echo $curPlayer->estimateValue($nowDate);
+		$redis = $this->getRedisInstance();
+		$redis->rpush('ypn_tasks', date('Y-m-d H:i:s'));
+		
+		exit("ok\n");
+	}
+	
+	/**
+	 * 异步任务 cli方式
+	 */
+	public function run_task()
+	{
+		$redis = $this->getRedisInstance();
+		
+		while(1)
+		{
+			$content = $redis->lpop('ypn_tasks');
+			if($content)
+			{
+				echo $content . "\n";	
+			}
+		}
 	}
 }

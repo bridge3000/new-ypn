@@ -538,4 +538,10 @@ class PlayerController extends AppController
 		
 		echo json_encode(array('status'=>0));
 	}
+	
+	public function show($id)
+	{
+		$curPlayer = PlayerManager::getInstance()->findById($id);
+		print_r($curPlayer);exit;
+	}
 }

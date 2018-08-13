@@ -13,7 +13,7 @@
 	<?php foreach ($players as $curPlayer): 	?>
 		<tr>
 			<td><?= $curPlayer['ShirtNo'] ?></td>
-			<td><a href="javascript:;" class="player_name" value="<?= $curPlayer['id'] ?>"><?= $curPlayer['name'] ?></a></td>
+			<td><a href="/player/show/<?= $curPlayer['id'] ?>" class="player_name" value="<?= $curPlayer['id'] ?>"><?= $curPlayer['name'] ?></a></td>
 			<td><?=MainConfig::$positions[$curPlayer['position_id']]?></td>
 			<td><?=$curPlayer['state']?></td>
 			<td>

@@ -1,16 +1,19 @@
 <?php
 namespace Model\Manager;
+
 use MainConfig;
-use Util\CommonUtil;
 
 class DataManager 
 {
     public $table = "";
+	
     
     public static function getInstance()
 	{
         static $aoInstance = array(); 
         $calledClassName = get_called_class(); 
+		
+		die($calledClassName);
         
         if (! isset ($aoInstance[$calledClassName])) { 
             $aoInstance[$calledClassName] = new $calledClassName(); 
@@ -386,6 +389,7 @@ class DataManager
 		$ids = array();
 		$where = ($where != '' AND count($where) >=1) ? implode(" ", $where).' AND ' : '';
 
+		$final = [];
 		foreach ($values as $key => $val)
 		{
 			$ids[] = $val[$index];
@@ -417,8 +421,10 @@ class DataManager
 		$sql .= substr($cases, 0, -2);
 
 		$sql .= ' WHERE '.$where.$index.' IN ('.implode(',', $ids).')';
-
-		DBManager::getInstance()->execute($sql);
+		if(!empty($ids))
+		{
+			DBManager::getInstance()->execute($sql);
+		}
 	}
 	
 	public function insertBatch($keys, $values)

@@ -813,7 +813,7 @@ class PlayerManager extends DataManager
         for ($i=0;$i<count($players);$i++)
         {
             $temp = $players[$i]->estimateFee($nowDate);
-            if ($temp > $maxFee)
+            if ($temp >= $maxFee)
             {
                 $maxId = $players[$i]->id;
                 $maxIndex = $i;

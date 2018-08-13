@@ -12,6 +12,9 @@ class MainConfig
     const DB_PASS = "";
     const DB_NAME = "ypn";
 	const DB_DEGUG = false;
+	
+	const REDIS_HOST = "127.0.0.1";
+	const REDIS_PORT = "6379";
 
     const DS = DIRECTORY_SEPARATOR;
     const ROOTPATH = PATH;
