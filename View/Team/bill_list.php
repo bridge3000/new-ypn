@@ -8,10 +8,10 @@
 	</tr>
 	<?php foreach ($bills as $curPlayer): ?>
 		<tr>
-			<td><?=date('Y-m-d', $curPlayer['date']) ?></td>
-			<td><?= (($curPlayer['dir'] == 1) ? "收入" : "支出") ?></td>
+			<td><?=date('Y-m-d', $curPlayer['PubTime']) ?></td>
+			<td><?= (($curPlayer['money'] > 0) ? "收入" : "支出") ?></td>
 			<td><?= $curPlayer['money'] ?> </td>
-			<td><?= $curPlayer['content'] ?> </td>
+			<td><?= $curPlayer['info'] ?> </td>
 			<td><?= $curPlayer['remain'] ?> </td>
 		</tr>
 	<?php endforeach; ?>

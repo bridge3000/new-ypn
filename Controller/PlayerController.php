@@ -381,6 +381,14 @@ class PlayerController extends AppController
 		$addMonthCount = $_POST['month'];
 		$buyTeamId = $_POST['buy_team_id'];
 		$nowDate = SettingManager::getInstance()->getNowDate();
+		
+		$d1 = new DateTime($nowDate);
+		$d1->add(new DateInterval('P6M'));
+		print_r($d1);exit;
+		
+		die($d1->date);
+			
+			
 		$curPlayerArray = PlayerManager::getInstance()->findById($playerId);
 		$arr = PlayerManager::getInstance()->loadData(array($curPlayerArray));
 		$curPlayer = $arr[0];
@@ -445,6 +453,7 @@ class PlayerController extends AppController
 			$d1->add(new DateInterval('P' . $addMonthCount . 'M'));
 			
 			$curPlayer->ContractEnd = $d1->date;
+			
 			PlayerManager::getInstance()->save($curPlayer, 'update');
 		}
 		else

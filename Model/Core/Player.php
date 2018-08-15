@@ -253,7 +253,7 @@ class Player
 		);
 				
 		$myPositionBestNo = $positionMap[$this->position_id];
-		$myBirthdayNo = date('Y', $this->birthday);
+		$myBirthdayNo = date('y', strtotime($this->birthday));
 		
 		if (!in_array($this->ShirtNo, $existTeamNos))
 		{

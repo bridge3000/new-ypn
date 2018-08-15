@@ -510,6 +510,7 @@ class TeamController extends AppController
 		$curTeam = TeamManager::getInstance()->findById($myCoach->team_id);
 		$bills = json_decode($curTeam['bills'], TRUE);
 		$bills = is_array($bills) ? $bills : array();
+//		print_r($bills);exit;
 		$this->set('bills', $bills);
 		$this->render('bill_list');
 	}

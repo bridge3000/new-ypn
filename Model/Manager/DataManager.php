@@ -12,8 +12,6 @@ class DataManager
 	{
         static $aoInstance = array(); 
         $calledClassName = get_called_class(); 
-		
-		die($calledClassName);
         
         if (! isset ($aoInstance[$calledClassName])) { 
             $aoInstance[$calledClassName] = new $calledClassName(); 
