@@ -20,7 +20,10 @@ use Util\FormHelper;
 				<td><?= $curPlayer->salary ?></td>
 				<td><?= $curPlayer->ContractBegin ?></td>
 				<td><?= $curPlayer->ContractEnd ?></td>
-				<td><a href="<?= MainConfig::BASE_URL ?>player/buy_apply/<?= $curPlayer->id ?>"><button>buy</button></a></td>
+				<td>
+					<a href="<?= MainConfig::BASE_URL ?>player/buy_apply/<?= $curPlayer->id ?>"><button>buy</button></a>
+					<a href="<?= MainConfig::BASE_URL ?>player/collect/<?= $curPlayer->id ?>"><button>收藏</button></a>
+				</td>
 			</tr> 
 	<?php endforeach; ?>
 	</table>

@@ -1,4 +1,4 @@
-<table class="tb_style_1">
+<table class="table table-striped">
 	<tr>
 		<th>号码</th>
 		<th>姓名</th>
@@ -33,19 +33,20 @@
 					<?= $curPlayer['birthday'] ?>
 				<?php endif; ?>
 			</td>
-			<td><?=$curPlayer['ContractBegin']?> - <?=$curPlayer['ContractEnd']?></td>
+			<td><?=date('Y.m.d', strtotime($curPlayer['ContractBegin']))?> - <?=date('Y.m.d', strtotime($curPlayer['ContractEnd']))?></td>
 			<td>
-			<?php if($curPlayer['isSelling']): ?>
-				挂牌中 <?=$curPlayer['fee']?>W
-			<?php else: ?>
-				<a href="javascript:;" class="sell_link" player_id="<?=$curPlayer['id']?>" player_name="<?=$curPlayer['name']?>">卖出</a>
-			<?php endif; ?>
-
 				<a href="">解约</a>
+				
+			<?php if( strtotime($curPlayer['ContractEnd'])-strtotime($nowDate) < 12*30*24*3600): ?>
+				<a href="/player/show/<?= $curPlayer['id'] ?>">
+					<button class="btn btn-info">续约</button>
+				</a>
+			<?php endif; ?>
 			</td>
 		</tr>
 	<?php endforeach; ?>
 </table>
+<div>共 <?=count($players)?> 人</div>
 
 <div id="full_bg"></div>
 <div id="player_sell_div">

@@ -154,7 +154,7 @@ class TeamManager extends DataManager
 		$bills = json_decode($curTeam['bills'], TRUE);
 		$bills[] = array('dir' => $dir, 'money' => $money, 'remain' => $curTeam['money'], 'content' => $content, 'date'=>strtotime($nowDate));
 		$curTeam['bills'] = json_encode($bills);
-		$this->save($curTeam, 'update');
+		$this->saveModel($curTeam, 'update');
 	}
 	
 	public function addMoneyBatch($teamIds, $money, $msg, $nowDate)

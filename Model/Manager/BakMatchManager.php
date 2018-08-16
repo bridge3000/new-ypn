@@ -32,7 +32,7 @@ class BakMatchManager extends DataManager
 
 		foreach ($newMatches as $m)
 		{
-			$this->save($m, 'insert');
+			$this->saveModel($m, 'insert');
 		}
 		echo 'success';		
 	}

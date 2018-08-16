@@ -74,7 +74,7 @@ class TeamController extends AppController
             $sellPrice = $targetPlayer->estimateFee($nowDate);
 			$targetPlayer->isSelling = 1;
 			$targetPlayer->fee = $sellPrice;
-			PlayerManager::getInstance()->save($targetPlayer);
+			PlayerManager::getInstance()->saveModel($targetPlayer);
 			
     		echo("<span class=\"blue_normal_span\">" . $targetPlayer->name . "</span>被以<span class=\"red_normal_span\">" . $sellPrice . "</span>W欧元的价格挂牌出售<br>");flush();
     	}
@@ -151,7 +151,7 @@ class TeamController extends AppController
         	if (isset($sellingPlayer['isChanged']))
         	{
 				unset($sellingPlayer['isChanged']);
-				PlayerManager::getInstance()->save($sellingPlayer);
+				PlayerManager::getInstance()->saveModel($sellingPlayer);
         	}
         }
         echo('转会结束.');
@@ -225,7 +225,7 @@ class TeamController extends AppController
 			}
 			elseif ((date("Y-m-d", strtotime("$nowDate + 181 day")) > $curPlayerArr['ContractEnd']) && ($curPlayerArr['loyalty'] < 85)) /*last 6 month，忠诚度小于85的会自由转会*/
 			{
-				FutureContractManager::getInstance()->save(array(
+				FutureContractManager::getInstance()->saveModel(array(
 					'player_id' => $curPlayer->id,
 					'NewContractEnd' => date("Y", strtotime("$nowDate + " . mt_rand(1, 6) . " year")) . "-6-30",
 					'NewTeam_id' => $buyTeam->id,
@@ -361,14 +361,14 @@ class TeamController extends AppController
 				{
 
 					$inviteTeam->addMoney(5, '邀请友谊赛', $nowDate);
-					TeamManager::getInstance()->save($inviteTeam);
+					TeamManager::getInstance()->saveModel($inviteTeam);
 
 					$newMatch = new Match();
 					$newMatch->HostTeam_id = $allTeams[$i]->id;
 					$newMatch->GuestTeam_id = $inviteTeam->id;
 					$newMatch->PlayTime = $invitePlayTime;
 					$newMatch->class_id = 24;
-					MatchManager::getInstance()->save($newMatch);
+					MatchManager::getInstance()->saveModel($newMatch);
 
 					$this->flushNow('<span class="blue_bold_span">' . $allTeams[$i]->name . '</span>与<span class="blue_bold_span">' . $inviteTeam->name . '</span>将于'. $invitePlayTime . '在'. $allTeams[$i]->FieldName . '进行了友谊赛<br>');
 					
@@ -482,7 +482,7 @@ class TeamController extends AppController
 			if(isset($curTeam->isChanged))
 			{
 				unset($curTeam->isChanged);
-				TeamManager::getInstance()->save($curTeam);
+				TeamManager::getInstance()->saveModel($curTeam);
 			}
 		}
     }

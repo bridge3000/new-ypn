@@ -121,6 +121,14 @@ class DataManager
         $data = $this->find('first', $options);
         return $data;
     }
+	
+	public function getById($id, $options=array())
+    {
+        $options['conditions'] = array('id'=>$id);
+        $data = $this->find('first', $options);
+		$obj = $this->loadOne($data);
+        return $obj;
+    }
     
     private function explainFieldValue(&$v)
     {
@@ -228,7 +236,7 @@ class DataManager
         return $str;
     }
     
-    public function save($obj, $type='')
+    public function saveModel($obj, $type='')
     {
         $sql = $this->generateSaveSql($obj, $type);
         
@@ -243,6 +251,8 @@ class DataManager
 	 */
     private function generateSaveSql($obj, $type)
     {
+//		var_dump($type, $obj);exit;
+		
         $sql = '';
         if ($type === '')
         {
@@ -259,7 +269,7 @@ class DataManager
             }
             else
             {
-                if (isset($obj->id))
+                if (isset($obj->id) && $obj->id)
                 {
                     $type = 'update';
                 }
@@ -276,9 +286,12 @@ class DataManager
             $values = array();
             foreach($obj as $k=>$v)
             {
-                $keys[] = "`$k`";
-				$v = str_replace("'", "''", $v);
-                $values[] = "'$v'";
+				if($k<>'table')
+				{
+					$keys[] = "`$k`";
+					$v = str_replace("'", "''", $v);
+					$values[] = "'$v'";
+				}
             }
 
             $sql = 'insert into ' . MainConfig::PREFIX . $this->table . '(' . implode(",", $keys)  . ') values(' . implode(",", $values) . ')';

@@ -45,7 +45,7 @@ class YpnController extends AppController
 		$todayMatchTeamIds = $this->getTodayMatchTeamIds($allUnplayedMatches, $nowDate);
 		if (!empty($todayMatchTeamIds)) //开始今日比赛
 		{
-            $this->redirect(array('controller' => 'match', 'action' => 'play'));
+            $this->oldRedirect(array('controller' => 'match', 'action' => 'play'));
 		}
 
 		$this->training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate);
@@ -70,7 +70,7 @@ class YpnController extends AppController
 
 			$this->flushNow('新的一天开始了.');
 
-			$this->redirect(array('controller'=>'player', 'action'=>'pay_birthday'), false); /*过生日的队员发奖金*/
+			$this->oldRedirect(array('controller'=>'player', 'action'=>'pay_birthday'), false); /*过生日的队员发奖金*/
 
 			/*列出近期新闻，如果不采用弹出窗口显示则不用列出*/
 			$this->set('news', NewsManager::getInstance()->getUnreadNews($myTeamId));
@@ -280,7 +280,7 @@ class YpnController extends AppController
                 if ($thePlayer['position_id'] <> $newPosition_id)
                 {
                     $thePlayer['position_id'] = $newPosition_id;
-                    PlayerManager::getInstance()->save($thePlayer);
+                    PlayerManager::getInstance()->saveModel($thePlayer);
                     $changedPosCount++;
                 }
             }
@@ -846,12 +846,12 @@ class YpnController extends AppController
 				if ($isTransferDay)
 				{
 					$this->flushNow('正在进行转会交易...');
-                    $this->redirect(array('controller'=>'team', 'action'=>'sell_players'), false);
+                    $this->oldRedirect(array('controller'=>'team', 'action'=>'sell_players'), false);
 				}
 				
 				if (!$isHoliday)
 				{
-                    $this->redirect(array('controller'=>'player', 'action'=>'alert_low_loyalty'), false);
+                    $this->oldRedirect(array('controller'=>'player', 'action'=>'alert_low_loyalty'), false);
 				}
 				
 				break;
@@ -860,7 +860,7 @@ class YpnController extends AppController
 				if ($isTransferDay)
 				{
 					$this->flushNow('正在续约球员，请稍候...');
-                    $this->redirect(array('controller'=>'player', 'action'=>'continue_contract'), false);
+                    $this->oldRedirect(array('controller'=>'player', 'action'=>'continue_contract'), false);
 				}
 
 				break;
@@ -869,28 +869,28 @@ class YpnController extends AppController
 				if ($isTransferDay)
 				{
 					$this->flushNow('正在进行转会交易...');
-                    $this->redirect(array('controller'=>'team', 'action'=>'buy_players'), false);
+                    $this->oldRedirect(array('controller'=>'team', 'action'=>'buy_players'), false);
 				}
 				break;
 			case 3:	
 				$this->flushNow('正在发工资...');
-                $this->redirect(array('controller'=>'team', 'action'=>'payoff'), false);
+                $this->oldRedirect(array('controller'=>'team', 'action'=>'payoff'), false);
 				if (!$isHoliday && $isTransferDay)
 				{
 					$this->flushNow('正在联系友谊赛...<br/>');
-                    $this->redirect(array('controller'=>'team', 'action'=>'invite_friend_match'), false);
+                    $this->oldRedirect(array('controller'=>'team', 'action'=>'invite_friend_match'), false);
 				}
 				break;
 			case 4:
 				$this->flushNow('ticket incoming...<br/>');
                 TeamManager::getInstance()->addOtherLeagueTeamSalary($myTeamId); //非意甲球队每周也有球票收入
-				$this->redirect(array('controller'=>'player', 'action'=>'drink'), false);   //增加球员个人活动的意外
+				$this->oldRedirect(array('controller'=>'player', 'action'=>'drink'), false);   //增加球员个人活动的意外
                 break;
 			case 5:/*周五*/
 				if ($isTransferDay)
 				{
 					$this->flushNow('正在检查合同是否到期，请稍候...');
-                    $this->redirect(array('controller'=>'player', 'action'=>'transfer_free_agent'), false);
+                    $this->oldRedirect(array('controller'=>'player', 'action'=>'transfer_free_agent'), false);
                 }
 				break;
 			case 6:

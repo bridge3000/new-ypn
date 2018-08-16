@@ -15,7 +15,7 @@ class NewsManager extends DataManager
 		$newNews->team_id = $team_id;
 		$newNews->PubTime = $nowDate;
 		$newNews->ImgSrc = $imgSrc;
-		$this->save($newNews);
+		$this->saveModel($newNews);
 	}
 	
 	public function push($content, $team_id, $nowDate, $imgSrc)

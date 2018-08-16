@@ -11,8 +11,7 @@ use Model\Manager\TeamManager;
 use Model\Manager\MatchManager;
 use Model\Manager\NewsManager;
 use Model\Manager\YpnManager;
-use \DateTime;
-use \DateInterval;
+use Model\Core\PlayerCollect;
 
 class PlayerController extends AppController
 {
@@ -58,7 +57,7 @@ class PlayerController extends AppController
                 $targetPlayer->league_id = $buyTeam['league_id'];
             }
 
-            PlayerManager::getInstance()->save($targetPlayer);
+            PlayerManager::getInstance()->saveModel($targetPlayer);
             $this->FutureContract->delete($futureContracts[$i]['id'], false);
 
             NewsManager::getInstance()->add('自由球员<font color=green><strong>' . $targetPlayer->name . '</strong></font>加入了我们', $futureContracts[$i]['NewTeam_id'], $nowDate, $targetPlayer->ImgSrc);
@@ -141,7 +140,7 @@ class PlayerController extends AppController
 				{
 					TeamManager::getInstance()->changeMoney($birthdayPlayers[$i]['team_id'], 2, 1, $nowDate, '给' . $birthdayPlayers[$i]['name'] . '发生日补助');
 					$birthdayPlayers[$i]['loyalty'] += 1;
-					PlayerManager::getInstance()->save($birthdayPlayers[$i], 'update');
+					PlayerManager::getInstance()->saveModel($birthdayPlayers[$i], 'update');
 				}
 				
 			}
@@ -170,6 +169,9 @@ class PlayerController extends AppController
         }
     }
     
+	/**
+	 * NPC续约
+	 */
     public function continue_contract()
 	{
 		$nowDate = SettingManager::getInstance()->getNowDate();
@@ -220,8 +222,8 @@ class PlayerController extends AppController
 		
 		if($isTransferDay)
 		{
-			$d1 = new DateTime($nowDate);
-			$d1->add(new DateInterval('P6M'));
+			$d1 = new \DateTime($nowDate);
+			$d1->add(new \DateInterval('P6M'));
 			$sixMonthLater = $d1->format('Y-m-d');
 
 			switch ($searchType) 
@@ -382,13 +384,6 @@ class PlayerController extends AppController
 		$buyTeamId = $_POST['buy_team_id'];
 		$nowDate = SettingManager::getInstance()->getNowDate();
 		
-		$d1 = new DateTime($nowDate);
-		$d1->add(new DateInterval('P6M'));
-		print_r($d1);exit;
-		
-		die($d1->date);
-			
-			
 		$curPlayerArray = PlayerManager::getInstance()->findById($playerId);
 		$arr = PlayerManager::getInstance()->loadData(array($curPlayerArray));
 		$curPlayer = $arr[0];
@@ -448,13 +443,9 @@ class PlayerController extends AppController
 			$curPlayer->ContractBegin = $nowDate;
 			$curPlayer->ClubDepending = 80;
 			$curPlayer->setBestShirtNo(PlayerManager::getInstance()->getExistNos());
+			$curPlayer->ContractEnd = date('Y-m-d', strtotime($nowDate)+$addMonthCount*30*24*3600);
 			
-			$d1 = new DateTime($nowDate);
-			$d1->add(new DateInterval('P' . $addMonthCount . 'M'));
-			
-			$curPlayer->ContractEnd = $d1->date;
-			
-			PlayerManager::getInstance()->save($curPlayer, 'update');
+			PlayerManager::getInstance()->saveModel($curPlayer, 'update');
 		}
 		else
 		{
@@ -550,7 +541,84 @@ class PlayerController extends AppController
 	
 	public function show($id)
 	{
-		$curPlayer = PlayerManager::getInstance()->findById($id);
-		print_r($curPlayer);exit;
+		$curPlayer = PlayerManager::getInstance()->getById($id);
+		$this->data['curPlayer'] = $curPlayer;
+		
+		$retiredShirts = RetiredShirtManager::getInstance()->find('all', array(
+				'conditions' => ['team_id'=>$curPlayer->team_id],
+			)
+		);
+		
+		$myTeamPlayers = PlayerManager::getInstance()->find('all', [
+				'conditions' => ['team_id'=>$curPlayer->team_id],
+			]
+		);
+		
+		$usedNos = [];
+		foreach($myTeamPlayers as $player)
+		{
+			if($player['id'] != $id)
+			{
+				$usedNos[] = $player['ShirtNo'];
+			}
+		}
+		
+		foreach($retiredShirts as $retiredShirt)
+		{
+			$usedNos[] = $retiredShirt['shirt'];
+		}
+		
+		$this->data['canUsedNos'] = [];
+		for($i=1;$i<100;$i++)
+		{
+			if(!in_array($i, $usedNos))
+			{
+				$this->data['canUsedNos'][] = $i;
+			}
+		}
+		
+		$this->render('show');
+	}
+	
+	public function collect($playerId)
+	{
+		$curPlayer = PlayerManager::getInstance()->findById($playerId);
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		
+		$newPlayerCollect = new \Model\Core\PlayerCollect();
+		$newPlayerCollect->player_id = $playerId;
+		$newPlayerCollect->manager_id = 1;
+		$newPlayerCollect->created_at = $nowDate;
+		$newPlayerCollect->save();
+		
+		$this->redirect('/player/collect_list');
+	}
+	
+	public function collect_list()
+	{
+		$playerCollects = PlayerCollect::getInstance()->find('all', array(
+				'conditions' => [],
+			)
+		);
+		
+		foreach($playerCollects as $playerCollect)
+		{
+			$curPlayer = PlayerManager::getInstance()->findById($playerCollect['player_id']);
+			$this->data['collectPlayers'][] = [
+				'player_id' => $curPlayer['id'],
+				'name' => $curPlayer['name']
+			];
+		}
+		
+		$this->render('/collect_list');
+	}
+	
+	public function ajax_change_shirt_no()
+	{
+		$playerId = $_POST['player_id'];
+		$shirtNo = $_POST['shirt_no'];
+		PlayerManager::getInstance()->update(array('ShirtNo'=>$shirtNo), array('id'=>$playerId));
+		
+		exit(json_encode(['code'=>1]));
 	}
 }

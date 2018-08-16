@@ -192,7 +192,7 @@ class MatchController extends AppController
 		unset($curMatch->hostPlayers);
 		unset($curMatch->guestPlayers);
 		
-		MatchManager::getInstance()->save($curMatch);
+		MatchManager::getInstance()->saveModel($curMatch);
 		
 		$count = MatchManager::getInstance()->find('count', array(
 			'conditions' => array(
@@ -553,7 +553,7 @@ class MatchController extends AppController
 		$winTeam = TeamManager::getInstance()->loadOne($winTeamArr);
 		$winTeam->popular += 2;
 		$winTeam->addMoney($winReward, '亚冠冠军奖金', $nowDate);
-		TeamManager::getInstance()->save($winTeam);
+		TeamManager::getInstance()->saveModel($winTeam);
 		
 		$loseTeamArr = TeamManager::getInstance()->findById($loseTeamId, array(
 			'fields' => array('id', 'money', 'bills', 'popular')
@@ -561,7 +561,7 @@ class MatchController extends AppController
 		$loseTeam = TeamManager::getInstance()->loadOne($loseTeamArr);
 		$loseTeam->popular += 1;
 		$loseTeam->addMoney($loseReward, '亚冠亚军奖金', $nowDate);
-		TeamManager::getInstance()->save($loseTeam);
+		TeamManager::getInstance()->saveModel($loseTeam);
 		
 		NewsManager::getInstance()->add('亚冠联赛冠军', $winTeamId, $nowDate, '/res/img/afc.jpg');
 		NewsManager::getInstance()->add('亚冠联赛亚军', $loseTeamId, $nowDate, '/res/img/afc.jpg');
@@ -632,7 +632,7 @@ class MatchController extends AppController
 		$winTeam = TeamManager::getInstance()->loadOne($winTeamArr);
 		$winTeam->popular += 5;
 		$winTeam->addMoney($winReward, '世俱杯冠军奖金', $nowDate);
-		TeamManager::getInstance()->save($winTeam);
+		TeamManager::getInstance()->saveModel($winTeam);
 		
 		$loseTeamArr = TeamManager::getInstance()->findById($loseTeamId, array(
 			'fields' => array('id', 'money', 'bills', 'popular')
@@ -640,7 +640,7 @@ class MatchController extends AppController
 		$loseTeam = TeamManager::getInstance()->loadOne($loseTeamArr);
 		$loseTeam->popular += 1;
 		$loseTeam->addMoney($loseReward, '世俱杯亚军奖金', $nowDate);
-		TeamManager::getInstance()->save($loseTeam);
+		TeamManager::getInstance()->saveModel($loseTeam);
 		
 		NewsManager::getInstance()->add('世俱杯冠军', $winTeamId, $nowDate, '/res/img/fifa.gif');
 		NewsManager::getInstance()->add('世俱杯亚军', $loseTeamId, $nowDate, '/res/img/fifa.gif');
@@ -846,7 +846,7 @@ class MatchController extends AppController
 				$newMatch['GuestTeam_id'] = $guestTeamId;
 				$newMatch['PlayTime'] = $playDate;
 				$newMatch['class_id'] = 24;
-				MatchManager::getInstance()->save($newMatch, 'insert');
+				MatchManager::getInstance()->saveModel($newMatch, 'insert');
 				$result = 0;
 			}
 			else

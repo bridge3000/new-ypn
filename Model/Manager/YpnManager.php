@@ -15,7 +15,7 @@ class YpnManager extends DataManager
             $this->EuroCupGroup->create();
             $this->data['EuroCupGroup']['GroupName'] = $allElgroups[$i]['bak_euro_cup_groups']['GroupName'];
             $this->data['EuroCupGroup']['team_id'] = $allElgroups[$i]['bak_euro_cup_groups']['team_id'];
-            $this->EuroCupGroup->save($this->data);
+            $this->EuroCupGroup->saveModel($this->data);
         }
         unset($allElgroups);
         echo('欧洲杯分组更新完成！<br>');
@@ -31,7 +31,7 @@ class YpnManager extends DataManager
 			$this->WorldcupGroup->create();
 			$this->request->data['Worldcupgroup']['GroupName'] = $allElgroups[$i]['BakWorldcupGroup']['GroupName'];
 			$this->request->data['Worldcupgroup']['team_id'] = $allElgroups[$i]['BakWorldcupGroup']['team_id'];
-			$this->WorldcupGroup->save($this->data);
+			$this->WorldcupGroup->saveModel($this->data);
 		}
 		unset($allElgroups);
 		echo('世界杯分组更新完成！<br>');
@@ -47,7 +47,7 @@ class YpnManager extends DataManager
 		{
 			$this->PlayerUpload->create();
 			$data['PlayerUpload'] = $bpu['BakPlayerUpload'];
-			$this->PlayerUpload->save($data);			
+			$this->PlayerUpload->saveModel($data);			
 		}
 		echo('国家队上调球员名单更新完成！<br>');
 		flush();
@@ -85,7 +85,7 @@ class YpnManager extends DataManager
                 }
                 else
                 {
-                    $mBakPlayer->save($data);
+                    $mBakPlayer->saveModel($data);
                 }
                 
             }

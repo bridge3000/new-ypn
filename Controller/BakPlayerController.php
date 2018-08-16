@@ -70,8 +70,8 @@ class BakPlayerController extends AppController
         ));
         $_POST['country_id'] = $country['id'];
         $data = BakPlayerManager::getInstance()->loadData(array($_POST));
-        BakPlayerManager::getInstance()->save($data[0]);
-        $this->redirect(array('controller'=>'BakTeam', 'action'=>'show', 'params'=>$teamId));
+        BakPlayerManager::getInstance()->saveModel($data[0]);
+        $this->oldRedirect(array('controller'=>'BakTeam', 'action'=>'show', 'params'=>$teamId));
     }
     
     public function search()

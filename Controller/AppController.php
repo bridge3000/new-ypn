@@ -33,7 +33,7 @@ class AppController
         $this->data = array();
     }
     
-    protected function redirect($data, $jumpPage = true)
+    protected function oldRedirect($data, $jumpPage = true)
     {
         $controller = $data['controller'];
         $action = $data['action'];
@@ -42,6 +42,7 @@ class AppController
         if ($jumpPage)
         {
             header("location:index.php?c=$controller&a=$action&p=$params");exit;
+//			header("location:/$controller/$action");exit;
         }
         else
         {
@@ -51,6 +52,11 @@ class AppController
             $m->$action();
         }
     }
+	
+	protected function redirect($path)
+    {
+		header("location:{$path}");exit;
+	}
     
     protected function flushNow($str)
     {
