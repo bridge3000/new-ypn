@@ -3,6 +3,9 @@ namespace Model\Manager;
 
 use MainConfig;
 
+/**
+ * 此类里的逻辑会逐步迁移到YpnModel里,然后废弃此类
+ */
 class DataManager 
 {
     public $table = "";
@@ -120,14 +123,6 @@ class DataManager
         $options['conditions'] = array('id'=>$id);
         $data = $this->find('first', $options);
         return $data;
-    }
-	
-	public function getById($id, $options=array())
-    {
-        $options['conditions'] = array('id'=>$id);
-        $data = $this->find('first', $options);
-		$obj = $this->loadOne($data);
-        return $obj;
     }
     
     private function explainFieldValue(&$v)

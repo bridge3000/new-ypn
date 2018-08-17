@@ -75,4 +75,9 @@ class AppController
 	{
 		$this->flushNow("<script src=\"" . \MainConfig::BASE_URL . "res/js/jquery.js\"  type=\"text/javascript\"></script>");
 	}
+		
+	protected function responseToClient($code, $data)
+	{
+		exit(json_encode(['code'=>$code, 'data'=>$data]));
+	}
 }

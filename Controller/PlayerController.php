@@ -11,6 +11,7 @@ use Model\Manager\TeamManager;
 use Model\Manager\MatchManager;
 use Model\Manager\NewsManager;
 use Model\Manager\YpnManager;
+use Model\Core\Player;
 use Model\Core\PlayerCollect;
 
 class PlayerController extends AppController
@@ -541,7 +542,7 @@ class PlayerController extends AppController
 	
 	public function show($id)
 	{
-		$curPlayer = PlayerManager::getInstance()->getById($id);
+		$curPlayer = Player::getById($id);
 		$this->data['curPlayer'] = $curPlayer;
 		
 		$retiredShirts = RetiredShirtManager::getInstance()->find('all', array(
@@ -621,4 +622,38 @@ class PlayerController extends AppController
 		
 		exit(json_encode(['code'=>1]));
 	}
+	
+	public function ajax_continue_contract()
+	{
+		$playerId = $_POST['player_id'];
+		$targetMonth = $_POST['target_month'];
+		$targetSalary = $_POST['target_salary'];
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$code = 0;
+		$data = [];
+		$curPlayer = Player::getById($playerId);
+		
+		$expectedSalary = $curPlayer->getExpectedSalary($nowDate);
+		
+		if($targetSalary >= $expectedSalary)
+		{
+			$code = 1;
+			
+			$curPlayer->salary = $targetSalary;
+			$curPlayer->ContractBegin = $nowDate;
+			$curPlayer->ContractEnd = date('Y-m-d', strtotime($nowDate)+$targetMonth*30*24*3600);
+			$curPlayer->save();
+			
+			$data['contract_begin'] = date('Y.m.d', strtotime($curPlayer->ContractBegin));
+			$data['contract_end'] = date('Y.m.d', strtotime($curPlayer->ContractEnd));
+		}
+		else
+		{
+			$data['expected_salary'] = $expectedSalary;
+			$code = 0;
+		}
+		
+		$this->responseToClient($code, $data);
+	}
+
 }

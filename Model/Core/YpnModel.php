@@ -1,21 +1,31 @@
 <?php
 namespace Model\Core;
 
-class YpnModel extends \Model\Manager\DataManager {
+use \MainConfig;
+use \Model\Manager\DBManager;
 
-    public $table = '';
+class YpnModel
+{
+
+    public static $table = '';
     public $id = 0;
     
     public function __construct()
     {
-		if(!$this->table)
-		{
-			$arr = explode("\\", static::class);
-			$this->table = $this->humpToLine(lcfirst($arr[count($arr)-1])).'s';
-		}
     }
 	
-	private function humpToLine($str){
+	public static function getTable()
+	{
+		if(!self::$table)
+		{
+			$arr = explode("\\", static::class);
+			self::$table = self::humpToLine(lcfirst($arr[count($arr)-1])).'s';
+		}
+		
+		return self::$table;
+	}
+	
+	private static function humpToLine($str){
 		$str = preg_replace_callback('/([A-Z]{1})/',function($matches){
 			return '_'.strtolower($matches[0]);
 		},$str);
@@ -24,9 +34,67 @@ class YpnModel extends \Model\Manager\DataManager {
 	
 	public function save()
     {
-		$this->saveModel($this);
+		$sql = self::generateSaveSql($this, '');
+        
+        return DBManager::getInstance()->execute($sql);
     }
 
+	private static function generateSaveSql($obj)
+    {
+        $sql = '';
+		$type = '';
+		if (isset($obj->id) && $obj->id)
+		{
+			$type = 'UPDATE';
+		}
+		else
+		{
+			$type = 'INSERT';
+		}
+
+        if ($type === 'INSERT')
+        {
+            $keys = array();
+            $values = array();
+            foreach($obj as $k=>$v)
+            {
+				if($k<>'table')
+				{
+					$keys[] = "`$k`";
+					$v = str_replace("'", "''", $v);
+					$values[] = "'$v'";
+				}
+            }
+
+            $sql = 'INSERT into ' . MainConfig::PREFIX . self::getTable() . '(' . implode(",", $keys)  . ') values(' . implode(",", $values) . ')';
+        }
+        else
+        {
+            $sql = 'UPDATE ' . MainConfig::PREFIX . self::getTable() . ' SET ';
+            $arr = array();
+            foreach($obj as $k => $v)
+            {
+				if ($k != 'id')
+				{
+					$v = str_replace("'", "''", $v);
+					self::explainFieldValue($v);
+					$arr[] = $k . '=' . $v;
+				}
+            }
+
+            $sql .= implode(",", $arr);
+			if (is_array($obj))
+			{
+				$sql .= ' WHERE id=' . $obj['id'];
+			}
+			else
+			{
+				$sql .= ' WHERE id=' . $obj->id;
+			}
+        }
+
+        return $sql;
+    }
     
     /**
      * 把stdClass转换成当前model
@@ -41,5 +109,194 @@ class YpnModel extends \Model\Manager\DataManager {
 			$obj2->$k = $v;
 		}
 		return $obj2;
+    }
+	
+	public static function getById($id)
+    {
+        $options['conditions'] = array('id'=>$id);
+        $data = self::find('first', $options);
+		$obj = self::loadOne($data);
+        return $obj;
+    }
+	
+	public static function find($type, $option = array())
+    {
+		$data = array();
+        $fields = array();
+        if (array_key_exists('fields', $option))
+        {
+            $fields = $option['fields'];
+        }
+		
+		if ($type == 'count')
+		{
+			$fields = "count(*) as count";
+		}
+        else if (empty($fields))
+        {
+            $fields = "*";
+        }
+        else
+        {
+            $fields = implode(",", $fields);
+        }
+        
+        $sql = "select $fields from " . MainConfig::PREFIX . self::getTable() . " where 1=1 ";
+        
+        if (array_key_exists('conditions', $option))
+        {
+            $sql .= self::explainCondition($option['conditions']);
+        }
+        
+        if (array_key_exists('order', $option))
+        {
+            $sql .= " order by ";
+            
+            foreach ($option['order'] as $k=>$v)
+            {
+                $sql .= $k . ' ' . $v . ',';
+            }
+            $sql = substr($sql, 0, strlen($sql)-1);
+        }
+        
+        if (array_key_exists('limit', $option))
+        {
+			if (is_array($option['limit']))
+			{
+				$sql .= " limit " . $option['limit'][0] . ',' . $option['limit'][1];
+			}
+			else
+			{
+				$sql .= " limit " . $option['limit'];
+			}
+        }
+		
+		if(\MainConfig::DB_DEGUG)
+		{
+			echo $sql . "<br>";
+		}
+
+        if ($type == "all")
+        {
+            $data = DBManager::getInstance()->fetch($sql);
+        }
+        else if ($type == "first")
+        {
+            $data = DBManager::getInstance()->fetch($sql);
+
+            if ($data != null)
+            {
+                $data = $data[0];
+            }
+        }
+        else if ($type == "list")
+        {
+            $data = DBManager::getInstance()->fetchList($sql);
+        }
+		else if ($type == "count")
+        {
+            $data = DBManager::getInstance()->fetch($sql);
+			$data = $data[0]['count'];
+        }
+        return $data;
+    }
+	
+	private static function explainCondition($conditions)
+    {
+        $sql = '';
+        foreach($conditions as $k=>$v)
+        {
+            $k = strtolower($k);
+            if ($k == 'or')
+            {
+                $orStr = " and (1=2 ";
+                foreach($conditions['or'] as $k1 => $v1)
+                {
+                    $orStr .= ' or ' . $this->explainValue($k1, $v1);
+                }
+
+                $orStr .= ") ";
+                $sql .= $orStr;
+            }
+            else if ($k == 'not')
+            {
+                $k1 = array_keys($v);
+                
+                $str = ' and ' . $k1[0] . ' not in (' . implode(",", $v[$k1[0]]) . ') ';
+                $sql .= $str;
+            }
+            else
+            {
+                $sql .= ' and ' . self::explainValue($k, $v);
+            }
+        }
+        
+        return $sql;
+    }
+	
+	private static function loadOne($arr)
+    {
+		$newInstance = new static();
+		foreach($arr as $k=>$v)
+		{
+			$k = str_replace("-", "_", $k);
+
+			$newInstance->$k = $v;
+		}
+        
+        return $newInstance;
+    }
+	
+	private static function explainValue($k, $v)
+    {
+        $str = '';
+        
+        if (is_array($v) && (!empty($v)))
+        {
+            $str = $k . ' in (' . implode(",", $v) . ') ';
+        }
+        else
+        {
+            if (strpos($k, '<') || strpos($k, '>') || strpos($k, '<>'))
+            {
+                $str = $k . '"' . $v . '" ';
+            }
+            else if (strpos($k, 'like') != false)
+            {
+                $str = $k . '"' . $v . '"';
+            }
+            else
+            {
+                $str = $k . '=' . '"' . $v . '"';
+            }
+        }
+        
+        return $str;
+    }
+	
+	private static function explainFieldValue(&$v)
+    {
+        $hasMath = false;
+        $yunsuanfu = array('+', '-', '*');
+        foreach($yunsuanfu as $oper)
+        {
+            $yIndex = strpos($v, $oper);
+            if ($yIndex != false)
+            {
+                $data = explode($oper, $v);
+                {
+                    if (!is_numeric($data[0]) && is_numeric($data[1]))
+                    {
+                        $hasMath = true;
+                    }
+                }
+                break;
+            }
+        }
+        
+        if (!$hasMath)
+        {
+            $v = "'" . $v . "'";
+        }
     }
 }

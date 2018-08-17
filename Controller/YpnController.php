@@ -87,7 +87,7 @@ class YpnController extends AppController
 	private function training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate)
 	{
 		$this->flushJs();
-		$this->flushNow("<div align=center><img id='training' src='" . MainConfig::STATIC_DIR . "img/training.jpg' width='500' /><br><br>training<img id='loading' src='" . MainConfig::STATIC_DIR . "res/img/loading.gif'></div>");
+		$this->flushNow("<div align=center><img id='training' src='" . MainConfig::STATIC_URL . "img/training.jpg' width='500' /><br><br>training<img id='loading' src='" . MainConfig::STATIC_URL . "res/img/loading.gif'></div>");
 		
 		$allTeamIds = TeamManager::getInstance()->getAllTeamIds();
 		$noMatchTeamIds = array_diff($allTeamIds, $todayMatchTeamIds); //今日没有比赛的球队ID
@@ -934,4 +934,5 @@ class YpnController extends AppController
 			}
 		}
 	}
+
 }

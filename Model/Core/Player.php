@@ -1,7 +1,7 @@
 <?php
 namespace Model\Core;
 
-class Player
+class Player extends YpnModel
 {
     public $id;
     

@@ -44,7 +44,8 @@ td,th, div, span, body {
 #field {
 	width: 350px;
 	height: 468px;
-	background: url("../img/field.gif");
+	/*background: url("../img/field.gif");*/
+	background-color: silver;
 	position: relative;
 }
 
