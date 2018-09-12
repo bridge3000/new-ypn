@@ -85,7 +85,7 @@ class MatchController extends AppController
 				echo $curMatch->hostTeam->name.' 没有球员 无法比赛';
 				continue;
 			}
-			elseif(!$teamPlayers[$curMatch->GuestTeam_id])
+			elseif(!isset($teamPlayers[$curMatch->GuestTeam_id]))
 			{
 				echo $curMatch->guestTeam->name.' 没有球员 无法比赛';
 				continue;
@@ -734,11 +734,11 @@ class MatchController extends AppController
                 $needTurn = true;
                 break;
             case 2:
-                $this->flushMatch($defensePlayers['shoufa'][$cornerResult['headerIndex']]->name . ' pohuai，');
+                $this->flushMatch($attackPlayers['shoufa'][$cornerResult['headerIndex']]->name . ' touqiugongmen，' . $defensePlayers['shoufa'][$cornerResult['goalkeeperIndex']]->name . ' pu chu le.');
                 $needTurn = true;
                 break;
-            case 3:
-                $this->flushMatch($attackPlayers['shoufa'][$cornerResult['headerIndex']]->name . ' touqiugongmen，' . $defensePlayers['shoufa'][$cornerResult['goalkeeperIndex']]->name . ' pu chu le.');
+			case 3:
+                $this->flushMatch($defensePlayers['shoufa'][$cornerResult['headerIndex']]->name . ' pohuai，');
                 $needTurn = true;
                 break;
             case 4:
