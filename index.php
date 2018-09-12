@@ -21,7 +21,14 @@ function handleError($errno,$errstr,$errfile,$errline,$errcontext)
 	$html = '';
     foreach($array as $row)
     {
-       $html .= $row['file'].':'.$row['line'].'行,调用方法:'.$row['function']."<p>";
+		if(isset($row['file']))
+		{
+			$html .= $row['file'].':'.$row['line'].'行,调用方法:'.$row['function']."<p>";
+		}
+		else
+		{
+			print_r($row);
+		}
     }
     echo $html;
 }
@@ -81,12 +88,14 @@ else
 	$action = 'today';
 }
 
-if(preg_match("/cli/i", php_sapi_name()))
+//die(php_sapi_name());
+
+//if(preg_match("/cli/i", php_sapi_name()))
+if(php_sapi_name() == "cli")
 {
 	$controller = $argv[1];
 	$action = $argv[2];
 	$params = [];
-	
 }
 
 $firstLetter = substr($controller, 0, 1);

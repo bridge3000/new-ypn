@@ -80,14 +80,25 @@ class MatchController extends AppController
 			$curMatch->hostTeam = $matchTeams[$curMatch->HostTeam_id];
 			$curMatch->guestTeam = $matchTeams[$curMatch->GuestTeam_id];
 			
+			if(!isset($teamPlayers[$curMatch->HostTeam_id]))
+			{
+				echo $curMatch->hostTeam->name.' 没有球员 无法比赛';
+				continue;
+			}
+			elseif(!$teamPlayers[$curMatch->GuestTeam_id])
+			{
+				echo $curMatch->guestTeam->name.' 没有球员 无法比赛';
+				continue;
+			}
+			
 			$this->isWatch = $curMatch->isWatched;
-            $curMatch->hostPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->HostTeam_id], $curMatch->class_id, $curMatch->hostTeam->formattion, $curMatch->hostTeam->isAutoFormat);
+            $curMatch->hostPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->HostTeam_id], $curMatch->class_id, $curMatch->hostTeam->formattion, $curMatch->hostTeam->is_auto_format);
             $strHtml = '<div class="shoufa_div">';
             $strHtml .= $this->generateZhenrongHtml($curMatch->hostPlayers, $curMatch->hostTeam);
             $strHtml .= '</div>';
             $this->flushMatch($strHtml);
             
-            $curMatch->guestPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->GuestTeam_id], $curMatch->class_id, $curMatch->guestTeam->formattion, $curMatch->guestTeam->isAutoFormat);
+            $curMatch->guestPlayers = PlayerManager::getInstance()->setShoufa($teamPlayers[$curMatch->GuestTeam_id], $curMatch->class_id, $curMatch->guestTeam->formattion, $curMatch->guestTeam->is_auto_format);
             $strHtml = '<div class="shoufa_div">';
             $strHtml .= $this->generateZhenrongHtml($curMatch->guestPlayers, $curMatch->guestTeam);
             $strHtml .= '</div><div style="clear:both"></div>';

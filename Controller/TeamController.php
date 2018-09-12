@@ -521,6 +521,6 @@ class TeamController extends AppController
 		$myTeamId = CoachManager::getInstance()->getMyCoach()->team_id;
 		$isAutoFormat = $_POST['auto_format'];
 		
-		TeamManager::getInstance()->update(array('isAutoFormat'=>$isAutoFormat), array('id'=>$myTeamId));
+		TeamManager::getInstance()->update(array('is_auto_format'=>$isAutoFormat), array('id'=>$myTeamId));
 	}
 }
