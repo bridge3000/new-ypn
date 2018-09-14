@@ -1,12 +1,3 @@
-
-<script>
-function watchMatch(match_id)
-{
-	$.get("index.php?c=match&a=watch&p=" + match_id, {}, function(data){
-		//
-	});
-}
-</script>
 <span id="spTest">today match</span>
 <?php 
 if (count($matches) == 0)
@@ -73,4 +64,11 @@ else
 <?php 
 }
 ?>
-
+<script>
+function watchMatch(match_id)
+{
+	$.get("/index.php?c=match&a=watch&p=" + match_id, {}, function(data){
+		//
+	});
+}
+</script>

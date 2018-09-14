@@ -45,7 +45,6 @@ class YpnController extends AppController
 		$todayMatchTeamIds = $this->getTodayMatchTeamIds($allUnplayedMatches, $nowDate);
 		if (!empty($todayMatchTeamIds)) //开始今日比赛
 		{
-//            $this->oldRedirect(array('controller' => 'match', 'action' => 'play'));
 			$this->redirect('/match/play');
 		}
 

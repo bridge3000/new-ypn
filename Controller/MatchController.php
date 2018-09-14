@@ -18,6 +18,7 @@ class MatchController extends AppController
     public $name = "Match";
     public $layout = "main";
     private $isWatch = 0;
+	private $replay = '';
     
     public function today()
     {
@@ -77,17 +78,24 @@ class MatchController extends AppController
         //play
         foreach ($todayMatches as $curMatch)
         {
+			$this->replay = '';
 			$curMatch->hostTeam = $matchTeams[$curMatch->HostTeam_id];
 			$curMatch->guestTeam = $matchTeams[$curMatch->GuestTeam_id];
+			$curMatch->hostPlayers['shoufa'] = [];
+			$curMatch->guestPlayers['shoufa'] = [];
 			
 			if(!isset($teamPlayers[$curMatch->HostTeam_id]))
 			{
 				echo $curMatch->hostTeam->name.' 没有球员 无法比赛';
+				$curMatch->GuestGoals = 2;
+				$this->onMatchEnd($curMatch);
 				continue;
 			}
 			elseif(!isset($teamPlayers[$curMatch->GuestTeam_id]))
 			{
 				echo $curMatch->guestTeam->name.' 没有球员 无法比赛';
+				$curMatch->HostGoals = 2;
+				$this->onMatchEnd($curMatch);
 				continue;
 			}
 			
@@ -129,7 +137,7 @@ class MatchController extends AppController
 		$this->flushMatch('the match is over, ' . $curMatch->hostTeam->name . $curMatch->HostGoals . ":" . $curMatch->GuestGoals . $curMatch->guestTeam->name . "<br>");
     }
 	
-	private function onMatchEnd(&$curMatch)
+	private function onMatchEnd($curMatch)
     {
 		$curMatch->isPlayed = 1;
 
@@ -186,8 +194,10 @@ class MatchController extends AppController
                 $curMatch->guestTeam->draw++;
             }
 			
-			TeamManager::getInstance()->saveMatchInfo($curMatch->hostTeam);
-			TeamManager::getInstance()->saveMatchInfo($curMatch->guestTeam);	
+//			TeamManager::getInstance()->saveMatchInfo($curMatch->hostTeam);
+//			TeamManager::getInstance()->saveMatchInfo($curMatch->guestTeam);	
+			$curMatch->hostTeam->save();
+			$curMatch->guestTeam->save();
         }
 		else if ($curMatch->class_id == 3) //ucl
 		{
@@ -203,7 +213,9 @@ class MatchController extends AppController
 		unset($curMatch->hostPlayers);
 		unset($curMatch->guestPlayers);
 		
-		MatchManager::getInstance()->saveModel($curMatch);
+//		MatchManager::getInstance()->saveModel($curMatch);
+		$curMatch->replay = $this->replay;
+		$curMatch->save();
 		
 		$count = MatchManager::getInstance()->find('count', array(
 			'conditions' => array(
@@ -789,6 +801,8 @@ class MatchController extends AppController
         {
             $this->flushNow($str);
         }
+		
+		$this->replay .= $str;
     }
 	
 	public function ajax_get_my_next()
@@ -797,7 +811,7 @@ class MatchController extends AppController
         $myTeamId = $myCoach->team_id;
 		
 		$nowDate = SettingManager::getInstance()->getNowdate();
-		$weekarray=array("日","一","二","三","四","五","六"); //先定义一个数组
+		$weekarray = array("日","一","二","三","四","五","六"); //先定义一个数组
 		$weekDay = "星期".$weekarray[date("w", strtotime($nowDate))];
 		
 		$data = MatchManager::getInstance()->getNextUnplayedMatch($myTeamId);

@@ -6,23 +6,22 @@ use \Model\Manager\DBManager;
 
 class YpnModel
 {
-
-    public static $table = '';
+    protected $table = '';
     public $id = 0;
     
     public function __construct()
     {
     }
 	
-	public static function getTable()
+	public function getTable()
 	{
-		if(!self::$table)
+		if(!$this->table)
 		{
 			$arr = explode("\\", static::class);
-			self::$table = self::humpToLine(lcfirst($arr[count($arr)-1])).'s';
+			$this->table = self::humpToLine(lcfirst($arr[count($arr)-1])).'s';
 		}
 		
-		return self::$table;
+		return $this->table;
 	}
 	
 	private static function humpToLine($str){
@@ -34,12 +33,12 @@ class YpnModel
 	
 	public function save()
     {
-		$sql = self::generateSaveSql($this, '');
+		$sql = $this->generateSaveSql($this, '');
         
         return DBManager::getInstance()->execute($sql);
     }
 
-	private static function generateSaveSql($obj)
+	private function generateSaveSql($obj)
     {
         $sql = '';
 		$type = '';
@@ -66,15 +65,15 @@ class YpnModel
 				}
             }
 
-            $sql = 'INSERT into ' . MainConfig::PREFIX . self::getTable() . '(' . implode(",", $keys)  . ') values(' . implode(",", $values) . ')';
+            $sql = 'INSERT into ' . MainConfig::PREFIX . $this->getTable() . '(' . implode(",", $keys)  . ') values(' . implode(",", $values) . ')';
         }
         else
         {
-            $sql = 'UPDATE ' . MainConfig::PREFIX . self::getTable() . ' SET ';
+            $sql = 'UPDATE ' . MainConfig::PREFIX . $this->getTable() . ' SET ';
             $arr = array();
             foreach($obj as $k => $v)
             {
-				if ($k != 'id')
+				if (!in_array($k, ['id', 'table']))
 				{
 					$v = str_replace("'", "''", $v);
 					self::explainFieldValue($v);

@@ -1,7 +1,7 @@
 <?php
 namespace Model\Core;
 
-class Team 
+class Team extends YpnModel
 {
     public $id;
     

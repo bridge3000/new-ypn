@@ -409,6 +409,7 @@ class TeamController extends AppController
     
     public function get_young_players()
     {
+		ini_set('memory_limit','512M');
 		$this->flushCss();
 		$this->flushNow('转会期已经结束了，各个俱乐部正在抽调年轻球员，请稍候...<br>');
         
@@ -464,9 +465,9 @@ class TeamController extends AppController
                 foreach($extractInfo['positions'] as $positionId => $count) //按position_id遍历
                 {
                     $names = PlayerManager::getInstance()->getLeastYoungPlayers($positionId, $count, $firstNames, $familyNames, $countries, $usedNOs, $curTeam->getLeagueId(), $curTeam->getId(), $nowDate, $existPlayerNames);
-                    foreach($names as $n)
+                    foreach($names as $newPlayerName)
                     {
-                        $this->flushNow("在二线队抽调了<span=\"blue_bold_span\">" . $curTeam->getName() . "</span>在二线队抽调了<span=\"green_bold_span\">" . $n . "</span>到一线队<br>");
+                        $this->flushNow("在二线队抽调了<span=\"blue_bold_span\">" . $curTeam->getName() . "</span>在二线队抽调了<span=\"green_bold_span\">" . $newPlayerName . "</span>到一线队<br>");
 	
 						$curTeam->addMoney(-5, '抽调新队员', $nowDate);
 						$curTeam->player_count++;

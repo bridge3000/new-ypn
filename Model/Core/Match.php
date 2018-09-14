@@ -1,7 +1,9 @@
 <?php
 namespace Model\Core;
-class Match 
+
+class Match extends YpnModel
 {
+	protected $table = 'matches';
     private $faqiuquan = 1;
     
     public function turnFaqiuquan()
@@ -65,5 +67,3 @@ class Match
 		return $data;
 	}
 }
-
-?>

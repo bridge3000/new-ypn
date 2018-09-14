@@ -96,18 +96,18 @@ class TeamManager extends DataManager
         return $computerTeams;
     }
     
-    public function saveMatchInfo($curTeam)
-    {
-        $data = array(
-            'goals' => $curTeam->goals,
-            'lost' => $curTeam->lost,
-            'score' => $curTeam->score,
-            'win' => $curTeam->win,
-            'lose' => $curTeam->lose,
-            'draw' => $curTeam->draw,
-        );
-        TeamManager::getInstance()->update($data, array('id'=>$curTeam->id));
-    }
+//    public function saveMatchInfo($curTeam)
+//    {
+//        $data = array(
+//            'goals' => $curTeam->goals,
+//            'lost' => $curTeam->lost,
+//            'score' => $curTeam->score,
+//            'win' => $curTeam->win,
+//            'lose' => $curTeam->lose,
+//            'draw' => $curTeam->draw,
+//        );
+//        TeamManager::getInstance()->update($data, array('id'=>$curTeam->id));
+//    }
 	
 	public function setAttack($teamId, $attack)
 	{

@@ -108,7 +108,7 @@ foreach ($myPlayers as $k => $v) {
 		</td></tr>
 	<tr>
 		<td align="right" bgcolor="whitesmoke">自动设置阵容：</td>
-		<td bgcolor="#FFFFFF"><input type="checkbox" id="chkAutoFormat" <?=($myTeam['isAutoFormat']?"checked":"")?> /></td>
+		<td bgcolor="#FFFFFF"><input type="checkbox" id="chkAutoFormat" <?=($myTeam['is_auto_format']?"checked":"")?> /></td>
 	</tr>
 	<tr>
 		<td align="right" bgcolor="whitesmoke">攻击程度：</td>
@@ -132,9 +132,7 @@ for ($i = 10; $i < 110; $i += 10) {
 	</tr>
 	<tr>
 		<td align="right" bgcolor="whitesmoke">守门员参与最后一次定位球进攻：</td>
-		<td bgcolor="#FFFFFF"><input type="checkbox" name="checkbox" id="checkbox" onclick="changeGoalkeeperAttack();" <?php if ($myTeam['isGoalkeeperAttack']) {
-						echo(" checked");
-					} ?> /></td>
+		<td bgcolor="#FFFFFF"><input type="checkbox" name="checkbox" id="checkbox" onclick="changeGoalkeeperAttack();" <?=($myTeam['isGoalkeeperAttack'] ? "checked" : '') ?> /></td>
 	</tr>
 	<tr>
 		<td colspan="2" align="center" bgcolor="#FFFFFF">
@@ -151,7 +149,7 @@ for ($i = 10; $i < 110; $i += 10) {
 <script>
 	function changeAttack(attackRate)
 	{
-		$.get("index.php?c=team&a=ajax_change_attack&p=" + attackRate, {}, function (attack) {
+		$.get("/index.php?c=team&a=ajax_change_attack&p=" + attackRate, {}, function (attack) {
 			$(".attack_td").each(function(){
 				if ($(this).attr("value") == attack)
 				{
@@ -167,7 +165,7 @@ for ($i = 10; $i < 110; $i += 10) {
 
 	function changeGoalkeeperAttack()
 	{
-		$.get("change_goalkeeper_attack/", {}, function () {
+		$.get("/change_goalkeeper_attack/", {}, function () {
 
 		});
 	}
@@ -185,7 +183,7 @@ for ($i = 10; $i < 110; $i += 10) {
 
 	function changeKicker(kickerType, kickerId)
 	{
-		$.get("index.php", {c: 'team', a: 'change_kicker', p: kickerType + ',' + kickerId}, function () {
+		$.get("/index.php", {c: 'team', a: 'change_kicker', p: kickerType + ',' + kickerId}, function () {
 		});
 	}
 
@@ -222,7 +220,7 @@ for ($i = 10; $i < 110; $i += 10) {
 		price = $('#txtPrice').val();
 		if (confirm('更改球票价格将使俱乐部人气变化，确认更改吗？'))
 		{
-			$.get("change_price/" + price, function (data) {
+			$.get("/change_price/" + price, function (data) {
 				$("#spPrice").html(price);
 				$("#btnPrice1").show();
 				$("#btnPrice2").hide();
