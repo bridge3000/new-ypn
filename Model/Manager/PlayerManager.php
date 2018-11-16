@@ -11,14 +11,14 @@ class PlayerManager extends DataManager
     public function doNormal()
     {
         $sqlArr = array();
-        $sqlArr[] = "update ypn_players set condition_id=3 where condition_id=5 and Punish1Count=0 and Punish2Count=0 and Punish3Count=0";
-		$sqlArr[] = "update ypn_players set sinew=sinew+25,YellowTodayCount=0";
-		$sqlArr[] = "update ypn_players set sinew=SinewMax where sinew>SinewMax";
-		$sqlArr[] = "update ypn_players set state=100 where state>100";
-		$sqlArr[] = "update ypn_players set InjuredDay=InjuredDay-1 where InjuredDay>0";
-		$sqlArr[] = "update ypn_players set condition_id=3 where InjuredDay=0 and condition_id not in (1,2)";
-		$sqlArr[] = "update ypn_players set cooperate=100 where cooperate>100";
-		$sqlArr[] = "update ypn_players set state=state-2 where state>66";
+        $sqlArr[] = "UPDATE ypn_players SET condition_id=3 WHERE condition_id=5 AND Punish1Count=0 AND Punish2Count=0 AND Punish3Count=0";
+		$sqlArr[] = "UPDATE ypn_players SET sinew=sinew+15,YellowTodayCount=0";
+		$sqlArr[] = "UPDATE ypn_players SET sinew=SinewMax WHERE sinew>SinewMax";
+		$sqlArr[] = "UPDATE ypn_players SET state=100 WHERE state>100";
+		$sqlArr[] = "UPDATE ypn_players SET InjuredDay=InjuredDay-1 WHERE InjuredDay>0";
+		$sqlArr[] = "UPDATE ypn_players SET condition_id=3 WHERE InjuredDay=0 AND condition_id not in (1,2)";
+		$sqlArr[] = "UPDATE ypn_players SET cooperate=100 WHERE cooperate>100";
+		$sqlArr[] = "UPDATE ypn_players SET state=state-2 WHERE state>66";
         
         DBManager::getInstance()->multi_execute(implode(";", $sqlArr));
     }
@@ -1132,7 +1132,7 @@ class PlayerManager extends DataManager
 	
 	public function saveMatchResult($hostShoufaPlayers, $guestShoufaPlayers)
 	{
-		$keys = array('id', 'Goal1Count', 'Penalty1Count', 'Assist1Count', 'Tackle1Count', 'Punish1Count', 'ShotAccurateExperience', 'PassExperience', 'YellowCard1Count', 'RedCard1Count', 'sinew');
+		$keys = ['id', 'Goal1Count', 'Penalty1Count', 'Assist1Count', 'Tackle1Count', 'Punish1Count', 'ShotAccurateExperience', 'PassExperience', 'YellowCard1Count', 'RedCard1Count', 'sinew', 'cooperate'];
 		$values = array();
 		$shoufaPlayers = array_merge($hostShoufaPlayers, $guestShoufaPlayers);
 		foreach($shoufaPlayers as $p)

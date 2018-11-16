@@ -132,15 +132,14 @@ class DataManager
         foreach($yunsuanfu as $oper)
         {
             $yIndex = strpos($v, $oper);
-            if ($yIndex != false)
+            if ($yIndex !== FALSE)
             {
-                $data = explode($oper, $v);
-                {
-                    if (!is_numeric($data[0]) && is_numeric($data[1]))
-                    {
-                        $hasMath = true;
-                    }
-                }
+				$hasMath = true;
+//                $data = explode($oper, $v);
+//                    if (!is_numeric($data[0]) && is_numeric($data[1]))
+//                    {
+//                        $hasMath = true;
+//                    }
                 break;
             }
         }
@@ -157,7 +156,27 @@ class DataManager
         foreach($data as $k => $v)
         {
             $this->explainFieldValue($v);
-            $dataStr .= $k . '=' . $v . ',';
+			
+			$hasMath = FALSE;
+			$yunsuanfu = array('+', '-', '*');
+			foreach($yunsuanfu as $oper)
+			{
+				$yIndex = strpos($v, $oper);
+				if ($yIndex !== FALSE)
+				{
+					$hasMath = true;
+					break;
+				}
+			}
+			
+			if($hasMath)
+			{
+				$dataStr .= $k . '=' . $k . $v . ',';
+			}
+			else
+			{
+				$dataStr .= $k . '=' . $v . ',';
+			}
         }
         $dataStr = substr($dataStr, 0, strlen($dataStr)-1);
         

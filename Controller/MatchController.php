@@ -144,13 +144,30 @@ class MatchController extends AppController
 		foreach($curMatch->hostPlayers['shoufa'] as &$p)
 		{
 			$p->sinew -= 30;
+			if($p->cooperate < 100)
+			{
+				$p->cooperate += 2;
+			}
+			if($p->cooperate > 100)
+			{
+				$p->cooperate = 100;
+			}
 		}
 		
 		foreach($curMatch->guestPlayers['shoufa'] as &$p)
 		{
 			$p->sinew -= 30;
+			if($p->cooperate < 100)
+			{
+				$p->cooperate += 2;
+			}
+			if($p->cooperate > 100)
+			{
+				$p->cooperate = 100;
+			}
 		}
 		
+		//player需要更新的属性需要在下面的函数中写入列表
 		PlayerManager::getInstance()->saveMatchResult($curMatch->hostPlayers['shoufa'], $curMatch->guestPlayers['shoufa']);
 		
 		$result = 0; //1host win 2guestwin 3draw 
@@ -194,8 +211,6 @@ class MatchController extends AppController
                 $curMatch->guestTeam->draw++;
             }
 			
-//			TeamManager::getInstance()->saveMatchInfo($curMatch->hostTeam);
-//			TeamManager::getInstance()->saveMatchInfo($curMatch->guestTeam);	
 			$curMatch->hostTeam->save();
 			$curMatch->guestTeam->save();
         }
@@ -213,7 +228,6 @@ class MatchController extends AppController
 		unset($curMatch->hostPlayers);
 		unset($curMatch->guestPlayers);
 		
-//		MatchManager::getInstance()->saveModel($curMatch);
 		$curMatch->replay = $this->replay;
 		$curMatch->save();
 		

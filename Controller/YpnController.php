@@ -48,9 +48,6 @@ class YpnController extends AppController
 			$this->redirect('/match/play');
 		}
 
-		$this->training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate);
-		unset($todayMatchTeamIds);
-
 		$this->checkTransferOverDayAndDo($nowDate, $thisYear); //如果刚刚过转会期人还没有招满
 
 		/*如果赛季比赛全完事，则进入新赛季页面*/
@@ -75,12 +72,12 @@ class YpnController extends AppController
 			/*列出近期新闻，如果不采用弹出窗口显示则不用列出*/
 			$this->set('news', NewsManager::getInstance()->getUnreadNews($myTeamId));
 			NewsManager::getInstance()->readAll($myTeamId);
-
+			
+			$this->training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate);
 			PlayerManager::getInstance()->doNormal(); //球员日常变化
 
 			echo "<a href=\"" . MainConfig::BASE_URL . "match/today\">today match</a>";
 			echo "<script>$(\"#loading\").remove();</script>";
-//			echo "<script>location.href = 'index.php?c=match&a=today';</script>";
 		}
 	}
 	
@@ -165,6 +162,11 @@ class YpnController extends AppController
 		return $todayMatchTeamIds;
 	}
 	
+	/**
+	 * 检测夏窗关闭抽调新人
+	 * @param type $nowDate
+	 * @param type $thisYear
+	 */
 	private function checkTransferOverDayAndDo($nowDate, $thisYear)
 	{
 		if ($nowDate == $thisYear . "-09-01")
