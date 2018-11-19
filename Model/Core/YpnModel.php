@@ -139,8 +139,10 @@ class YpnModel
         {
             $fields = implode(",", $fields);
         }
+		
+		$table = (new static)->getTable();
         
-        $sql = "select $fields from " . MainConfig::PREFIX . self::getTable() . " where 1=1 ";
+        $sql = "SELECT $fields FROM " . MainConfig::PREFIX . $table . " WHERE 1=1 ";
         
         if (array_key_exists('conditions', $option))
         {

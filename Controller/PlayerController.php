@@ -311,7 +311,7 @@ class PlayerController extends AppController
 				'team_id' => $myCoach->team_id,
 				'condition_id' => 1
 			),
-                    'contain' => array()
+			'contain' => array()
 			)
 		);
 		
@@ -320,12 +320,15 @@ class PlayerController extends AppController
 				'team_id' => $myCoach->team_id,
 				'condition_id' => 2
 			),
-                    'contain' => array()
+			'contain' => array()
 			)
 		);
 
         $positions = MainConfig::$positions;
-		$playergroups = PlayerManager::getInstance()->query('select * from ypn_player_groups where team_id=' . $myCoach->team_id);
+		$playergroups = \Model\Manager\PlayerGroupManager::getInstance()->find('all', [
+			'conditions' => ['team_id'=>$myCoach->team_id]
+		]);
+		
 		$this->set('positions', $positions);
 		$this->set('players', $players);
 		$this->set('shoufaCount', count($playersCondition1));
@@ -334,7 +337,8 @@ class PlayerController extends AppController
 		$this->set('group_id', $group_id);
 		$this->set('cornerpositions', MainConfig::$cornerPositions);
 		$this->set('fieldPunish', $fieldPunish);
-		$this->set('playergroups', array());
+		$this->set('playergroups', $playergroups);
+		$this->set('teamId', $myCoach->team_id);
         
         $this->render('chuchang');
 	}
@@ -342,6 +346,8 @@ class PlayerController extends AppController
     public function ajax_change_condition($playerId, $conditionId)
 	{
 		PlayerManager::getInstance()->update(array('condition_id'=>$conditionId), array('id'=>$playerId));
+		
+		$this->responseToClient(1, []);
 	}
 	
 	public function ajax_change_position($playerId, $positionId)
@@ -656,4 +662,13 @@ class PlayerController extends AppController
 		$this->responseToClient($code, $data);
 	}
 
+	public function changegroup($playerId, $groupId)
+	{
+		$curPlayer = Player::getById($playerId);
+		
+		$curPlayer->group_id = $groupId;
+		$curPlayer->save();
+		
+		$this->redirect("/player/chuchang");
+	}
 }

@@ -18,18 +18,18 @@ class UclGroupManager extends DataManager
 	{
 		if($result == 1)
 		{
-			$this->update(array("score"=>"+3","win"=>"+1"), array('team_id'=>$hostTeamId));
-			$this->update(array("lose"=>"+1"), array('team_id'=>$guestTeamId));
+			$this->update(array("score"=>"score+3","win"=>"win+1"), array('team_id'=>$hostTeamId));
+			$this->update(array("lose"=>"lose+1"), array('team_id'=>$guestTeamId));
 		}
 		else if($result == 2)
 		{
-			$this->update(array("score"=>"+3","win"=>"+1"), array('team_id'=>$guestTeamId));
-			$this->update(array("lose"=>"+1"), array('team_id'=>$hostTeamId));
+			$this->update(array("score"=>"score+3","win"=>"win+1"), array('team_id'=>$guestTeamId));
+			$this->update(array("lose"=>"lose+1"), array('team_id'=>$hostTeamId));
 		}
 		else if($result == 3)
 		{
-			$this->update(array("score"=>"+1","draw"=>"+1"), array('team_id'=>$hostTeamId));
-			$this->update(array("score"=>"+1","draw"=>"+1"), array('team_id'=>$guestTeamId));
+			$this->update(array("score"=>"score+1","draw"=>"draw+1"), array('team_id'=>$hostTeamId));
+			$this->update(array("score"=>"score+1","draw"=>"draw+1"), array('team_id'=>$guestTeamId));
 		}
 	}
 	

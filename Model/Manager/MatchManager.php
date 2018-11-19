@@ -26,7 +26,7 @@ class MatchManager extends DataManager
         $data = $this->find("all", array(
             'conditions' => array(
                 'or' => array('HostTeam_id' => $myTeamId, 'GuestTeam_id' => $myTeamId),
-                'isPlayed' => 0
+//                'isPlayed' => 0
                 ),
             'fields' => array('id', 'PlayTime', 'HostTeam_id', 'GuestTeam_id', 'isPlayed', 'isWatched', 'class_id', 'HostGoals', 'GuestGoals', 'HostGoaler_ids', 'GuestGoaler_ids'),
             'order'=> array('PlayTime' => 'asc')

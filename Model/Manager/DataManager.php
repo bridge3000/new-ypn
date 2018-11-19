@@ -127,22 +127,25 @@ class DataManager
     
     private function explainFieldValue(&$v)
     {
-        $hasMath = false;
         $yunsuanfu = array('+', '-', '*');
+		$operCnt = 0;
+		$hasOper = '';
+		$hasMath = FALSE;
         foreach($yunsuanfu as $oper)
         {
-            $yIndex = strpos($v, $oper);
-            if ($yIndex !== FALSE)
-            {
-				$hasMath = true;
-//                $data = explode($oper, $v);
-//                    if (!is_numeric($data[0]) && is_numeric($data[1]))
-//                    {
-//                        $hasMath = true;
-//                    }
-                break;
-            }
+			$curOperCnt = substr_count($v, $oper);
+			$operCnt += $curOperCnt;
+			if($curOperCnt > 0)
+			{
+				$hasOper = $oper;
+			}
         }
+		
+		if($operCnt == 1) //只有一个运算符 并且运算符后面是数字
+		{
+			$arr = explode($hasOper, $v);
+			$hasMath = is_numeric($arr[1]);
+		}
         
         if (!$hasMath)
         {
@@ -152,31 +155,11 @@ class DataManager
 
     public function update($data, $conditions)
     {
-        $dataStr = "";
+		$dataStr = '';
         foreach($data as $k => $v)
         {
             $this->explainFieldValue($v);
-			
-			$hasMath = FALSE;
-			$yunsuanfu = array('+', '-', '*');
-			foreach($yunsuanfu as $oper)
-			{
-				$yIndex = strpos($v, $oper);
-				if ($yIndex !== FALSE)
-				{
-					$hasMath = true;
-					break;
-				}
-			}
-			
-			if($hasMath)
-			{
-				$dataStr .= $k . '=' . $k . $v . ',';
-			}
-			else
-			{
-				$dataStr .= $k . '=' . $v . ',';
-			}
+			$dataStr .= $k . '=' . $v . ',';
         }
         $dataStr = substr($dataStr, 0, strlen($dataStr)-1);
         
@@ -265,8 +248,6 @@ class DataManager
 	 */
     private function generateSaveSql($obj, $type)
     {
-//		var_dump($type, $obj);exit;
-		
         $sql = '';
         if ($type === '')
         {
