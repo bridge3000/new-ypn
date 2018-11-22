@@ -17,10 +17,10 @@ use MainConfig;
 class YpnController extends AppController 
 {
 	var $name = 'Ypn';
+	public $layout = "main";
 	
 	public function new_day()
 	{
-		$this->layout = 'clear';
 		header("content-type:text/html; charset=utf-8");
         
         $myCoach = CoachManager::getInstance()->getMyCoach();
@@ -65,8 +65,6 @@ class YpnController extends AppController
 			$isTransferDay = YpnManager::getInstance()->checkTransferDay($nowDate);
 			$this->doWeekdayTask($weekday, $isTransferDay, $isHoliday, $myTeamId);
 
-			$this->flushNow('新的一天开始了.');
-
 			$this->oldRedirect(array('controller'=>'player', 'action'=>'pay_birthday'), false); /*过生日的队员发奖金*/
 
 			/*列出近期新闻，如果不采用弹出窗口显示则不用列出*/
@@ -76,16 +74,12 @@ class YpnController extends AppController
 			$this->training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate);
 			PlayerManager::getInstance()->doNormal(); //球员日常变化
 
-			echo "<a href=\"" . MainConfig::BASE_URL . "match/today\">today match</a>";
-			echo "<script>$(\"#loading\").remove();</script>";
+			$this->render('new_day');
 		}
 	}
 	
 	private function training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate)
 	{
-		$this->flushJs();
-		$this->flushNow("<div align=center><img id='training' src='" . MainConfig::STATIC_URL . "img/training.jpg' width='500' /><br><br>training<img id='loading' src='" . MainConfig::STATIC_URL . "res/img/loading.gif'></div>");
-		
 		$allTeamIds = TeamManager::getInstance()->getAllTeamIds();
 		$noMatchTeamIds = array_diff($allTeamIds, $todayMatchTeamIds); //今日没有比赛的球队ID
 		

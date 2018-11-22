@@ -140,11 +140,7 @@ class PlayerManager extends DataManager
         }
 		
         /*公共的 门将 左右前卫 左右后卫*/
-        $this->online2(13, $punishField, $players, $matchClassId);
-        $this->online2(14, $punishField, $players, $matchClassId);
-        $this->online2(9, $punishField, $players, $matchClassId);
-        $this->online2(10, $punishField, $players, $matchClassId);
-        $this->online2(4, $punishField, $players, $matchClassId);
+		$this->online2(4, $punishField, $players, $matchClassId); //优先门将
 
         /*根据阵型判断*/
         switch ($formattion) 
@@ -208,6 +204,11 @@ class PlayerManager extends DataManager
 	            $this->online2(3, $punishField, $players, $matchClassId);
 	            break;
         }
+		
+		$this->online2(13, $punishField, $players, $matchClassId);
+        $this->online2(14, $punishField, $players, $matchClassId);
+        $this->online2(9, $punishField, $players, $matchClassId);
+        $this->online2(10, $punishField, $players, $matchClassId);
 
         /*设置5个替补队员*/
         $j = 0;

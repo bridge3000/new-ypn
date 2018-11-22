@@ -4,6 +4,7 @@
 			<th>号码</th>
 			<th>姓名</th>
 			<th>位置</th>
+			<th>方向</th>
 			<th>状态</th>
 			<th>体力</th>
 			<th>磨合度</th>
@@ -16,6 +17,7 @@
 				<td><?= $curPlayer['ShirtNo'] ?></td>
 				<td><a href="javascript:;" class="player_name" value="<?= $curPlayer['id'] ?>"><?= $curPlayer['name'] ?></a></td>
 				<td><?=MainConfig::$positions[$curPlayer['position_id']]?></td>
+				<td><?=$curPlayer['LeftProperties']?> | <?=$curPlayer['MidProperties']?> | <?=$curPlayer['RightProperties']?></td>
 				<td><?=$curPlayer['state']?></td>
 				<td>
 				<?php

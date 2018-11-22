@@ -92,10 +92,10 @@
 					<tr>
 						<td>分组：</td>
 						<td>
-							<select name="select3" id="select3" onchange="location = '/player/chuchang/' + this.value;">
+							<select onchange="location = '/player/chuchang/' + this.value;">
 								<option value="0">未选择</option>
 							<?php foreach($playergroups as $playerGroup): ?>
-								<option value="<?=$playerGroup['id']?>"><?=$playerGroup['name']?></option>
+								<option value="<?=$playerGroup['id']?>" <?=($playerGroup['id']==$groupId)?'selected':''?>><?=$playerGroup['name']?></option>
 							<?php endforeach; ?>
 							</select>
 						</td>
@@ -138,19 +138,31 @@
 	var shoufaCount = <?= $shoufaCount ?>;
 
 	var positionCor = {
-		1: [1, 1], // => '前锋',
-		2: [2, 4], // => '后腰',
-		3: [1, 5], // => '中后卫',
-		4: [2, 6], // => '门将',
+		1: [1, 2], // => '前锋',
+		2: [4, 2], // => '后腰',
+		3: [5, 2], // => '中后卫',
+		4: [6, 2], // => '门将',
 		5: [0, 0], // => '左边锋',
-		6: [4, 0], // => '右边锋',
-		7: [2, 0], //=> '中锋',
+		6: [0, 4], // => '右边锋',
+		7: [0, 2], //=> '中锋',
 		8: [2, 2], // => '前腰',
-		9: [1, 3], // => '左前卫',
+		9: [3, 1], // => '左前卫',
 		10: [3, 3], // => '右前卫',
-		13: [0, 5], // => '左后卫',
-		14: [4, 5] // => '右后卫'
+		13: [5, 0], // => '左后卫',
+		14: [5, 4] // => '右后卫'
 	};
+	
+	$(document).ready(function(){
+		for (var i in players)
+		{
+			if (players[i].condition_id == 1)
+			{
+				players[i].div = getDiv(players[i]);
+				players[i].div.appendTo($("#field"));
+				changeCor(players[i].position_id, players[i].div);
+			}
+		}
+	});
 
 	function getDiv(player)
 	{
@@ -165,20 +177,15 @@
 
 	function changeCor(positionId, $div)
 	{
-		var posX = positionCor[positionId][0] * perWidth;
-		var posY = positionCor[positionId][1] * perHeight;
+		var rndColors = ['white', 'yellow', 'red'];
+		var posX = positionCor[positionId][1] * perWidth + 80*(Math.random()-0.5);
+		var posY = positionCor[positionId][0] * perHeight;
+		
 		$div.css("left", posX);
 		$div.css("top", posY);
-	}
-
-	for (var i in players)
-	{
-		if (players[i].condition_id == 1)
-		{
-			players[i].div = getDiv(players[i]);
-			players[i].div.appendTo($("#field"));
-			changeCor(players[i].position_id, players[i].div);
-		}
+		
+		var rndIndex = parseInt(Math.random()*rndColors.length);
+		$div.css("color", rndColors[rndIndex]);
 	}
 
 	function changeCondition(playerId, conditionId)
@@ -188,7 +195,6 @@
 			{
 				if (players[i].id == playerId)
 				{
-
 					if (conditionId == 1)
 					{
 						players[i].div = getDiv(players[i]);
@@ -202,8 +208,9 @@
 						if (players[i].condition_id == 1)
 						{
 							players[i].div.remove();
+							shoufaCount--;
 						}
-						shoufaCount--;
+
 						$("#spShoufaCount").text(shoufaCount);
 					}
 					else if (conditionId == 3)
@@ -211,8 +218,9 @@
 						if (players[i].condition_id == 1)
 						{
 							players[i].div.remove();
+							shoufaCount--;
 						}
-						shoufaCount--;
+						
 						$("#spShoufaCount").text(shoufaCount);
 					}
 

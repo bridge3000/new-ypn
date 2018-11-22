@@ -157,6 +157,15 @@ class TeamController extends AppController
         echo('转会结束.');
     }
 	
+	/**
+	 * NPC Team购买球员
+	 * @param type $curTeam
+	 * @param type $allTeamUsedNOs
+	 * @param type $allCanBuyPlayers
+	 * @param type $futurePlayerIds 已经在未来合同的集合
+	 * @param type $allTeamPositionCount
+	 * @param type $computerLeagueTeams
+	 */
 	private function buySomePlayers(&$curTeam, $allTeamUsedNOs, &$allCanBuyPlayers, &$futurePlayerIds, $allTeamPositionCount, &$computerLeagueTeams)
     {
         $usedNOs = array_key_exists($curTeam->id, $allTeamUsedNOs) ? $allTeamUsedNOs[$curTeam->id] : array(); //已使用的号码
@@ -232,6 +241,8 @@ class TeamController extends AppController
 					'NewSalary' => $newSalary,
 					'OldContractEnd' => $curPlayer->ContractEnd
 				));
+				
+				$futurePlayerIds[] = $curPlayer->id;
 				
 				$info = "<span class=\"green_bold_span\">" . $curPlayer->name . "</span>将在6个月内自由转会加盟<span class=\"blue_normal_span\">" . $buyTeam->name . "</span>";
 				$this->flushNow($info . "<br>");  

@@ -82,7 +82,7 @@ class PlayerController extends AppController
     {
         $fieldName = '';
         $conditions = array();
-        if (in_array($matchClassId, array(1, 31)))
+        if (in_array($matchClassId, array(1, 31))) //联赛
         {
             if ($fieldType == 'goal')
             {
@@ -106,6 +106,10 @@ class PlayerController extends AppController
                 $conditions['league_id'] = 3;
             }
         }
+		else //杯赛
+		{
+			
+		}
         
         $players = PlayerManager::getInstance()->find('all', array(
             'conditions' => $conditions,
@@ -241,7 +245,7 @@ class PlayerController extends AppController
 
 			$records = PlayerManager::getInstance()->find('all', array(
 				'conditions' => $conditions,
-				'fields' => array('id', 'name', 'team_id', 'position_id', 'fee', 'salary', 'popular', 'ContractBegin', 'ContractEnd', 'birthday'),
+				'fields' => array('id', 'name', 'team_id', 'position_id', 'fee', 'salary', 'popular', 'ContractBegin', 'ContractEnd', 'birthday', 'LeftProperties', 'MidProperties', 'RightProperties'),
 				'order' => array('fee'=>'desc', 'salary'=>'desc','popular'=>'desc', 'id'=>'desc'),
 				'limit' => array(($curPage-1)*$perPage, $perPage)
 			));
@@ -272,7 +276,7 @@ class PlayerController extends AppController
         $this->render('buy_list');
     }
     
-    public function chuchang($group_id = 0) 
+    public function chuchang($groupId = 0) 
 	{
 		$this->layout = 'main';
 		header("Expires: Mon, 26 Jul 1997 05:00:00 GMT"); 
@@ -294,10 +298,10 @@ class PlayerController extends AppController
 		PlayerManager::getInstance()->query('update ypn_players set condition_id=3 where team_id=' . $myCoach->team_id . ' and ' . $fieldPunish . '>0');
 		
 		/*使用自定义分组*/
-		if ($group_id <> 0)
+		if ($groupId <> 0)
 		{
 			PlayerManager::getInstance()->query('update ypn_players set condition_id=3 where condition_id=1 and team_id=' . $myCoach->team_id);
-			PlayerManager::getInstance()->query('update ypn_players set condition_id=1 where group_id=' . $group_id . ' and team_id=' . $myCoach->team_id . ' and condition_id in(2, 3) and ' . $matchFields['fieldPunish'] . '=0');
+			PlayerManager::getInstance()->query('update ypn_players set condition_id=1 where group_id=' . $groupId . ' and team_id=' . $myCoach->team_id . ' and condition_id in(2, 3) and ' . $matchFields['fieldPunish'] . '=0');
 		}
 				
 		$players = PlayerManager::getInstance()->find('all', array(
@@ -334,7 +338,7 @@ class PlayerController extends AppController
 		$this->set('shoufaCount', count($playersCondition1));
 		$this->set('tibus', $playersCondition2);
 		$this->set('playergroups', $playergroups);
-		$this->set('group_id', $group_id);
+		$this->set('groupId', $groupId);
 		$this->set('cornerpositions', MainConfig::$cornerPositions);
 		$this->set('fieldPunish', $fieldPunish);
 		$this->set('playergroups', $playergroups);
@@ -380,7 +384,7 @@ class PlayerController extends AppController
 	}
 		
 	/**
-	 * 人操作买入
+	 * 玩家操作买入
 	 * @param type $playerId
 	 */
 	public function buy($playerId)
@@ -423,7 +427,7 @@ class PlayerController extends AppController
 		}
 		else //salary不满
 		{
-			NewsManager::getInstance()->add('salaray error, expected ' . $expectedSalary, $buyTeamId, $nowDate, '', 0);
+			NewsManager::getInstance()->add("{$curPlayer->name}期望周薪{$expectedSalary}", $buyTeamId, $nowDate, '', 0);
 		}
 		
 		if ($isSalaryAgreed)
@@ -603,7 +607,7 @@ class PlayerController extends AppController
 	
 	public function collect_list()
 	{
-		$playerCollects = PlayerCollect::getInstance()->find('all', array(
+		$playerCollects = PlayerCollect::find('all', array(
 				'conditions' => [],
 			)
 		);

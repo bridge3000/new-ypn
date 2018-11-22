@@ -9,12 +9,13 @@ use Util\FormHelper;
 	</div>
 
 	<table class="tb_style_1">
-		<tr><th>name</th><th>team</th><th>pos</th><th>age</th><th>fee</th><th>salary</th><th>contract-begin</th><th>contract-end</th><th>操作</th></tr>
+		<tr><th>name</th><th>team</th><th>pos</th><th>dirs</th><th>age</th><th>fee</th><th>salary</th><th>contract-begin</th><th>contract-end</th><th>操作</th></tr>
 	<?php foreach ($players as $curPlayer): ?>
 			<tr>
 				<td><?= $curPlayer->name ?></td>
 				<td><?= (($curPlayer->team_id ? $teamList[$curPlayer->team_id] : '自由球员')) ?></td>
 				<td><?= MainConfig::$positions[$curPlayer->position_id] ?></td>
+				<td><?= $curPlayer->LeftProperties ?>|<?= $curPlayer->MidProperties ?>|<?= $curPlayer->RightProperties ?></td>
 				<td><?= $curPlayer->getAge($nowDate) ?></td>
 				<td><?= $curPlayer->fee ?></td>
 				<td><?= $curPlayer->salary ?></td>

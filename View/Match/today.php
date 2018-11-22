@@ -30,18 +30,18 @@ else
             <td><?php echo MainConfig::$matchClasses[$match['class_id']]; ?></td>
 		<td align="right" bgcolor="#FFFFFF"><?php echo $match['HostGoaler_ids']; ?><?php echo  $allTeams[$match['HostTeam_id']]; ?>		</td>
 		<td>
-<?php
-if ($match['isPlayed'])
-{
-    echo $match['HostGoals'] . ' ：' . $match['GuestGoals'];
-}
-else
-{
-    echo '- ：-';
-}
-?>
+		<?php
+		if ($match['isPlayed'])
+		{
+			echo $match['HostGoals'] . ' ：' . $match['GuestGoals'];
+		}
+		else
+		{
+			echo '- ：-';
+		}
+		?>
         </td>
-		<td align="left" bgcolor="#FFFFFF"><?php echo  $allTeams[$match['GuestTeam_id']]; ?><?php echo $match['GuestGoaler_ids']; ?></td>
+		<td align="left" bgcolor="#FFFFFF"><?=$allTeams[$match['GuestTeam_id']]?><?=$match['GuestGoaler_ids']?></td>
 		<td>
 	<?php
 		if ($match['isPlayed'])
