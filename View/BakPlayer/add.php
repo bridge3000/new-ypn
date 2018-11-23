@@ -1,9 +1,9 @@
 <?php
 $myLeagueTeams = array();
 
-if (array_key_exists($curPlayer['league_id'], $teams))
+if (array_key_exists($curCollectPlayer['league_id'], $teams))
 {
-    foreach($teams[$curPlayer['league_id']] as $team)
+    foreach($teams[$curCollectPlayer['league_id']] as $team)
     {
         $myLeagueTeams[$team['id']] = $team['name'];
     }
@@ -163,10 +163,10 @@ $(document).ready(function(){
 <form method="post" action="index.php?c=BakPlayer&a=save">
 <table class="tb_style_1">
     <tr><th>shirt no</th><td><input type="text" name="ShirtNo" value="40" /></td></tr>
-    <tr><th>name</th><td><input type="text" name="name" value="<?php echo $curPlayer['name'] ?>" x-webkit-speech="" /></td></tr>
+    <tr><th>name</th><td><input type="text" name="name" value="<?php echo $curCollectPlayer['name'] ?>" x-webkit-speech="" /></td></tr>
     <tr><th>country</th><td><input type="text" name="country" value="意大利" x-webkit-speech="" /></td></tr>
-    <tr><th>league_id</th><td><?php Util\FormHelper::select(array('id'=>'league_id', 'name'=>'league_id', 'onchange'=>'changeTeams()'), $leagues, $curPlayer['league_id']) ?></td></tr>
-    <tr><th>team_id</th><td><?php Util\FormHelper::select(array('id'=>'team_id', 'name'=>'team_id'), $myLeagueTeams, $curPlayer['team_id']) ?></td></tr>  
+    <tr><th>league_id</th><td><?php Util\FormHelper::select(array('id'=>'league_id', 'name'=>'league_id', 'onchange'=>'changeTeams()'), $leagues, $curCollectPlayer['league_id']) ?></td></tr>
+    <tr><th>team_id</th><td><?php Util\FormHelper::select(array('id'=>'team_id', 'name'=>'team_id'), $myLeagueTeams, $curCollectPlayer['team_id']) ?></td></tr>  
     <tr><th>birthday</th><td><input type="text" name="birthday" value="1988-3-11" /></td></tr>
     <tr><th>condition_id</th><td><?php Util\FormHelper::select(array('id'=>'condition_id', 'name'=>'condition_id'), MainConfig::$conditions, 3) ?></td></tr>
     <tr><th>position_id</th><td><?php Util\FormHelper::select(array('id'=>'position_id', 'name'=>'position_id', 'onchange'=>'changePro()'), MainConfig::$positions, '') ?></td></tr>
@@ -198,7 +198,7 @@ $(document).ready(function(){
     <tr><th>SinewMax</th><td><input type="text" id="SinewMax" name="SinewMax" value="84" /></td></tr>
     <tr><th>loyalty</th><td><input type="text" name="loyalty" value="75" /></td></tr>
     <tr><th>popular</th><td><input type="text" name="popular" value="60" /></td></tr>
-    <tr><th>ImgSrc</th><td><input type="text" name="ImgSrc" value="<?php echo $curPlayer['ImgSrc'] ?>" /></td></tr>
+    <tr><th>ImgSrc</th><td><input type="text" name="ImgSrc" value="<?php echo $curCollectPlayer['ImgSrc'] ?>" /></td></tr>
     <tr><th>ContractBegin</th><td><input type="text" name="ContractBegin" value="2012-7-1" /></td></tr>
     <tr><th>ContractEnd</th><td><input type="text" name="ContractEnd" value="2016-6-30" /></td></tr>
     <tr><th>moral</th><td><input type="text" name="moral" value="75" /></td></tr>

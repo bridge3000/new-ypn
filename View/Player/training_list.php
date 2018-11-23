@@ -7,13 +7,13 @@
 		<th><?=$t['title']?></th>
 	<?php endforeach; ?>
 	</tr>
-	<?php foreach ($players as $curPlayer): 	?>
+	<?php foreach ($players as $curCollectPlayer): 	?>
 		<tr>
-			<td><?= $curPlayer['ShirtNo'] ?></td>
-			<td><a href="javascript:;" class="player_name" value="<?= $curPlayer['id'] ?>"><?= $curPlayer['name'] ?></a></td>
-			<td><?=MainConfig::$positions[$curPlayer['position_id']]?></td>
+			<td><?= $curCollectPlayer['ShirtNo'] ?></td>
+			<td><a href="javascript:;" class="player_name" value="<?= $curCollectPlayer['id'] ?>"><?= $curCollectPlayer['name'] ?></a></td>
+			<td><?=MainConfig::$positions[$curCollectPlayer['position_id']]?></td>
 		<?php foreach($trainingList as $trainingId=>$t):?>	
-			<td style="background-color: <?=($trainingId==$curPlayer['training_id'])?'green':''?>;" class="training_td" training_id="<?=$trainingId?>" player_id="<?=$curPlayer['id']?>"><?=$curPlayer[$t['skill']]?>(<?=$curPlayer[$t['experience']]?>)</td>
+			<td style="background-color: <?=($trainingId==$curCollectPlayer['training_id'])?'green':''?>;" class="training_td" training_id="<?=$trainingId?>" player_id="<?=$curCollectPlayer['id']?>"><?=$curCollectPlayer[$t['skill']]?>(<?=$curCollectPlayer[$t['experience']]?>)</td>
 		<?php endforeach; ?>
 		</tr>
 	<?php endforeach; ?>

@@ -202,6 +202,28 @@ class YpnModel
         return $data;
     }
 	
+	public static function findObjs($type, $option = array())
+	{
+		$data = self::find($type, $option);
+		if($type == 'first')
+		{
+			return self::loadOne($data);
+		}
+		elseif($type == 'all')
+		{
+			$objs = [];
+			foreach($data as $a)
+			{
+				$objs[] = self::loadOne($a);
+			}
+			return $objs;
+		}
+		else
+		{
+			return $data;
+		}
+	}
+	
 	private static function explainCondition($conditions)
     {
         $sql = '';
@@ -300,4 +322,10 @@ class YpnModel
             $v = "'" . $v . "'";
         }
     }
+	
+	public function delete()
+	{
+		$sql = "DELETE FROM " . MainConfig::PREFIX . "{$this->getTable()} WHERE id={$this->id}";
+		DBManager::getInstance()->execute($sql);
+	}
 }

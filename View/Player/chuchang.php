@@ -17,42 +17,42 @@
 					<th>中属性</th>
 					<th>右属性</th>
 				</tr>
-				<?php foreach ($players as $curPlayer): ?>
+				<?php foreach ($players as $curCollectPlayer): ?>
 					<tr>
-						<td><?= $curPlayer['ShirtNo'] ?></td>
-						<td><a href="javascript:;" class="player_name" value="<?= $curPlayer['id'] ?>"><?= $curPlayer['name'] ?></a></td>
+						<td><?= $curCollectPlayer['ShirtNo'] ?></td>
+						<td><a href="javascript:;" class="player_name" value="<?= $curCollectPlayer['id'] ?>"><?= $curCollectPlayer['name'] ?></a></td>
 						<td>
-							<select id="sel_position" onchange="changePosition(<?= $curPlayer['id'] ?>, this.value)">
+							<select id="sel_position" onchange="changePosition(<?= $curCollectPlayer['id'] ?>, this.value)">
 								<?php foreach (MainConfig::$positions as $k => $v): ?>
-									<option value="<?= $k ?>" <?= (($k == $curPlayer['position_id']) ? 'selected' : '') ?> ><?= $v ?></option>               
+									<option value="<?= $k ?>" <?= (($k == $curCollectPlayer['position_id']) ? 'selected' : '') ?> ><?= $v ?></option>               
 								<?php endforeach; ?>
 							</select>        
 						</td>
 						<td>
 							<?php
-							if ($curPlayer['condition_id'] == 4)
+							if ($curCollectPlayer['condition_id'] == 4)
 							{
-								echo ("<img src='" . MainConfig::BASE_URL . "/res/img/injured.gif'> " . $curPlayer['InjuredDay'] . "天");
-							} else if ($curPlayer[$fieldPunish] > 0)
+								echo ("<img src='" . MainConfig::BASE_URL . "/res/img/injured.gif'> " . $curCollectPlayer['InjuredDay'] . "天");
+							} else if ($curCollectPlayer[$fieldPunish] > 0)
 							{
-								echo("<img src='" . MainConfig::BASE_URL . "/res/img/RedCard.gif' />停赛" . $curPlayer[$fieldPunish] . "场");
+								echo("<img src='" . MainConfig::BASE_URL . "/res/img/RedCard.gif' />停赛" . $curCollectPlayer[$fieldPunish] . "场");
 							} else
 							{
 								?>
-								<select name="select" id="select" onchange="changeCondition(<?php echo $curPlayer['id']; ?>, this.value)">
-									<option value="1" <?php if ($curPlayer['condition_id'] == 1) echo(" selected"); ?>>首发</option>
-									<option value="2" <?php if ($curPlayer['condition_id'] == 2) echo(" selected"); ?>>板凳</option>
-									<option value="3" <?php if ($curPlayer['condition_id'] == 3) echo(" selected"); ?>>场外</option>
+								<select name="select" id="select" onchange="changeCondition(<?php echo $curCollectPlayer['id']; ?>, this.value)">
+									<option value="1" <?php if ($curCollectPlayer['condition_id'] == 1) echo(" selected"); ?>>首发</option>
+									<option value="2" <?php if ($curCollectPlayer['condition_id'] == 2) echo(" selected"); ?>>板凳</option>
+									<option value="3" <?php if ($curCollectPlayer['condition_id'] == 3) echo(" selected"); ?>>场外</option>
 								</select>
 								<?php
 							}
 							?>
 						</td>
 						<td>
-							<select onchange="location = '/player/changegroup/<?php echo $curPlayer['id']; ?>/' + this.value;">
+							<select onchange="location = '/player/changegroup/<?php echo $curCollectPlayer['id']; ?>/' + this.value;">
 								<option value="0">未分组</option>
 								<?php for ($i = 0; $i < count($playergroups); $i++): ?>
-									<option value="<?=$playergroups[$i]['id']?>" <?php if ($playergroups[$i]['id'] == $curPlayer['group_id']) echo(" selected"); ?>><?=$playergroups[$i]['name']?></option>
+									<option value="<?=$playergroups[$i]['id']?>" <?php if ($playergroups[$i]['id'] == $curCollectPlayer['group_id']) echo(" selected"); ?>><?=$playergroups[$i]['name']?></option>
 								<?php endfor; ?>
 							</select>
 						</td>
@@ -64,22 +64,22 @@
 							</select> 
 						</td>  
 
-						<td><?php echo $curPlayer['state']; ?></td>
+						<td><?php echo $curCollectPlayer['state']; ?></td>
 						<td>
 							<?php
-							if ($curPlayer['sinew'] < 78)
+							if ($curCollectPlayer['sinew'] < 78)
 							{
-								echo "<font color=red>" . $curPlayer['sinew'] . "</font>";
+								echo "<font color=red>" . $curCollectPlayer['sinew'] . "</font>";
 							} else
 							{
-								echo $curPlayer['sinew'];
+								echo $curCollectPlayer['sinew'];
 							}
 							?>
 						</td>
-						<td><?= $curPlayer['cooperate'] ?></td>
-						<td><?= $curPlayer['LeftProperties'] ?> </td>
-						<td><?= $curPlayer['MidProperties'] ?> </td>
-						<td><?= $curPlayer['RightProperties'] ?> </td>
+						<td><?= $curCollectPlayer['cooperate'] ?></td>
+						<td><?= $curCollectPlayer['LeftProperties'] ?> </td>
+						<td><?= $curCollectPlayer['MidProperties'] ?> </td>
+						<td><?= $curCollectPlayer['RightProperties'] ?> </td>
 					</tr>
 			<?php endforeach; ?>
 			</table>

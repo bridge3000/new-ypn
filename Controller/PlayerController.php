@@ -369,7 +369,7 @@ class PlayerController extends AppController
 		
 		$curTeam = TeamManager::getInstance()->find('first', array(
 			'fields' => array('id', 'name'),
-			'conditions' => array('id'=>$id),
+			'conditions' => array('id'=>$curPlayer['team_id']),
 		));
 		
 		$myCoach = CoachManager::getInstance()->getMyCoach();
@@ -591,9 +591,8 @@ class PlayerController extends AppController
 		$this->render('show');
 	}
 	
-	public function collect($playerId)
+	public function ajaxCollect($playerId)
 	{
-		$curPlayer = PlayerManager::getInstance()->findById($playerId);
 		$nowDate = SettingManager::getInstance()->getNowDate();
 		
 		$newPlayerCollect = new \Model\Core\PlayerCollect();
@@ -602,7 +601,7 @@ class PlayerController extends AppController
 		$newPlayerCollect->created_at = $nowDate;
 		$newPlayerCollect->save();
 		
-		$this->redirect('/player/collect_list');
+		exit(json_encode(['code'=>1]));
 	}
 	
 	public function collect_list()
@@ -612,12 +611,15 @@ class PlayerController extends AppController
 			)
 		);
 		
+		$this->data['collectPlayers'] = [];
+		
 		foreach($playerCollects as $playerCollect)
 		{
 			$curPlayer = PlayerManager::getInstance()->findById($playerCollect['player_id']);
 			$this->data['collectPlayers'][] = [
 				'player_id' => $curPlayer['id'],
-				'name' => $curPlayer['name']
+				'name' => $curPlayer['name'],
+				'collect_date' => date('Y-m-d', strtotime($playerCollect['created_at']))
 			];
 		}
 		
@@ -674,5 +676,19 @@ class PlayerController extends AppController
 		$curPlayer->save();
 		
 		$this->redirect("/player/chuchang");
+	}
+	
+	public function collect_del($playerId)
+	{
+		$playerCollects = PlayerCollect::findObjs('all', [
+			'conditions' => ['player_id'=>$playerId]
+		]);
+		
+		foreach($playerCollects as $playerCollect)
+		{
+			$playerCollect->delete();
+		}
+		
+		$this->redirect("/player/collect_list");
 	}
 }

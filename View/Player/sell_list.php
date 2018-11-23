@@ -12,36 +12,36 @@
 			<th>合同</th>
 			<th>操作</th>
 		</tr>
-		<?php foreach ($players as $curPlayer): 	?>
+		<?php foreach ($players as $curCollectPlayer): 	?>
 			<tr>
-				<td><?= $curPlayer['ShirtNo'] ?></td>
-				<td><a href="javascript:;" class="player_name" value="<?= $curPlayer['id'] ?>"><?= $curPlayer['name'] ?></a></td>
-				<td><?=MainConfig::$positions[$curPlayer['position_id']]?></td>
-				<td><?=$curPlayer['LeftProperties']?> | <?=$curPlayer['MidProperties']?> | <?=$curPlayer['RightProperties']?></td>
-				<td><?=$curPlayer['state']?></td>
+				<td><?= $curCollectPlayer['ShirtNo'] ?></td>
+				<td><a href="javascript:;" class="player_name" value="<?= $curCollectPlayer['id'] ?>"><?= $curCollectPlayer['name'] ?></a></td>
+				<td><?=MainConfig::$positions[$curCollectPlayer['position_id']]?></td>
+				<td><?=$curCollectPlayer['LeftProperties']?> | <?=$curCollectPlayer['MidProperties']?> | <?=$curCollectPlayer['RightProperties']?></td>
+				<td><?=$curCollectPlayer['state']?></td>
 				<td>
 				<?php
-				if ($curPlayer['sinew'] < 78) {
-					echo "<font color=red>" . $curPlayer['sinew'] . "</font>";
+				if ($curCollectPlayer['sinew'] < 78) {
+					echo "<font color=red>" . $curCollectPlayer['sinew'] . "</font>";
 				} else {
-					echo $curPlayer['sinew'];
+					echo $curCollectPlayer['sinew'];
 				}
 				?>
 				</td>
-				<td><?= $curPlayer['cooperate'] ?></td>
+				<td><?= $curCollectPlayer['cooperate'] ?></td>
 				<td>
-					<?php if (date('md', strtotime($curPlayer['birthday'])) == date('md', strtotime($nowDate))): ?>
-						<a href="javascript:;" value="<?= $curPlayer['id'] ?>" class="birthday_link">今日生日</a>
+					<?php if (date('md', strtotime($curCollectPlayer['birthday'])) == date('md', strtotime($nowDate))): ?>
+						<a href="javascript:;" value="<?= $curCollectPlayer['id'] ?>" class="birthday_link">今日生日</a>
 					<?php else: ?>
-						<?= $curPlayer['birthday'] ?>
+						<?= $curCollectPlayer['birthday'] ?>
 					<?php endif; ?>
 				</td>
-				<td><?=date('Y.m.d', strtotime($curPlayer['ContractBegin']))?> - <?=date('Y.m.d', strtotime($curPlayer['ContractEnd']))?></td>
+				<td><?=date('Y.m.d', strtotime($curCollectPlayer['ContractBegin']))?> - <?=date('Y.m.d', strtotime($curCollectPlayer['ContractEnd']))?></td>
 				<td>
-				<?php if($curPlayer['isSelling']): ?>
-					挂牌中 <?=$curPlayer['fee']?>W
+				<?php if($curCollectPlayer['isSelling']): ?>
+					挂牌中 <?=$curCollectPlayer['fee']?>W
 				<?php else: ?>
-					<a href="javascript:;" class="sell_link" player_id="<?=$curPlayer['id']?>" player_name="<?=$curPlayer['name']?>">卖出</a>
+					<a href="javascript:;" class="sell_link" player_id="<?=$curCollectPlayer['id']?>" player_name="<?=$curCollectPlayer['name']?>">卖出</a>
 				<?php endif; ?>
 
 					<a href="">解约</a>
