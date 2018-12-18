@@ -416,7 +416,7 @@ class PlayerController extends AppController
 			}
 			elseif(($contractRemainMonth>0) && ($contractRemainMonth <= 6)) //future free transfer
 			{
-				$hasFutureContract = FutureContract::find(['conditions'=>['player_id'=>$playerId]]);
+				$hasFutureContract = FutureContract::findArray(['conditions'=>['player_id'=>$playerId]]);
 				if($hasFutureContract)
 				{
 					$buyTeam = Team::getById($hasFutureContract->NewTeam_id);
@@ -646,7 +646,7 @@ class PlayerController extends AppController
 	
 	public function collect_list()
 	{
-		$playerCollects = PlayerCollect::find('all', array(
+		$playerCollects = PlayerCollect::findArray('all', array(
 				'conditions' => [],
 			)
 		);
@@ -720,7 +720,7 @@ class PlayerController extends AppController
 	
 	public function collect_del($playerId)
 	{
-		$playerCollects = PlayerCollect::findObjs('all', [
+		$playerCollects = PlayerCollect::find('all', [
 			'conditions' => ['player_id'=>$playerId]
 		]);
 		

@@ -44,8 +44,9 @@ class MatchManager extends DataManager
             'fields' => array('HostTeam_id', 'GuestTeam_id', 'PlayTime'),
             'order' => array('PlayTime'=>'asc')
         ));
-        
-        return "next match played:" . $data['PlayTime'];
+		
+		$str = $data ? "next match played:" . $data['PlayTime'] : '比赛已全部打完';
+        return $str;
     }
     
     public function getTodayMatches($nowDate, $isPlayed = -1)

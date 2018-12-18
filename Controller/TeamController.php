@@ -23,7 +23,7 @@ class TeamController extends AppController
     public function payoff()
     {
         $nowDate = SettingManager::getInstance()->getNowDate();
-		$allTeams = Team::findObjs('all', ['conditions'=>['league_id <'=>100]]);
+		$allTeams = Team::find('all', ['conditions'=>['league_id <'=>100]]);
 		
         for ($i = 0;$i < count($allTeams);$i++)
     	{

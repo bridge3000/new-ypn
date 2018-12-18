@@ -11,7 +11,7 @@ class MainConfig
     const DB_USER = "root";
     const DB_PASS = "";
     const DB_NAME = "ypn";
-	const DB_DEGUG = false;
+	const DB_DEGUG = true;
 	
 	const REDIS_HOST = "127.0.0.1";
 	const REDIS_PORT = "6379";
@@ -31,12 +31,12 @@ class MainConfig
         9 	=> "意大利杯半决赛",
         10 	=> "意大利杯决赛",
         11 	=> "意大利超级杯",
-        12 	=> "欧洲联赛小组赛",
-        13 	=> "欧洲联赛十六分之一决赛",
-        14 	=> "欧洲联赛八分之一决赛",
-        15 	=> "欧洲联赛四分之一决赛",
-        16 	=> "欧洲联赛半决赛",
-        17 	=> "欧洲联赛决赛",
+        12 	=> "欧罗巴联赛小组赛",
+        13 	=> "欧罗巴联赛十六分之一决赛",
+        14 	=> "欧罗巴联赛八分之一决赛",
+        15 	=> "欧罗巴联赛四分之一决赛",
+        16 	=> "欧罗巴联赛半决赛",
+        17 	=> "欧罗巴联赛决赛",
         18 	=> "欧洲超级杯",
         19 	=> "贝卢斯科尼杯",
         20 	=> "世界俱乐部杯半决赛",
@@ -108,10 +108,10 @@ class MainConfig
 	const BASE_URL = "http://test.ypn.com/";
 	
 	static $uclPlayoffDates = array(
-		'8' => array(array('2-17','2-24'),array('2-18','2-25'),array('3-10','3-17'), array('3-9','3-16')), //八分之一
-		'4' => array(array('4-6','4-14'),array('4-7','4-13')),
-		'half' => array(array('4-27','5-5'),array('4-28','5-4')),
-		'final' => '5-29'
+		'8' => array(array('2-13','2-14'),array('2-20','2-21'),array('3-6','3-7'), array('3-13','3-14')), //八分之一
+		'4' => array('4-9','4-16'),
+		'half' => array('4-30','5-7'),
+		'final' => ['5-29']
 	);
 	
 	static $elPlayoffDates = array(

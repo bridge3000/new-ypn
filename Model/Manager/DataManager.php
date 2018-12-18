@@ -87,11 +87,6 @@ class DataManager
 				$sql .= " limit " . $option['limit'];
 			}
         }
-		
-		if(\MainConfig::DB_DEGUG)
-		{
-			echo $sql . "<br>";
-		}
 
         if ($type == "all")
         {
@@ -166,10 +161,6 @@ class DataManager
         $conditionStr = $this->explainCondition($conditions);
         
         $sql = "update " . MainConfig::PREFIX . $this->table . " set " . $dataStr . " where 1=1 " . $conditionStr;
-		if (\MainConfig::DB_DEGUG)
-		{
-			echo $sql . "<br>";
-		}
         DBManager::getInstance()->execute($sql);
     }
     
@@ -329,10 +320,6 @@ class DataManager
         foreach($arrObj as $obj)
         {
             $sql = $this->generateSaveSql($obj, $type);
-			if (MainConfig::DB_DEGUG)
-			{
-				echo $sql."<br/>";
-			}
             DBManager::getInstance()->execute($sql);
         }
     }

@@ -561,6 +561,12 @@ class Player extends YpnModel
 		$this->score += 4;
 	}
 	
+	public function onSaved($matchClassId)
+	{
+		$this->SaveExperience += 2;
+		$this->score += 2;
+	}
+	
 	public function addAssist($matchClassId)
 	{
 		$assistField = '';
@@ -707,5 +713,81 @@ class Player extends YpnModel
 		}
 		
 		return $transferType;
+	}
+	
+	public function getBestPosition()
+	{
+		$bestPositionId = 2;
+		if($this->save >= 78)
+		{
+			$bestPositionId = 4;
+		}
+		elseif( ($this->MidProperties == 100) && ($this->ShotDesire>=82) )
+		{
+			if($this->height/2+$this->header > $this->speed+$this->beat)
+			{
+				$bestPositionId = 7;
+			}
+			else
+			{
+				$bestPositionId = 1;
+			}
+		}
+		elseif(  ($this->LeftProperties == 100) ) //优先左侧
+		{
+			if($this->ShotDesire >= 81)
+			{
+				$bestPositionId = 5;
+			}
+			else
+			{
+				if($this->tackle > $this->beat)
+				{
+					$bestPositionId = 13;
+				}
+				else
+				{
+					$bestPositionId = 9;
+				}
+			}
+		}
+		elseif(  ($this->MidProperties == 100) )
+		{
+			if($this->tackle > $this->ShotAccurate)
+			{
+				if( ($this->height/2+$this->qiangdian) > ($this->pinqiang+$this->scope) )
+				{
+					$bestPositionId = 3;
+				}
+				else
+				{
+					$bestPositionId = 2;
+				}
+			}
+			else
+			{
+				$bestPositionId = 8;
+			}
+		}
+		elseif(  ($this->RightProperties == 100) )
+		{
+			if($this->ShotDesire >= 81)
+			{
+				$bestPositionId = 6;
+			}
+			else
+			{
+				if($this->tackle > $this->beat)
+				{
+					$bestPositionId = 14;
+				}
+				else
+				{
+					$bestPositionId = 10;
+				}
+			}
+		}
+		
+		return $bestPositionId;
 	}
 }

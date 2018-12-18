@@ -3,15 +3,15 @@
 if (count($matches) == 0)
 {
 ?>
-	<div align=center><img src="../img/NoMatch.gif" /></div>
+	<div align=center><img src="/res/img/NoMatch.gif" /></div>
 <?php 
 }
 else
 {
 ?>
 	<div align=center><a href="watch/">全选</a></div>
-	<table border="0" align="center" cellpadding="3" cellspacing="1" bgcolor="silver">
-	<tr bgcolor="whitesmoke">
+	<table class="table table-striped">
+	<tr>
         <th>日期</th>
         <th>比赛</th>
 		<th>主队</th>
@@ -22,15 +22,11 @@ else
 	<?php
 	$i = 0;
 	foreach ($matches as $match):
-		$class = null;
-		if ($i++ % 2 == 0) {
-			$class = ' class="altrow"';
-		}
 	?>
-		<tr bgcolor="#FFFFFF"<?php echo $class;?>>
+		<tr>
         <td><?php echo $match['PlayTime']; ?></td>
         <td><?php echo MainConfig::$matchClasses[$match['class_id']]; ?></td>
-		<td align="right" bgcolor="#FFFFFF"><?php echo $match['HostGoaler_ids']; ?><?php echo  $allTeams[$match['HostTeam_id']]; ?>		</td>
+		<td align="right"><?php echo $match['HostGoaler_ids']; ?><?php echo  $allTeams[$match['HostTeam_id']]; ?>		</td>
 		<td>
 		<?php if($match['isPlayed']): ?>
 			<?=$match['HostGoals']?>：<?=$match['GuestGoals']?>
@@ -38,7 +34,7 @@ else
 			-:-
 		<?php endif; ?>
 		</td>
-		<td align="left" bgcolor="#FFFFFF"><?php echo  $allTeams[$match['GuestTeam_id']]; ?><?php echo $match['GuestGoaler_ids']; ?></td>
+		<td align="left"><?php echo  $allTeams[$match['GuestTeam_id']]; ?><?php echo $match['GuestGoaler_ids']; ?></td>
 		<td>
 	<?php
 		if ($match['isPlayed'])

@@ -687,19 +687,20 @@ class PlayerManager extends DataManager
             }
         }
         
-        $result = array('shoterIndex'=>$shoterIndex, 'goalkeeperIndex'=>$goalkeeperIndex);
+        $shotResultData = array('shoterIndex'=>$shoterIndex, 'goalkeeperIndex'=>$goalkeeperIndex);
         
         if ($attackPlayers['shoufa'][$shoterIndex]->getShotValue($attackDir) > $defensePlayers['shoufa'][$goalkeeperIndex]->getSaveValue())
         {
-            $result['result'] = 1;
+            $shotResultData['result'] = 1;
 			$attackPlayers['shoufa'][$shoterIndex]->addGoal($matchClassId);
         }
         else
         {
-            $result['result'] = mt_rand(2, 3);
+			$defensePlayers['shoufa'][$goalkeeperIndex]->onSaved($matchClassId);
+            $shotResultData['result'] = mt_rand(2, 3);
         }
         
-        return $result;
+        return $shotResultData;
     }
     
     public function getCornerKickerIndex($attackShoufaPlayers, $cornerKickerId)

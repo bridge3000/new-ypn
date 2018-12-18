@@ -26,7 +26,7 @@ class DBManager
     {
 		if(MainConfig::DB_DEGUG)
 		{
-			echo $sql . '<br>';
+			error_log(date('Y-m-d H:i:s') . ': ' . $sql . "\n", 3, dirname(dirname(__DIR__)) . '/Logs/sql.log');
 		}
 		
         $result = mysqli_query(DBManager::getInstance()->conn, $sql);

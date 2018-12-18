@@ -113,12 +113,12 @@ class YpnModel
 	public static function getById($id)
     {
         $options['conditions'] = array('id'=>$id);
-        $data = self::find('first', $options);
+        $data = self::findArray('first', $options);
 		$obj = self::loadOne($data);
         return $obj;
     }
 	
-	public static function find($type, $option = array())
+	public static function findArray($type, $option = array())
     {
 		$data = array();
         $fields = array();
@@ -174,7 +174,7 @@ class YpnModel
 		
 		if(\MainConfig::DB_DEGUG)
 		{
-			echo $sql . "<br>";
+			error_log(date('Y-m-d H:i:s') . ': ' . $sql . "\n", 3, dirname(dirname(__DIR__)) . '/Logs/sql.log');
 		}
 
         if ($type == "all")
@@ -202,9 +202,9 @@ class YpnModel
         return $data;
     }
 	
-	public static function findObjs($type, $option = array())
+	public static function find($type, $option = array())
 	{
-		$data = self::find($type, $option);
+		$data = self::findArray($type, $option);
 		if($type == 'first')
 		{
 			return self::loadOne($data);
