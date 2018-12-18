@@ -74,6 +74,8 @@ class MatchController extends AppController
             $teamId = $player->team_id;
             $teamPlayers[$teamId][] = $player;
         }
+		
+		$allMatchHtml = '';
         
         //play
         foreach ($todayMatches as $curMatch)
@@ -116,11 +118,17 @@ class MatchController extends AppController
 			
             $this->start($curMatch);
 			$this->onMatchEnd($curMatch);
+			
+			if($curMatch->isWatched)
+			{
+				$allMatchHtml .= $this->replay.'<hr>';
+			}
         }
         
         PlayerManager::getInstance()->update(array("condition_id"=>"4", 'InjuredDay'=>6), array('sinew <' => 0)); //体力为0的变成伤员
-		
-		$this->flushNow("<a href=\"" . MainConfig::BASE_URL . 'match/today' . "\">today match</a>");
+
+		$this->set('allMatchHtml', $allMatchHtml);
+		$this->render('play');
     }
     
     private function start(&$curMatch)
@@ -342,7 +350,7 @@ class MatchController extends AppController
 			if(mt_rand(1,5) == 1) //free
 			{
 				$freeResult = PlayerManager::getInstance()->free($attackPlayers['shoufa'], $defensePlayers['shoufa'], $attackTeam->FreeKicker_id, $curMatch->class_id);
-				$this->flushMatch($freeResult['free_kicker']->name . 'free shot');
+				$this->flushMatch($freeResult['free_kicker']->name . '任意球射门');
 				if($freeResult['result'] == 1)
 				{
 					$this->flushMatch('goal<br>');
@@ -350,7 +358,7 @@ class MatchController extends AppController
 				}
 				else
 				{
-					$this->flushMatch($freeResult['goal_keeper']->name . 'saved<br>');
+					$this->flushMatch($freeResult['goal_keeper']->name . '扑救成功<br>');
 				}
 				$needTurn = TRUE;
 			}
@@ -413,10 +421,11 @@ class MatchController extends AppController
 		foreach($leagueTeams as $t)
 		{
 			$msg = 'champion' . $leagueTeams[0]['name'] . '，mvp' . $mvpPlayer['name'];
-			NewsManager::getInstance()->push($msg, $t['id'], $nowDate, $mvpPlayer['ImgSrc']);
+//			NewsManager::getInstance()->push($msg, $t['id'], $nowDate, $mvpPlayer['ImgSrc']);
+			News::create($msg, $t['id'], $nowDate, $mvpPlayer['ImgSrc']);
 		}
 		
-		NewsManager::getInstance()->insertBatch();
+//		NewsManager::getInstance()->insertBatch();
 	}
 	
 	private function onUclTeamEnd()
@@ -813,7 +822,7 @@ class MatchController extends AppController
     {
         if ($this->isWatch)
         {
-            $this->flushNow($str);
+//            $this->flushNow($str);
         }
 		
 		$this->replay .= $str;

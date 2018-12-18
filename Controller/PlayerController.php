@@ -12,7 +12,10 @@ use Model\Manager\MatchManager;
 use Model\Manager\NewsManager;
 use Model\Manager\YpnManager;
 use Model\Core\Player;
+use Model\Core\Team;
+use Model\Core\News;
 use Model\Core\PlayerCollect;
+use Model\Core\FutureContract;
 
 class PlayerController extends AppController
 {
@@ -394,76 +397,113 @@ class PlayerController extends AppController
 		$addMonthCount = $_POST['month'];
 		$buyTeamId = $_POST['buy_team_id'];
 		$nowDate = SettingManager::getInstance()->getNowDate();
+		$newContractEnd = date('Y-m-d', strtotime($nowDate)+$addMonthCount*30*24*3600);
 		
-		$curPlayerArray = PlayerManager::getInstance()->findById($playerId);
-		$arr = PlayerManager::getInstance()->loadData(array($curPlayerArray));
-		$curPlayer = $arr[0];
+		$curPlayer = Player::getById($playerId);
+		$sellTeam = Team::getById($curPlayer->team_id);
 		$isSalaryAgreed = FALSE;
+		$isClubAgreed = FALSE;
 		
 		$expectedSalary = $curPlayer->getExpectedSalary($nowDate);
 		if ($newSalary >= $expectedSalary) //player salary同意
 		{
+			$isSalaryAgreed = TRUE;
 			$contractRemainMonth = $curPlayer->getContractRemainMonth($nowDate); //until contract_end month
-		
-			if ( ($curPlayer->team_id == 0) || ($contractRemainMonth <= 6) )//free transfer
+			
+			if ($curPlayer->team_id == 0) //real free transfer
 			{
-				$isSalaryAgreed = TRUE;
-				NewsManager::getInstance()->add("买进{$curPlayer->name}成功", $buyTeamId, $nowDate, '', 0);
+				$isClubAgreed = TRUE;
 			}
-			else
+			elseif(($contractRemainMonth>0) && ($contractRemainMonth <= 6)) //future free transfer
 			{
-				$expectedValue = $curPlayer->estimateFee($nowDate);
-				$wave = mt_rand(1, 10);
-				if ($newPrice >= $expectedValue - $expectedSalary*$wave/100)
+				$hasFutureContract = FutureContract::find(['conditions'=>['player_id'=>$playerId]]);
+				if($hasFutureContract)
 				{
-					$isSalaryAgreed = TRUE;
+					$buyTeam = Team::getById($hasFutureContract->NewTeam_id);
+					News::create("{$curPlayer->name}已经与{$buyTeam->name}签了未来合同,引进失败", $buyTeamId, $nowDate, $buyTeam->ImgSrc);
 				}
 				else
 				{
-					$isSalaryAgreed = FALSE;
-					NewsManager::getInstance()->add('fee error, expected ' . $expectedValue, $buyTeamId, $nowDate, '', 0);
+					$newFutureContract = new FutureContract();
+					$newFutureContract->player_id = $playerId;
+					$newFutureContract->OldContractEnd = $curPlayer->ContractEnd;
+					$newFutureContract->NewContractEnd = $newContractEnd;
+					$newFutureContract->NewTeam_id = $buyTeamId;
+					$newFutureContract->NewSalary = $newSalary;
+					$newFutureContract->save();
+					
+					News::create("已经与{$curPlayer->name}达成协议,将在6个月内入队", $buyTeamId, $nowDate, $curPlayer->ImgSrc);
+				}
+			}
+			else 
+			{
+				$needFee = 0;
+				if($curPlayer->isSelling)
+				{
+					$needFee = $curPlayer->fee;
+				}
+				else //force buy
+				{
+					$needFee = $curPlayer->estimateFee($nowDate);		
+				}
+				
+				if ($newPrice >=  $needFee)
+				{
+					$isClubAgreed = TRUE;
+				}
+				else
+				{
+					$isClubAgreed = FALSE;
+					News::create("{$sellTeam->name}希望卖出{$needFee}W" . $needFee, $buyTeamId, $nowDate, $sellTeam->ImgSrc);
 				}
 			}
 		}
 		else //salary不满
 		{
-			NewsManager::getInstance()->add("{$curPlayer->name}期望周薪{$expectedSalary}", $buyTeamId, $nowDate, '', 0);
+			News::create("{$curPlayer->name}期望周薪{$expectedSalary}", $buyTeamId, $nowDate, $curPlayer->ImgSrc);
 		}
 		
-		if ($isSalaryAgreed)
+		if ($isSalaryAgreed && $isClubAgreed)
 		{
+			News::create("买进{$curPlayer->name}成功", $buyTeamId, $nowDate, $curPlayer->ImgSrc);
+			
 			//reset total salary
 			if ($curPlayer->team_id)
 			{
-				$sellTeam = TeamManager::getInstance()->findById($curPlayer->team_id);
-				$sellTeam['money'] += $newPrice;
-				$sellTeam['TotalSalary'] -= $newSalary;
-				$sellTeam['player_count'] -= 1;
-				TeamManager::getInstance()->update(array('money'=>$sellTeam['money'], 'TotalSalary'=>$sellTeam['TotalSalary'], 'player_count'=>$sellTeam['player_count']), array('id'=>$curPlayer->team_id));
+				$sellTeam->money += $newPrice;
+				$sellTeam->TotalSalary -= $newSalary;
+				$sellTeam->player_count -= 1;
+				$sellTeam->addMoney($newPrice, "卖出球员{$curPlayer->name}", $nowDate);
+				$sellTeam->save();
 			}
-			
-			TeamManager::getInstance()->changeMoney($buyTeamId, 2, $newPrice, $nowDate, "买进球员{$curPlayer->name}");
-			
-			$buyTeam = TeamManager::getInstance()->findById($buyTeamId);
-			$buyTeam['TotalSalary'] += $newSalary;
-			$buyTeam['player_count'] += 1;
-			TeamManager::getInstance()->update(array('money'=>$buyTeam['money'], 'TotalSalary'=>$buyTeam['TotalSalary'], 'player_count'=>$buyTeam['player_count']), array('id'=>$buyTeamId));
-			
+
+			$buyTeam = Team::getById($buyTeamId);
+			$buyTeam->money -= $newPrice;
+			$buyTeam->TotalSalary += $newSalary;
+			$buyTeam->player_count += 1;
+			$buyTeam->addMoney(-$newPrice, "买进球员{$curPlayer->name}", $nowDate);
+			$buyTeam->save();
+
+			if($curPlayer->league_id == $buyTeam->league_id)
+			{
+				$curPlayer->cooperate = 90;
+			}
+			else
+			{
+				$curPlayer->cooperate = 80;
+			}
+
+			$curPlayer->league_id = $buyTeam->league_id;
 			$curPlayer->team_id = $buyTeamId;
 			$curPlayer->salary = $newSalary;
 			$curPlayer->ContractBegin = $nowDate;
 			$curPlayer->ClubDepending = 80;
 			$curPlayer->setBestShirtNo(PlayerManager::getInstance()->getExistNos());
-			$curPlayer->ContractEnd = date('Y-m-d', strtotime($nowDate)+$addMonthCount*30*24*3600);
-			
-			PlayerManager::getInstance()->saveModel($curPlayer, 'update');
-		}
-		else
-		{
-//			echo 'failed';
+			$curPlayer->ContractEnd = $newContractEnd;
+			$curPlayer->save();
 		}
 		
-		header("location:".\MainConfig::BASE_URL.'ypn/new_day');
+		$this->redirect('/ypn/new_day');
 	}
 	
 	public function ajax_get($id)

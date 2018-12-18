@@ -1,14 +1,17 @@
 <table class="tb_style_1">
     <caption>xxx</caption>
     <tr><th>rank</th><th>team</th><th>win</th><th>draw</th><th>lose</th><th>goal</th><th>lost</th><th>jsq</th><th>score</th></tr>
-<?php
-$i = 1;
-foreach($teams as $curCollectPlayer)
-{
-?>
-        <tr><td><?php echo $i ?></td><td><?php echo $curCollectPlayer['name'] ?></td><td><?php echo $curCollectPlayer['win'] ?></td><td><?php echo $curCollectPlayer['draw'] ?></td><td><?php echo $curCollectPlayer['lost'] ?></td><td><?php echo $curCollectPlayer['goals'] ?></td><td><?php echo $curCollectPlayer['lose'] ?></td><td><?php echo $curCollectPlayer['jingshengqiu'] ?></td><td><?php echo $curCollectPlayer['score'] ?></td></tr>
-<?php
-    $i++;
-}
-?>
+<?php foreach($teams as $k=>$curTeam): ?>
+        <tr>
+			<td><?= ($k+1) ?></td>
+			<td><?php echo $curTeam['name'] ?></td>
+			<td><?php echo $curTeam['win'] ?></td>
+			<td><?php echo $curTeam['draw'] ?></td>
+			<td><?php echo $curTeam['lose'] ?></td>
+			<td><?php echo $curTeam['goals'] ?></td>
+			<td><?php echo $curTeam['lost'] ?></td>
+			<td><?php echo $curTeam['jingshengqiu'] ?></td>
+			<td><?php echo $curTeam['score'] ?></td>
+		</tr>
+<?php endforeach; ?>
 </table>

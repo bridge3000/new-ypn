@@ -60,10 +60,9 @@ class AppController
     
     protected function flushNow($str)
     {
-//        echo str_pad('<span>' . $str . '</span>', 4096);
-		echo $str;
-        ob_flush();
-        flush();
+//		echo $str;
+//        ob_flush();
+//        flush();
     }
 	
 	public function flushCss()

@@ -23,21 +23,14 @@ class TeamController extends AppController
     public function payoff()
     {
         $nowDate = SettingManager::getInstance()->getNowDate();
+		$allTeams = Team::findObjs('all', ['conditions'=>['league_id <'=>100]]);
 		
-    	$conditions = array('league_id <>'=>100);
-    	$fields = array('id', 'name', 'ImgSrc', 'TotalSalary', 'money', 'bills');
-    	$allTeamsData = TeamManager::getInstance()->find('all', compact('conditions', 'fields'));
-        $allTeams = TeamManager::getInstance()->loadData($allTeamsData, 'Team');
-		$changeData = array();
         for ($i = 0;$i < count($allTeams);$i++)
     	{
             $allTeams[$i]->paySalary($nowDate);
-			
-			$changeData[] = array('id'=>$allTeams[$i]->id, 'money'=>$allTeams[$i]->money, 'bills'=>$allTeams[$i]->bills);
+			$allTeams[$i]->save();
     	}
         
-		$this->flushNow('正在保存...<br>');
-        TeamManager::getInstance()->update_batch($changeData);
 		$this->flushNow('完成<br>');
     }
     

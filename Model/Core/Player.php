@@ -191,23 +191,31 @@ class Player extends YpnModel
     
 	public function estimateFee($nowDate)
     {
-        $contractXishu = 0;
-        $monthDepart = $this->getContractRemainMonth($nowDate);
-
-		if ($monthDepart <= 6)
+		$estimateValue = $this->estimateValue($nowDate);
+		if($this->isSelling)
 		{
 			$contractXishu = 0;
-		}
-        else if (($monthDepart < 12) && ($monthDepart>6))
-        {
-            $contractXishu = 100 - (12-$monthDepart) * 10;
-        }
-        else
-        {
-            $contractXishu = 100;
-        }
+			$monthDepart = $this->getContractRemainMonth($nowDate);
+			if ($monthDepart <= 6)
+			{
+				$contractXishu = 0;
+			}
+			else if (($monthDepart < 12) && ($monthDepart>6))
+			{
+				$contractXishu = 100 - (12-$monthDepart) * 10;
+			}
+			else
+			{
+				$contractXishu = 100;
+			}
 
-        $fee = round(($this->estimateValue($nowDate) * $this->ClubDepending / 100 * $contractXishu / 100), -2);
+			$fee = round(($estimateValue * $this->ClubDepending / 100 * $contractXishu / 100), -2);
+		}
+		else //force buy
+		{
+			$fee = round(($estimateValue * (100+$this->ClubDepending) / 100), -2);
+		}
+
         return $fee;
     }
     

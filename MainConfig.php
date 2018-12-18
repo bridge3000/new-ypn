@@ -103,7 +103,8 @@ class MainConfig
         4 => '禁区外'
     );
     
-    const STATIC_URL = "http://milan100-static.stor.sinaapp.com/ypn_img/";
+//    const STATIC_URL = "http://milan100-static.stor.sinaapp.com/ypn_img/";
+	const STATIC_URL = "http://test.ypn.com/";
 	const BASE_URL = "http://test.ypn.com/";
 	
 	static $uclPlayoffDates = array(

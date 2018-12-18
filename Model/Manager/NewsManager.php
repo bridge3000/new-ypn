@@ -18,33 +18,33 @@ class NewsManager extends DataManager
 		$this->saveModel($newNews);
 	}
 	
-	public function push($content, $team_id, $nowDate, $imgSrc)
-	{
-        $newNews = array();
-        $newNews['content'] = $content;
-		$newNews['team_id'] = $team_id;
-		$newNews['PubTime'] = $nowDate;
-		$newNews['ImgSrc'] = $imgSrc;
-        self::$newArr[] = $newNews;
-	}
+//	public function push($content, $team_id, $nowDate, $imgSrc)
+//	{
+//        $newNews = array();
+//        $newNews['content'] = $content;
+//		$newNews['team_id'] = $team_id;
+//		$newNews['PubTime'] = $nowDate;
+//		$newNews['ImgSrc'] = $imgSrc;
+//        self::$newArr[] = $newNews;
+//	}
 	
-	public function insertBatch($keys=array(), $values=array())
-	{
-		if (!empty(self::$newArr))
-		{
-			$keys = array_keys(self::$newArr[0]);
-			foreach(self::$newArr as $n)
-			{
-				$v = array();
-				foreach($keys as $k)
-				{
-					$v[] = $n[$k];
-				}
-				$values[] = $v;
-			}
-		}
-		parent::insertBatch($keys, $values);
-	}
+//	public function insertBatch($keys=array(), $values=array())
+//	{
+//		if (!empty(self::$newArr))
+//		{
+//			$keys = array_keys(self::$newArr[0]);
+//			foreach(self::$newArr as $n)
+//			{
+//				$v = array();
+//				foreach($keys as $k)
+//				{
+//					$v[] = $n[$k];
+//				}
+//				$values[] = $v;
+//			}
+//		}
+//		parent::insertBatch($keys, $values);
+//	}
 	
 	public function readAll($teamId)
     {

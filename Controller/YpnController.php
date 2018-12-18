@@ -74,7 +74,8 @@ class YpnController extends AppController
 			$this->training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate);
 			PlayerManager::getInstance()->doNormal(); //球员日常变化
 
-			$this->render('new_day');
+//			$this->render('new_day');
+			$this->redirect('/match/today');
 		}
 	}
 	
@@ -290,7 +291,7 @@ class YpnController extends AppController
         /*随着时间球员数值的变化*/
         $this->Match->query("update ypn_players set SinewMax=SinewMax-2,speed=speed-2,ShotPower=ShotPower-2,agility=agility-2,pinqiang=pinqiang-2,scope=scope-2,popular=popular-3 where DATE_ADD(birthday, INTERVAL 30 YEAR)<'" . $nowDate . "'");
         $this->Match->query("update ypn_players set SinewMax=SinewMax+2,ShotPower=ShotPower+2 where DATE_ADD(birthday, INTERVAL 20 YEAR)>'" . $nowDate . "'");
-        $this->Match->query("update ypn_players set LastSeasonScore=ScoreAll, ScoreAll=0, all_matches_count=0, InjuredDay=0, sinew=SinewMax, mind=mind+2,state=75,goal1Count=0,goal2Count=0,goal3Count=0,penalty1Count=0,penalty2Count=0,penalty3Count=0,Assist1Count=0,Assist2Count=0,Assist3Count=0,Tackle1Count=0,Tackle2Count=0,Tackle3Count=0,YellowCard1Count=0,YellowCard2Count=0,YellowCard3Count=0,RedCard1Count=0,RedCard2Count=0,RedCard3Count=0,punish1Count=0,punish2Count=0");
+        $this->Match->query("update ypn_players set LastSeasonScore=total_score, total_score=0, all_matches_count=0, InjuredDay=0, sinew=SinewMax, mind=mind+2,state=75,goal1Count=0,goal2Count=0,goal3Count=0,penalty1Count=0,penalty2Count=0,penalty3Count=0,Assist1Count=0,Assist2Count=0,Assist3Count=0,Tackle1Count=0,Tackle2Count=0,Tackle3Count=0,YellowCard1Count=0,YellowCard2Count=0,YellowCard3Count=0,RedCard1Count=0,RedCard2Count=0,RedCard3Count=0,punish1Count=0,punish2Count=0");
 
 		/*生成欧洲超级杯*/
 		//欧洲冠军联赛冠军

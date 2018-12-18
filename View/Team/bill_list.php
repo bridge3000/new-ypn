@@ -6,13 +6,20 @@
 		<th>内容</th>
 		<th>余额</th>
 	</tr>
-	<?php foreach ($bills as $curCollectPlayer): ?>
+	<?php foreach ($bills as $bill): ?>
 		<tr>
-			<td><?=date('Y-m-d', $curCollectPlayer['PubTime']) ?></td>
-			<td><?= (($curCollectPlayer['money'] > 0) ? "收入" : "支出") ?></td>
-			<td><?= $curCollectPlayer['money'] ?> </td>
-			<td><?= $curCollectPlayer['info'] ?> </td>
-			<td><?= $curCollectPlayer['remain'] ?> </td>
+			<td>
+		<?php if(isset($bill['PubTime'])): ?>
+			<?=date('Y-m-d', $bill['PubTime']) ?>
+		<?php else: ?>
+			<?php print_r($bill); ?>
+		<?php endif; ?>
+			
+			</td>
+			<td><?= (($bill['money'] > 0) ? "收入" : "支出") ?></td>
+			<td><?= $bill['money'] ?> </td>
+			<td><?= $bill['info'] ?> </td>
+			<td><?= $bill['remain'] ?> </td>
 		</tr>
 	<?php endforeach; ?>
 </table>
