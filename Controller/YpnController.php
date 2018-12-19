@@ -16,7 +16,9 @@ use Model\Manager\PlayerManager;
 use Model\Manager\NewsManager;
 use Model\Manager\FifaDateManager;
 use Model\Manager\UclGroupManager;
-use Model\Manager\ElGroupManager;
+use Model\Manager\ElgroupManager;
+use Model\Core\Uclgroup;
+use Model\Core\Elgroup;
 use MainConfig;
 
 class YpnController extends AppController 
@@ -79,7 +81,8 @@ class YpnController extends AppController
 			$this->training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate);
 			PlayerManager::getInstance()->doNormal(); //球员日常变化
 
-			$this->redirect('/match/today');
+//			$this->redirect('/match/today');
+			echo '<br/><a href="/ypn/new_day">New Day</a>';
 		}
 	}
 	
@@ -195,20 +198,6 @@ class YpnController extends AppController
 		$nowDate = date("Y-m-d", strtotime(SettingManager::getInstance()->getNowDate()));
 		$thisYear = date('Y', strtotime($nowDate));
 	    PlayerManager::getInstance()->query("delete from ypn_news");
-		
-	    PlayerManager::getInstance()->query("delete from ypn_matches where class_id in (20, 21, 22, 23, 24, 37)");
-	    PlayerManager::getInstance()->query("update ypn_matches set isWatched=0, mvp_player_id=0, replay='' where class_id<>25");
-	    
-        $conditions = array('league_id' => '1');
-        $order = array('score' => 'desc', 'goals' => 'desc', 'lost' => 'asc');
-        $limit = 20;
-		
-        $seriATeams = Team::findArray('all', compact('conditions', 'order', 'limit'));
-
-        $conditions = array('league_id' => '3');
-        $order = array('score' => 'desc', 'goals' => 'desc', 'lost' => 'asc');
-        $limit = 20;
-        $plTeams = TeamManager::getInstance()->find('all', compact('conditions', 'order', 'limit'));
 
         /*当年的FIFA足球先生*/
 		$fifaMvp = Player::find('first', [
@@ -217,8 +206,6 @@ class YpnController extends AppController
 			'order' => ['pingjun' => 'desc'],
 			'limit' => 20
 		]);
-		
-//		var_dump($fifaMvp);exit;
 		
 		PlayerManager::getInstance()->query("update ypn_players set popular=popular+10 where id=" . $fifaMvp->id);
 		$managers = Manager::find('all', array(
@@ -241,7 +228,6 @@ class YpnController extends AppController
 		echo 'FIFA-DAY SUCCES!<br>';flush();
          
 		 /*设置球员最优位置，老队员准备退役*/
-//		$allPlayers = PlayerManager::getInstance()->find('all', array('contain' => array()));
 		$allPlayerCount = Player::find('count');
 		$perPage = 1000;
 		$pageCount = ceil($allPlayerCount / $perPage);
@@ -295,15 +281,10 @@ class YpnController extends AppController
         echo 'OldPlayers Retired!<br>';flush();
         echo('<strong><font color=green>' . $changedPosCount . '</font></strong>players position changed');
 		echo '球员最优位置设置成功！<br>';flush();
-        
-        /*随着时间球员数值的变化*/
-        PlayerManager::getInstance()->query("update ypn_players set SinewMax=SinewMax-2,speed=speed-2,ShotPower=ShotPower-2,agility=agility-2,pinqiang=pinqiang-2,scope=scope-2,popular=popular-3 where DATE_ADD(birthday, INTERVAL 30 YEAR)<'" . $nowDate . "'");
-        PlayerManager::getInstance()->query("update ypn_players set SinewMax=SinewMax+2,ShotPower=ShotPower+2 where DATE_ADD(birthday, INTERVAL 20 YEAR)>'" . $nowDate . "'");
-        PlayerManager::getInstance()->query("update ypn_players set LastSeasonScore=total_score, total_score=0, all_matches_count=0, InjuredDay=0, sinew=SinewMax, mind=mind+2,state=75,goal1Count=0,goal2Count=0,goal3Count=0,penalty1Count=0,penalty2Count=0,penalty3Count=0,Assist1Count=0,Assist2Count=0,Assist3Count=0,Tackle1Count=0,Tackle2Count=0,Tackle3Count=0,YellowCard1Count=0,YellowCard2Count=0,YellowCard3Count=0,RedCard1Count=0,RedCard2Count=0,RedCard3Count=0,punish1Count=0,punish2Count=0");
-		
+ 
 		/*生成欧洲超级杯*/
 		//欧洲冠军联赛冠军
-		$euroChampionLeague = Match::find('first', array(
+		$eclFinalMatch = Match::find('first', array(
 				'conditions' => array(
 					'class_id' => 7
 				)
@@ -311,413 +292,228 @@ class YpnController extends AppController
 		);
 		
 		$uclWinTeamId = 0;
-		if ($euroChampionLeague->HostGoals > $euroChampionLeague->GuestGoals)
+		if ($eclFinalMatch->HostGoals > $eclFinalMatch->GuestGoals)
         {
-			$uclWinTeamId = $euroChampionLeague->HostTeam_id;
+			$uclWinTeamId = $eclFinalMatch->HostTeam_id;
 		}
 		else
 		{
-			$uclWinTeamId = $euroChampionLeague->GuestTeam_id;
+			$uclWinTeamId = $eclFinalMatch->GuestTeam_id;
 		}
 
-		$europeLeague = Match->find('first', array(
+		$elFinalMatch = Match::find('first', array(
 				'conditions' => array(
 					'class_id' => 17
 				)
 			)
 		);
         
-		/*欧洲联赛冠军*/
-		if ($europeLeague["Match"]["HostGoals"] > $europeLeague["Match"]["GuestGoals"])
+		/*欧罗巴联赛冠军*/
+		if ($elFinalMatch->HostGoals > $elFinalMatch->GuestGoals)
         {
-			$memberWinTeam = $europeLeague["Match"]["HostTeam_id"];
+			$elWinTeamId = $elFinalMatch->HostTeam_id;
 		}
 		else
 		{
-			$memberWinTeam = $europeLeague["Match"]["GuestTeam_id"];
+			$elWinTeamId = $elFinalMatch->GuestTeam_id;
 		}
+		
         PlayerManager::getInstance()->query("delete from ypn_matches where class_id=18");
-        $this->Match->createNew($memberWinTeam, $uclWinTeamId['id'], ($thisYear-1) . '-8-30', 18, 0);		
+        Match::create($elWinTeamId, $uclWinTeamId, ($thisYear-1) . '-8-30', 18, 0);		//底部会把所有match日期增加1年
         echo '超级杯 succes!<br>';flush();
         
         /*生成世俱杯*/
-        $this->loadModel('FIFAClubWorldCup');
-        $this->FIFAClubWorldCup->generateHalfFinal($uclWinTeamId['id'], $thisYear);
-        
+		$fcwc = Match::getById(1954);
+		$fcwc->isPlayed = 0;
+		$fcwc->HostGoals = 0;
+		$fcwc->GuestGoals = 0;
+		$fcwc->HostTeam_id = $uclWinTeamId;
+		$fcwc->save();
+		
+		$fcwcOtherMatches = Match::find(['conditions'=> ['class_id'=> [21,22]]]);
+		foreach($fcwcOtherMatches as $fcwcOtherMatch)
+		{
+			$fcwcOtherMatch->delete();
+		}
+		
+		$italySeriaATeams = Team::find('all', array(
+				'conditions' => ['league_id' => 1],
+				'order' => ['score'=>'desc', 'goals'=>'desc', 'lost'=>'asc', 'id'=>'asc']
+			)
+		);
+		
+		$englandSuperTeams = Team::find('all', array(
+				'conditions' => ['league_id' => 3],
+				'order' => ['score'=>'desc', 'goals'=>'desc', 'lost'=>'asc', 'id'=>'asc']
+			)
+		);
+		
 		/*更新欧冠联赛*/
-        PlayerManager::getInstance()->query("delete from ypn_matches where class_id in (4,5,6,7)");  
+		$uclGroups = Uclgroup::find('all');
+		$italyUclDownTeamIds = [];
+		$englandUclDownTeamIds = [];
+		$uclMap = [];
+		foreach($uclGroups as $uclTeam)
+		{
+			$curTeam = Team::getById($uclTeam->team_id);
+			if(in_array($curTeam->league_id, [1,2]))
+			{
+				$italyUclDownTeamIds[] = $uclTeam->team_id;
+			}
+			elseif($curTeam->league_id == 3)
+			{
+				$englandUclDownTeamIds[] = $uclTeam->team_id;
+			}
+		}
+		
+		//欧罗巴联赛的旧数据
+		$elGroups = Elgroup::find('all');
+		$italyElDownTeamIds = [];
+		$englandElDownTeamIds = [];
+
+		foreach($elGroups as $elTeam)
+		{
+			$curTeam = Team::getById($elTeam->team_id);
+			if(in_array($curTeam->league_id, [1,2]))
+			{
+				$italyElDownTeamIds[] = $elTeam->team_id;
+			}
+			elseif($curTeam->league_id == 3)
+			{
+				$englandElDownTeamIds[] = $elTeam->team_id;
+			}
+		}
+        
+		PlayerManager::getInstance()->query("update ypn_matches set isPlayed=0 where class_id=3");
 
         /*更新欧冠小组中的意甲球队*/
-        $shengji = TeamManager::getInstance()->find('all', array(
-				'conditions' => array(
-					'league_id' => 1
-				),
-				'order' => array('Team.score desc', 'goals desc', 'lost asc', 'Team.id asc'),
-				'limit' => 3
-			)
-		);
-		$jiangji = $this->Uclgroup->find('all', array(
-				'conditions' => array(
-				'league_id in (0,1,2)'
-				),
-				'limit' => 3
-			)
-		);
-		
-        PlayerManager::getInstance()->query("update ypn_matches set isPlayed=0 where class_id=3");
+		$italyUclUpCount = count($italyUclDownTeamIds);
+		$italyElUpCount = count($italyElDownTeamIds);
 
-        for ($i = 0; $i < 3; $i++)
-        {
-            PlayerManager::getInstance()->query("update ypn_matches set isPlayed=1,HostTeam_id=" . $shengji[$i]['Team']['id'] . " where isPlayed=0 and class_id=3 and HostTeam_id=" . $jiangji[$i]['Team']['id']);
-            PlayerManager::getInstance()->query("update ypn_matches set isPlayed=1,GuestTeam_id=" . $shengji[$i]['Team']['id'] . " where isPlayed=0 and class_id=3 and GuestTeam_id=" . $jiangji[$i]['Team']['id']);
-            PlayerManager::getInstance()->query("update ypn_uclgroups set isTurn=1,team_id=" . $shengji[$i]['Team']['id'] . " where isTurn=0 and team_id=" . $jiangji[$i]['Team']['id']);
-        }
-        PlayerManager::getInstance()->query("update ypn_uclgroups set isTurn=0,goal=0,lost=0,score=0,win=0,lose=0,draw=0");
+		
+		$italyUclUpTeams = array_slice($italySeriaATeams, 0, $italyUclUpCount);
+		foreach($italyUclDownTeamIds as $k=>$teamId)
+		{
+			$uclMap[$teamId] = $italyUclUpTeams[$k]->id;
+		}
 		
 		/*更新欧冠小组中的英超球队*/
-        $shengji = TeamManager::getInstance()->find('all', array(
-				'conditions' => array(
-					'league_id' => 3
-				),
-				'order' => array('Team.score desc', 'goals desc', 'lost asc', 'Team.id asc'),
-				'limit' => 4
-			)
-		);
-		$jiangji = $this->Uclgroup->find('all', array(
-				'conditions' => array(
-				'league_id in (3,53)'
-				),
-				'limit' => 4
-			)
-		);
-		
-        PlayerManager::getInstance()->query("update ypn_matches set isPlayed=0 where class_id=3");
-
-        for ($i = 0; $i < 4; $i++)
-        {
-            PlayerManager::getInstance()->query("update ypn_matches set isPlayed=1,HostTeam_id=" . $shengji[$i]['Team']['id'] . " where isPlayed=0 and class_id=3 and HostTeam_id=" . $jiangji[$i]['Team']['id']);
-            PlayerManager::getInstance()->query("update ypn_matches set isPlayed=1,GuestTeam_id=" . $shengji[$i]['Team']['id'] . " where isPlayed=0 and class_id=3 and GuestTeam_id=" . $jiangji[$i]['Team']['id']);
-            PlayerManager::getInstance()->query("update ypn_uclgroups set isTurn=1,team_id=" . $shengji[$i]['Team']['id'] . " where isTurn=0 and team_id=" . $jiangji[$i]['Team']['id']);
-        }
-        PlayerManager::getInstance()->query("update ypn_uclgroups set isTurn=0,goal=0,lost=0,score=0,win=0,lose=0,draw=0");		
-
-		/*欧冠小组赛基本奖金*/
-        $Uclgroups = $this->Uclgroup->find('all', array());
-		foreach ($Uclgroups as $Uclgroup) 
+		$englandUclUpCount = count($englandUclDownTeamIds);
+		$englandElUpCount = count($englandElDownTeamIds);
+		$englandUclUpTeams = array_slice($englandSuperTeams, 0, $englandUclUpCount);
+		foreach($englandUclDownTeamIds as $k=>$teamId)
 		{
-			TeamManager::getInstance()->writeJournal($Uclgroup["Uclgroup"]["team_id"], 1, 380, '欧洲冠军联赛小组赛出场费');
-			NewsManager::getInstance()->add('获得欧冠联赛小组赛奖金380W欧元', $Uclgroup["Uclgroup"]["team_id"], $nowDate, '/img/EuroChampion.jpg');
-		}
-	    unset($Uclgroups);	
-        echo 'ucl updated!<br>';flush();
-	        
-        /*生成意大利超级杯*/
-        PlayerManager::getInstance()->query("delete from ypn_matches where class_id=11");
-        
-        $leagueWinner = TeamManager::getInstance()->find('first', array(
-				'conditions' => array(
-				'league_id' => 1
-				),
-				'order' => array(
-				'Team.score' => 'desc',
-				'goals' => 'desc',
-				'lost' => 'asc'
-				)
-			)
-		);
-
-		$cupMatch = $this->Match->find('first', array(
-				'conditions' => array(
-				'class_id' => '10'
-				)
-			)
-		);
-		
-        if ($leagueWinner['Team']['id'] == $cupMatch['Match']["HostTeam_id"])
-        {
-            $cupWinner = $cupMatch['GuestTeam'];
-        }
-        else if ($leagueWinner['Team']['id'] == $cupMatch['Match']["GuestTeam_id"])
-        {
-            $cupWinner = $cupMatch['HostTeam'];
-        }
-        else
-        {
-                if ($cupMatch['Match']['HostGoals'] > $cupMatch['Match']['GuestGoals'])
-                {
-                    $cupWinner = $cupMatch['HostTeam'];
-                }
-                else
-                {
-                    $cupWinner = $cupMatch['GuestTeam'];
-                }
-        }
-
-        $this->Match->createNew($leagueWinner['Team']['id'], $cupWinner['id'], ($thisYear-1) . '-8-22', 11, 0);
-        $imgSrc = "/img/honour/ItalySuperCup.jpg";
-        $msg = "意甲冠军<font color=green>" . $leagueWinner['Team']['name'] . "</font>和杯赛冠军<font color=green>" . $cupWinner['name'] . "</font>" . $thisYear . "年8月19日争夺亚平宁半岛的王中王";
-        
-        echo 'Italy SuperCup created!<br>';
-
-		foreach ($seriATeams as $teams) 
-		{
-			NewsManager::getInstance()->add($msg, $teams['Team']['id'], $nowDate, $imgSrc);
+			$uclMap[$teamId] = $englandUclUpTeams[$k]->id;
 		}
 		
-        PlayerManager::getInstance()->query("delete from ypn_matches where class_id in (13,14,15,16,17)");
-
-        $i = 1;
-        $cupWinnerRank = -1;
-        
-		foreach ($seriATeams as $teams) 
+		foreach($uclGroups as $uclGroup)
 		{
-			if ($teams['Team']['id'] == $cupWinner['id'])
+			if(isset($uclMap[$uclGroup->team_id]))
 			{
-				$cupWinnerRank = $i;
-			}
-			$i++;
-		}
-	        
-        /*更新意甲球队的联盟杯数据*/
-		$i = 0;
-		$memberUpTeams = array();
-		foreach ($seriATeams as $teams) 
-		{
-			if ($i >= 3)
-			{
-				$memberUpTeams[$i-3] = $teams['Team']['id'];
-			}
-			$i++;
-			if ($i == 7)
-			{
-				break;
-			}
-		}
-
-        if ($cupWinnerRank == -1 || $cupWinnerRank > 8)
-        {
-            $memberUpTeams[3] = $cupWinner['id'];
-        }
-
-        $i = 0;
-        $memberMatches = $this->Match->find('all', array(
-				'conditions' => array(
-				'class_id' => '12'
-				),
-				'contain' => array('HostTeam', 'GuestTeam')
-			)
-		);
-
-		$memberDownTeams = array();
-       	foreach ($memberMatches as $memberMatches) 
-       	{
-       		if ($memberMatches['HostTeam']['league_id'] == 1 ||$memberMatches['HostTeam']['league_id'] == 2)
-       		{
-       			$memberDownTeams[$i] = $memberMatches['HostTeam']['id'];
-       			$i++;
-       			if ($i == 4)
-       			{
-       				break;
-       			}
-       		}
-            if ($memberMatches['GuestTeam']['league_id'] == 1 ||$memberMatches['GuestTeam']['league_id'] == 2)
-       		{
-       			$memberDownTeams[$i] = $memberMatches['GuestTeam']['id'];
-       			$i++;
-       		 	if ($i == 4)
-       			{
-       				break;
-       			}
-       		}
-       	}
-
-		PlayerManager::getInstance()->query("update ypn_elgroups set isTurn=0,goal=0,lost=0,score=0,win=0,lose=0,draw=0");
-        for ($k = 0; $k < count($memberDownTeams); $k++)
-        {
-            PlayerManager::getInstance()->query("update ypn_matches set isPlayed=0,hostTeam_id=" . $memberUpTeams[$k] . "  where hostTeam_id=" . $memberDownTeams[$k] . " and class_id=12 and isPlayed=1");
-            PlayerManager::getInstance()->query("update ypn_matches set isPlayed=0,guestTeam_id=" . $memberUpTeams[$k] . "  where guestTeam_id=" . $memberDownTeams[$k] . " and class_id=12 and isPlayed=1");
-            PlayerManager::getInstance()->query("update ypn_elgroups set isTurn=1,team_id=" . $memberUpTeams[$k] . " where isTurn=0 and team_id=" . $memberDownTeams[$k]);
-        }
-        echo '意甲联盟杯数据更新成功!<br>';
-		
-		/*更新英超球队的联盟杯数据*/
-        $ycEuropaLeagueCount = 3;
-		$memberUpTeams = array();		
-		$i = 0;
-		foreach ($plTeams as $teams) 		
-		{
-			if ($i > 3)
-			{
-				$memberUpTeams[] = $teams['Team']['id'];
+				$uclGroup->team_id = $uclMap[$uclGroup->team_id];
 			}
 			
-			if ($i == 6) break;
-            $i++;
+			$uclGroup->goal = 0;
+			$uclGroup->lost = 0;
+			$uclGroup->score = 0;
+			$uclGroup->win = 0;
+			$uclGroup->lose = 0;
+			$uclGroup->draw = 0;
+			$uclGroup->save();
 		}
+		
+		$uclTeamMatches = Match::find('all', ['conditions'=>['class_id'=>3]]);
+		foreach($uclTeamMatches as $uclTeamMatch)
+		{
+			if(isset($uclMap[$uclTeamMatch->HostTeam_id]))
+			{
+				$uclTeamMatch->HostTeam_id = $uclMap[$uclTeamMatch->HostTeam_id];
+			}
+			elseif(isset($uclMap[$uclTeamMatch->GuestTeam_id]))
+			{
+				$uclTeamMatch->GuestTeam_id = $uclMap[$uclTeamMatch->GuestTeam_id];
+			}
+			
+			$uclTeamMatch->isPlayed = 0;
+			$uclTeamMatch->save();
+		}
+		
 
-        $memberMatches = $this->Match->find('all', array(
-				'conditions' => array(
-				'class_id' => '12'
-				),
-				'contain' => array('HostTeam', 'GuestTeam')
-			)
-		);
-
-		$memberDownTeams = array();
-        $i = 0;
-       	foreach ($memberMatches as $memberMatches) 
-       	{
-       		if ( in_array($memberMatches['HostTeam']['league_id'], array(3, 53)) && !in_array($memberMatches['HostTeam']['id'], $memberDownTeams))
-       		{
-       			$memberDownTeams[] = $memberMatches['HostTeam']['id'];
-       			$i++;
-       			if ($i == $ycEuropaLeagueCount) break;
-       		}
-       	}
-
-		PlayerManager::getInstance()->query("update ypn_elgroups set isTurn=0,goal=0,lost=0,score=0,win=0,lose=0,draw=0");
-        for ($k = 0; $k < $ycEuropaLeagueCount; $k++)
-        {
-            PlayerManager::getInstance()->query("update ypn_matches set isPlayed=0,hostTeam_id=" . $memberUpTeams[$k] . "  where hostTeam_id=" . $memberDownTeams[$k] . " and class_id=12 and isPlayed=1");
-            PlayerManager::getInstance()->query("update ypn_matches set isPlayed=0,guestTeam_id=" . $memberUpTeams[$k] . "  where guestTeam_id=" . $memberDownTeams[$k] . " and class_id=12 and isPlayed=1");
-            PlayerManager::getInstance()->query("update ypn_elgroups set isTurn=1,team_id=" . $memberUpTeams[$k] . " where isTurn=0 and team_id=" . $memberDownTeams[$k]);
-        }
-        echo '英超球队的联盟杯数据更新成功!<br>';
-
+		/*欧冠小组赛基本奖金*/
+		foreach ($uclGroups as $uclGroup) 
+		{
+			$msg = '欧冠联赛小组赛出场费';
+			$reward = 380;
+			$curTeam = Team::getById($uclGroup->team_id);
+			$curTeam->addMoney($reward, $msg, $nowDate);
+			$curTeam->save();
+			News::create("获得{$msg}{$reward}万欧元", $uclGroup->team_id, $nowDate, '/res/img/EuroChampion.jpg');
+		}
+	    unset($uclGroups);	
+        echo 'ucl updated!<br>';flush();
+	        
+		PlayerManager::getInstance()->query("delete from ypn_matches where class_id in (4,5,6,7,13,14,15,16,17)"); 
+				
+		$elMap = [];
+		$italyElUpTeams = array_slice($italySeriaATeams, $italyUclUpCount, $italyElUpCount);
+		foreach($italyElDownTeamIds as $k=>$teamId)
+		{
+			$elMap[$teamId] = $italyElUpTeams[$k]->id;
+		}
+		
+		$englandElUpTeams = array_slice($englandSuperTeams, $englandUclUpCount, $englandElUpCount);
+		foreach($englandElDownTeamIds as $k=>$teamId)
+		{
+			$elMap[$teamId] = $englandElUpTeams[$k]->id;
+		}
+		
+		foreach($elGroups as $elGroup)
+		{
+			if(isset($elMap[$elGroup->team_id]))
+			{
+				$elGroup->team_id = $elMap[$elGroup->team_id];
+			}
+			
+			$elGroup->goal = 0;
+			$elGroup->lost = 0;
+			$elGroup->score = 0;
+			$elGroup->win = 0;
+			$elGroup->lose = 0;
+			$elGroup->draw = 0;
+			$elGroup->save();
+		}
+		
+		$elTeamMatches = Match::find('all', ['conditions'=>['class_id'=>12]]);
+		foreach($elTeamMatches as $elTeamMatch)
+		{
+			if(isset($elMap[$elTeamMatch->HostTeam_id]))
+			{
+				$elTeamMatch->HostTeam_id = $elMap[$elTeamMatch->HostTeam_id];
+			}
+			elseif(isset($elMap[$elTeamMatch->GuestTeam_id]))
+			{
+				$elTeamMatch->GuestTeam_id = $elMap[$elTeamMatch->GuestTeam_id];
+			}
+			
+			$elTeamMatch->isPlayed = 0;
+			$elTeamMatch->save();
+		}
+		
+        echo '欧罗巴联赛数据更新成功!<br>';
+		
         /*更新意甲升降级球队*/
-        $italySecondTeams = TeamManager::getInstance()->find('all', array(
-	        	'conditions' => array('league_id' => 2),
-                'contain' => array()
-        	)
-        );
-        shuffle($italySecondTeams);
-        $seriAShengji = array($italySecondTeams[0], $italySecondTeams[1], $italySecondTeams[2]);
-        $seriAJiangji = TeamManager::getInstance()->find('all', array(
-	        	'conditions' => array('league_id' => 1),
-                'contain' => array(),
-	        	'order' => array('score asc', 'goals asc', 'Team.id'),
-	        	'limit' => 3
-        	)
-        );
-
-        for ($i = 0; $i <= 2; $i++)
-        {
-            PlayerManager::getInstance()->query("update ypn_matches set HostTeam_id=" . $seriAShengji[$i]['Team']['id'] . " where class_id=1 and HostTeam_id=" . $seriAJiangji[$i]['Team']['id']);
-            PlayerManager::getInstance()->query("update ypn_matches set GuestTeam_id=" . $seriAShengji[$i]['Team']['id'] . " where class_id=1 and GuestTeam_id=" . $seriAJiangji[$i]['Team']['id']);
-            PlayerManager::getInstance()->query("update ypn_teams set league_id=1 where id=" . $seriAShengji[$i]['Team']['id']);
-            PlayerManager::getInstance()->query("update ypn_teams set league_id=2 where id=" . $seriAJiangji[$i]['Team']['id']);
-        }
+		$this->leagueLevelUp($italySeriaATeams, 1, 2, 1, 3);
         echo 'ItalyLeague updated!<br>';
 		
 		/*更新英超升降级球队*/
-       $yingguan  = TeamManager::getInstance()->find('all', array(
-	        	'conditions' => array('league_id' => 53),
-                'contain' => array()
-        	)
-        );
-        shuffle($yingguan);
-         
-        $plShengji = array($yingguan[0], $yingguan[1], $yingguan[2]);
-        $plJiangji = TeamManager::getInstance()->find('all', array(
-	        	'conditions' => array(
-	        	'league_id' => 3
-	        	),
-	        	'order' => array('score asc', 'goals asc', 'Team.id'),
-                'contain' => array(),
-	        	'limit' => 3
-        	)
-        );
-
-        for ($i = 0; $i <= 2; $i++)
-        {
-            PlayerManager::getInstance()->query("update ypn_matches set HostTeam_id=" . $plShengji[$i]['Team']['id'] . " where class_id=31 and HostTeam_id=" . $plJiangji[$i]['Team']['id']);
-            PlayerManager::getInstance()->query("update ypn_matches set GuestTeam_id=" . $plShengji[$i]['Team']['id'] . " where class_id=31 and GuestTeam_id=" . $plJiangji[$i]['Team']['id']);
-            PlayerManager::getInstance()->query("update ypn_teams set league_id=3 where id=" . $plShengji[$i]['Team']['id']);
-            PlayerManager::getInstance()->query("update ypn_teams set league_id=53 where id=" . $plJiangji[$i]['Team']['id']);
-        }
+		$this->leagueLevelUp($englandSuperTeams, 3, 53, 31, 3);
         echo 'PremierLeague updated!<br>';        
         
-        /*降级球队人气的变化*/
-        PlayerManager::getInstance()->query("update ypn_teams set popular=popular-2 where League_Id=2");
-        PlayerManager::getInstance()->query("update ypn_players set popular=popular-3 where Team_Id in (select id from ypn_teams where League_Id=2)");
-	        
-        /*删除无用的比赛记录*/
-        PlayerManager::getInstance()->query("delete from ypn_matches where class_id in(8,9,10)");
-
-        /*生成意大利杯赛事*/
-        $i = 0;
-        $bStr = array();
-        foreach ($seriATeams as $seriATeams) 
-        {
-        	$bhost[$i] = $seriATeams['Team']['id'];
-        	$bStr[] = $bhost[$i];
-        	$i++;
-        	
-        	if ($i == 8) break;
-        }
-        
-        if (mt_rand(1, 2) == 1)
-        {
-        	$orderType = 'asc';
-        }
-        else
-        {
-        	$orderType = 'desc';
-        }
-
-        PlayerManager::getInstance()->query("delete from ypn_matches where class_id=2");
-        
-        $conditions = array('league_id'=>array(1,2),  'not'=>array('id'=> $bStr));
-        $order = array('id' => $orderType);
-	    $limit = 8;
-	    $contain = array();
-        $cupAfter8Teams = TeamManager::getInstance()->find('all', compact('conditions', 'order', 'limit', 'contain')); 
-        
-        for ($i = 0; $i < 8; $i++)
-        {
-        	switch ($i) 
-        	{
-        		case 0:
-        		case 1:	
-        			$playTime = $thisYear . "-1-13";
-        			break;
-        		case 2:
-        		case 3:	
-        		case 4:
-        			$playTime = $thisYear . "-1-14";
-        			break;
-          		case 5:	
-        		case 6:
-        			$playTime = $thisYear . "-1-15";
-        			break;      		
-        		case 7:
-        			$playTime = ($thisYear-1) . "-12-17";
-        			break;
-        		break;
-        	}
-            PlayerManager::getInstance()->query("insert into ypn_matches (HostTeam_id,GuestTeam_id,class_id,PlayTime) values(" . $bhost[$i] . "," . $cupAfter8Teams[$i]['Team']['id'] . ",2,'" . $playTime . "')");
-        }
-        
-        echo "italy Cup updated!<br>";
-
-        $isYpnTeam = false;
-        if ($uclWinTeamId['league_id'] == 1)
-        {
-        	$isYpnTeam = true;
-        }
-
-        PlayerManager::getInstance()->query("update ypn_matches set playtime='" . ($thisYear - 1) . "-12-21' where playtime='" . ($thisYear) . "-2-13' and class_id=1");
-        
-        if ($isYpnTeam)
-        {
-            PlayerManager::getInstance()->query("update ypn_matches set playtime='" . ($thisYear) . "-2-13' where playtime='" . ($thisYear - 1) . "-12-21' and class_id=1 and (hostTeam_id=" . $uclWinTeamId['id'] . " or guestTeam_id=" . $uclWinTeamId['id'] . ")");
-        }
-        
         /*赞助费电视转播费*/
-        $allTeams = TeamManager::getInstance()->find('all', array('contain' => array()));
-        foreach ($allTeams as $allTeams) 
+        $allTeams = Team::find('all', array('conditions' => array('league_id <>'=>100)));
+        foreach ($allTeams as $curTeam) 
         {
-        	if ($allTeams['Team']['id'] == 2 || $allTeams['Team']['id'] == 4 || $allTeams['Team']['id'] == 10)
+        	if (in_array($curTeam->team_id, [2,4,10]) || ($curTeam->league_id == 3) )
         	{
         		$tvFee = 5000;
         	}
@@ -725,15 +521,15 @@ class YpnController extends AppController
         	{
         		$tvFee = 500;
         	}
-            NewsManager::getInstance()->add('俱乐部获得赞助费<font color=green><strong>' . $allTeams['Team']['sponsor'] . '</strong></font>W欧元', $allTeams['Team']['id'], $nowDate, $allTeams['Team']['ImgSrc']);
-        	NewsManager::getInstance()->add('俱乐部获得电视转播费<font color=green><strong>' . $tvFee . '</strong></font>W欧元', $allTeams['Team']['id'], $nowDate, $allTeams['Team']['ImgSrc']);
-        	TeamManager::getInstance()->writeJournal($allTeams['Team']['id'], 1, $allTeams['Team']['sponsor'], '赞助费');
-        	TeamManager::getInstance()->writeJournal($allTeams['Team']['id'], 1, $tvFee, '电视转播费');
-        
-        	/*发假期工资*/ 
-        	$gongzi = PlayerManager::getInstance()->query("select sum(salary) as AllMoney from ypn_players where Team_Id=" . $allTeams['Team']['id']);
-        	NewsManager::getInstance()->add("俱乐部给球员发假期工资共花费<font color=red><strong>" . round(($gongzi[0][0]['AllMoney'] * 5), 2) . "</strong></font>W欧元", $allTeams['Team']['id'], $nowDate, $allTeams['Team']['ImgSrc']);
-            TeamManager::getInstance()->writeJournal($allTeams['Team']['id'], 2, $gongzi[0][0]['AllMoney'] * 5, '给球员发假期工资');
+			
+			$curTeam->addMoney($curTeam->sponsor, '获得赞助费', $nowDate);
+			$curTeam->addMoney($tvFee, '获得电视转播费', $nowDate);
+			$curTeam->addMoney(-$curTeam->TotalSalary, '发假期工资', $nowDate);
+			
+			//随机改阵型
+			
+			
+			$curTeam->save();
         }
         
         echo 'team salary updated!<br>';
@@ -741,35 +537,31 @@ class YpnController extends AppController
         PlayerManager::getInstance()->query("update ypn_players set popular=99 where popular>99");	 
         PlayerManager::getInstance()->query("update ypn_players set mind=99 where mind>99");
         PlayerManager::getInstance()->query("update ypn_teams set score=0,goals=0,lost=0,win=0,lose=0,draw=0");
-        PlayerManager::getInstance()->query("update ypn_matches set hostTeam_id=" . $uclWinTeamId['id'] . " where guestTeam_id=178 and class_id=20");
 		PlayerManager::getInstance()->query("update ypn_matches set PlayTime=DATE_ADD(PlayTime, INTERVAL 1 YEAR),isPlayed=0,HostGoals=0,GuestGoals=0,HostGoaler_ids='', GuestGoaler_ids='' where class_id not in (25, 20)");
-        PlayerManager::getInstance()->query("update ypn_matches set isWatched=1 where hostTeam_id=" . $this->Session->read('Auth.User.team_id') . " or guestTeam_id=" . $this->Session->read('Auth.User.team_id'));
         
         /*判断是否世界杯年，如果是则把小组赛改为今年，isPlayed=1,*/
-        if (YpnManager::getInstance()->checkWorldCupDay())
+        if (YpnManager::getInstance()->checkWorldCupDay($nowDate))
 		{
 			$cha = $thisYear - 2010;
 			PlayerManager::getInstance()->query("update ypn_matches set PlayTime=DATE_ADD(PlayTime, INTERVAL " . $cha . " YEAR),isPlayed=0,HostGoals=0,GuestGoals=0,HostGoaler_ids='', GuestGoaler_ids='' where class_id=25");
-		    PlayerManager::getInstance()->query("update ypn_settings set today='" . $thisYear . "-6-1'");
+//		    PlayerManager::getInstance()->query("update ypn_settings set today='" . $thisYear . "-6-1'");
+			PlayerManager::getInstance()->query("update ypn_settings set today='" . $thisYear . "-7-1'");
 		}
 		else
 		{
 			PlayerManager::getInstance()->query("update ypn_settings set today='" . $thisYear . "-7-1'");
 		}
         
-        NewsManager::getInstance()->saveAllData();
+        /*删除无用的比赛记录*/
+	    PlayerManager::getInstance()->query("delete from ypn_matches where class_id in (8,9,10,21,22,23,24,37)");
+	    PlayerManager::getInstance()->query("update ypn_matches set isWatched=0, mvp_player_id=0, replay='' where class_id<>25");
+		       
+        /*随着时间球员数值的变化*/
+        PlayerManager::getInstance()->query("update ypn_players set SinewMax=SinewMax-2,speed=speed-2,ShotPower=ShotPower-2,agility=agility-2,pinqiang=pinqiang-2,scope=scope-2,popular=popular-3 where DATE_ADD(birthday, INTERVAL 30 YEAR)<'" . $nowDate . "'");
+        PlayerManager::getInstance()->query("update ypn_players set SinewMax=SinewMax+2,ShotPower=ShotPower+2 where DATE_ADD(birthday, INTERVAL 20 YEAR)>'" . $nowDate . "'");
+        PlayerManager::getInstance()->query("update ypn_players set LastSeasonScore=total_score, total_score=0, all_matches_count=0, InjuredDay=0, sinew=SinewMax, mind=mind+2,state=75,goal1Count=0,goal2Count=0,goal3Count=0,penalty1Count=0,penalty2Count=0,penalty3Count=0,Assist1Count=0,Assist2Count=0,Assist3Count=0,Tackle1Count=0,Tackle2Count=0,Tackle3Count=0,YellowCard1Count=0,YellowCard2Count=0,YellowCard3Count=0,RedCard1Count=0,RedCard2Count=0,RedCard3Count=0,punish1Count=0,punish2Count=0");
         
-        /*reset all team random formattions*/
-        $allTeams = TeamManager::getInstance()->find('all', array(
-            'contain' => array()
-        ));
-        $this->loadModel("Formattion");
-        $formattions = $this->Formattion->find('all');
-        TeamManager::getInstance()->resetAllFormattion($allTeams, $formattions);
-        TeamManager::getInstance()->saveMany($allTeams);
-        
-        echo("<div align=center><a href=newday>恭喜您完成了本赛季的教练工作，开始新的赛季将有新的希望。</a></div>");
-		echo("<script>$(parent.frames['left'].document).find('#cover').hide();");exit;
+        echo("<div align=center><a href='/ypn/new_day'>恭喜您完成了本赛季的教练工作，开始新的赛季将有新的希望。</a></div>");
 	}
     
     private function resetTotalSalaryAndPlayerCount()
@@ -809,7 +601,7 @@ class YpnController extends AppController
 		$this->flushNow('欧冠分组更新完成！<br>');
 		
 		/*更新欧联分组*/
-        ElGroupManager::getInstance()->resetElGroup();
+        ElgroupManager::getInstance()->resetElgroup();
 		$this->flushNow('欧联分组更新完成！<br>');
 		
 #        YpnManager::getInstance()->resetWorldcup();
@@ -843,7 +635,6 @@ class YpnController extends AppController
 	 */
     private function doWeekdayTask($weekday, $isTransferDay, $isHoliday, $myTeamId)
     {
-//		var_dump($weekday, $isTransferDay);exit;
 		$nowDate = SettingManager::getInstance()->getNowDate();
 		switch ($weekday)
 		{
@@ -852,7 +643,7 @@ class YpnController extends AppController
 				if ($isTransferDay)
 				{
 					$this->flushNow('正在进行转会交易...');
-                    $this->oldRedirect(array('controller'=>'team', 'action'=>'sell_players'), false);
+					$this->oldRedirect(array('controller'=>'team', 'action'=>'sell_players'), false); 
 				}
 				
 				if (!$isHoliday)
@@ -866,7 +657,7 @@ class YpnController extends AppController
 				if ($isTransferDay)
 				{
 					$this->flushNow('正在续约球员，请稍候...');
-                    $this->oldRedirect(array('controller'=>'player', 'action'=>'continue_contract'), false);
+					$this->oldRedirect(array('controller'=>'player', 'action'=>'continue_contract'), false); 
 				}
 
 				break;
@@ -875,7 +666,7 @@ class YpnController extends AppController
 				if ($isTransferDay)
 				{
 					$this->flushNow('正在进行转会交易...');
-                    $this->oldRedirect(array('controller'=>'team', 'action'=>'buy_players'), false);
+					$this->oldRedirect(array('controller'=>'team', 'action'=>'buy_players'), false);
 				}
 				break;
 			case 3:	
@@ -896,7 +687,7 @@ class YpnController extends AppController
 				if ($isTransferDay)
 				{
 					$this->flushNow('正在检查合同是否到期，请稍候...');
-                    $this->oldRedirect(array('controller'=>'player', 'action'=>'transfer_free_agent'), false);
+					$this->oldRedirect(array('controller'=>'player', 'action'=>'transfer_free_agent'), false); 
                 }
 				break;
 			case 6:
@@ -941,4 +732,52 @@ class YpnController extends AppController
 		}
 	}
 
+	/**
+	 * 联赛升降级
+	 * @param type $highLevelTeams
+	 * @param type $highLevelLeagueId
+	 * @param type $lowLevelLeagueId
+	 * @param type $matchClassId
+	 * @param type $upCount
+	 */
+	private function leagueLevelUp($highLevelTeams, $highLevelLeagueId, $lowLevelLeagueId, $matchClassId, $upCount)
+	{
+        $lowLevelTeams = Team::find('all', ['conditions'=>['league_id'=>$lowLevelLeagueId]]);
+        shuffle($lowLevelTeams);
+		
+		$seriaADownTeams = array_slice($highLevelTeams, count($highLevelTeams)-$upCount, $upCount);
+		$seriaBUpTeams =  array_slice($lowLevelTeams, 0, $upCount);
+		
+		$seriaAUpMap = []; //降级TeamId=>升级TeamId
+		foreach($seriaADownTeams as $k=>$curTeam)
+		{
+			$curTeam->league_id = $lowLevelLeagueId;
+			$curTeam->popular -= 5;
+			$curTeam->save();
+			
+			$seriaAUpMap[$curTeam->team_id] = $seriaBUpTeams[$k]->team_id;
+		}
+		
+		foreach($seriaBUpTeams as $curTeam)
+		{
+			$curTeam->league_id = $highLevelLeagueId;
+			$curTeam->popular += 5;
+			$curTeam->save();
+		}
+		
+		$seriaAMatches = Match::find('all', ['conditions'=>['class_id'=>$matchClassId]]);
+		foreach($seriaAMatches as $seriaAMatch)
+		{
+			if(isset($seriaAUpMap[$seriaAMatch->HostTeam_id]))
+			{
+				$seriaAMatch->HostTeam_id = $seriaAUpMap[$seriaAMatch->HostTeam_id];
+				$seriaAMatch->save();
+			}
+			elseif(isset($seriaAUpMap[$seriaAMatch->GuestTeam_id]))
+			{
+				$seriaAMatch->GuestTeam_id = $seriaAUpMap[$seriaAMatch->GuestTeam_id];
+				$seriaAMatch->save();
+			}
+		}
+	}
 }

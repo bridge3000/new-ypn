@@ -33,14 +33,6 @@ class TeamManager extends DataManager
         
         return $teams;
     }
-	
-    public function resetAllFormattion(&$allTeams, $formattions)
-    {
-        for ($i = 0;$i < count($allTeams);$i++)
-        {
-            $allTeams[$i]['Team']['formattion'] = $formattions[array_rand($formattions)]['Formattion']['title'];
-        }
-    }
     
     public function addOtherLeagueTeamSalary($myTeamId)
     {

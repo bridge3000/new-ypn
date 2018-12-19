@@ -567,6 +567,15 @@ class Player extends YpnModel
 		$this->score += 2;
 	}
 	
+	public function onGoaled($matchClassId)
+	{
+		$this->SaveExperience += 1;
+		if($this->score > 0)
+		{
+			$this->score -= 1;
+		}
+	}
+	
 	public function addAssist($matchClassId)
 	{
 		$assistField = '';

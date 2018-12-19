@@ -1,8 +1,5 @@
 <?php
-namespace Model\ElGroup;
+namespace Model\Core;
 
-class ElGroup {
-    //put your code here
+class Elgroup extends YpnModel {
 }
-
-?>

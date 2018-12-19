@@ -693,6 +693,7 @@ class PlayerManager extends DataManager
         {
             $shotResultData['result'] = 1;
 			$attackPlayers['shoufa'][$shoterIndex]->addGoal($matchClassId);
+			$defensePlayers['shoufa'][$goalkeeperIndex]->onGoaled($matchClassId);
         }
         else
         {

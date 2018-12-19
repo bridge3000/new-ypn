@@ -97,6 +97,7 @@ class TeamController extends AppController
 			}
         }
 		
+		echo '<br/><a href="/ypn/new_day">New Day</a>';
     }
     
     public function buy_players()
@@ -129,15 +130,17 @@ class TeamController extends AppController
         /*save ypn_players*/
 		$this->flushNow('正在保存数据...<br/>');
 		$teamSaveData = array();
-		foreach($computerLeagueTeams as $t)
+		foreach($computerLeagueTeams as $team)
 		{
-			if(isset($t->isChanged))
+			if(isset($team->isChanged))
 			{
-				$teamSaveData[] = array('id'=>$t->id, 'bills'=>$t->bills, 'money'=>$t->money);
+//				$teamSaveData[] = array('id'=>$team->id, 'bills'=>$team->bills, 'money'=>$team->money);
+				unset($team->isChanged);
+				$team->save();
 			}
 		}
 		
-		TeamManager::getInstance()->update_batch($teamSaveData);
+//		TeamManager::getInstance()->update_batch($teamSaveData);
 
 		foreach ($allCanBuyPlayers as $sellingPlayer)
         {

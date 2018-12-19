@@ -49,13 +49,12 @@ class MatchController extends AppController
         $todayMatches = MatchManager::getInstance()->getTodayMatches($nowDate, 0);
 		if(empty($todayMatches))
 		{
-			header("location:".MainConfig::BASE_URL.'ypn/new_day');
-			exit;
+			$this->redirect('/ypn/new_day');
 		}
-		else
-		{
-			$this->flushCss();
-		}
+//		else
+//		{
+//			$this->flushCss();
+//		}
 		
         $todayMatchTeamIds = array();
 		$matchClassIds = array();
@@ -123,7 +122,7 @@ class MatchController extends AppController
 			
 			if($curMatch->isWatched)
 			{
-				$allMatchHtml .= $this->replay.'<hr>';
+				$allMatchHtml .= $this->replay;
 			}
 			
 			$allMatchHtml .= $this->onMatchEnd($curMatch);
@@ -146,7 +145,6 @@ class MatchController extends AppController
 			}
 			$this->assault($curMatch);
 		}
-		$this->flushMatch('the match is over, ' . $curMatch->hostTeam->name . $curMatch->HostGoals . ":" . $curMatch->GuestGoals . $curMatch->guestTeam->name . "<br>");
     }
 	
 	private function onMatchEnd($curMatch)
@@ -193,7 +191,8 @@ class MatchController extends AppController
 			}
 		}
 		
-		$html .= "本场比赛的MVP是{$mvpPlayer->name}";
+		$html .= '<br/>全场比赛结束, 比分是 ' . $curMatch->hostTeam->name . $curMatch->HostGoals . ":" . $curMatch->GuestGoals . $curMatch->guestTeam->name . ', ';
+		$html .= "本场比赛的MVP是{$mvpPlayer->name}.<hr>";
 		
 		//player需要更新的属性需要在下面的函数中写入列表
 		PlayerManager::getInstance()->saveMatchResult($curMatch->hostPlayers['shoufa'], $curMatch->guestPlayers['shoufa']);
@@ -288,22 +287,37 @@ class MatchController extends AppController
 					$html .= $this->onUclSemiFinalsEnd();
 					break;
 				case 7: //
-					$html .= $this->onUclFinalEnd($curMatch);
+					$html .= $this->onFinalEnd($curMatch);
 					break;
 				case 12: //el
 					$html .= $this->onElTeamEnd();
 					break;
-				case 36: //亚冠半决
-					$html .= $this->onAfcHalfEnd();
+				case 13: //el 32to16
+					$html .= $this->generateNextLevelMatch(13, 14, MainConfig::$elPlayoffDates[14]);
 					break;
-				case 37: 
-					$html .= $this->onAfcFinalEnd();
+				case 14: //el 16to8
+					$html .= $this->generateNextLevelMatch(14, 15, MainConfig::$elPlayoffDates[15]);
+					break;
+				case 15: //el 8to4
+					$html .= $this->generateNextLevelMatch(15, 16, MainConfig::$elPlayoffDates[16]);
+					break;
+				case 16: //el quarter to final
+					$html .= $this->generateNextLevelMatch(16, 17, MainConfig::$elPlayoffDates[17]);
+					break;
+				case 17: //
+					$html .= $this->onFinalEnd($curMatch);
 					break;
 				case 20: //世俱半决
 					$html .= $this->onFcwcHalfEnd();
 					break;
 				case 22: //世俱决
 					$html .= $this->onFcwcFinalEnd();
+					break;
+				case 36: //亚冠半决
+					$html .= $this->onAfcHalfEnd();
+					break;
+				case 37: 
+					$html .= $this->onAfcFinalEnd();
 					break;
 			}
 		}
@@ -679,7 +693,7 @@ class MatchController extends AppController
 		$msg = '晋级世俱杯决赛了';
 		foreach($winTeams as $teamId)
 		{
-			NewsManager::getInstance()->push($msg, $teamId, $nowDate, '/res/img/afc.jpg');
+			News::create($msg, $teamId, $nowDate, '/res/img/afc.jpg');
 		}
 	}
 	
@@ -852,11 +866,6 @@ class MatchController extends AppController
     
     protected function flushMatch($str)
     {
-        if ($this->isWatch)
-        {
-//            $this->flushNow($str);
-        }
-		
 		$this->replay .= $str;
     }
 	
@@ -965,7 +974,7 @@ class MatchController extends AppController
 		return $html;
 	}
 	
-	private function onUclFinalEnd($curMatch)
+	private function onFinalEnd($curMatch)
 	{
 		$html = '';
 		$winnerTeamId = 0;
@@ -979,7 +988,7 @@ class MatchController extends AppController
 		}
 		$winTeam = Team::getById($winnerTeamId);
 		
-		$html .= '<div class="alert alert-danger" role="alert">' . $winTeam->name . '获得了欧洲冠军联赛的冠军</div>';
+		$html .= '<div class="alert alert-danger" role="alert">' . $winTeam->name . '获得了' . MainConfig::$matchClasses[$curMatch->class_id] . '的冠军</div>';
 		return $html;
 	}
 	
@@ -1049,7 +1058,7 @@ class MatchController extends AppController
 			$firstMatch->GuestTeam_id = $guestTeam->id;
 			$firstMatch->class_id = $nextClassId;
 			$firstMatch->PlayTime = $year . '-' . $playDates[0];
-			$firstMatch->host_team_id = isset($playDates[1]) ? $hostTeam->id : 0;
+			$firstMatch->is_host_park = isset($playDates[1]) ? 1 : 0;
 			$firstMatch->save();
 			
 			if(isset($playDates[1]))
@@ -1059,7 +1068,7 @@ class MatchController extends AppController
 				$secondMatch->GuestTeam_id = $hostTeam->id;
 				$secondMatch->class_id = $nextClassId;
 				$secondMatch->PlayTime = $year . '-' . $playDates[1];
-				$secondMatch->host_team_id = $guestTeam->id;
+				$secondMatch->host_team_id = 1;
 				$secondMatch->save();
 			}
 			

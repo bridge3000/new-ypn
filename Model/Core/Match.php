@@ -66,4 +66,15 @@ class Match extends YpnModel
 
 		return $data;
 	}
+	
+	public static function create($hostTeam_id, $guestTeam_id, $nowDate, $classId, $isHostPark)
+	{
+        $newMatch = new static();
+        $newMatch->HostTeam_id = $hostTeam_id;
+		$newMatch->GuestTeam_id = $guestTeam_id;
+		$newMatch->PlayTime = $nowDate;
+		$newMatch->class_id = $classId;
+		$newMatch->is_host_park = $isHostPark;
+		$newMatch->save();
+	}
 }

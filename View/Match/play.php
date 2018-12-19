@@ -1,2 +1,2 @@
 <div class="jumbotron"><?=$allMatchHtml?></div>
-<a href="/match/today">today match</a>
+<a href="/ypn/new_day">New Day</a>

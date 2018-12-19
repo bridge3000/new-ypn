@@ -29,29 +29,29 @@ class PlayerController extends AppController
 
 		TeamManager::getInstance()->saveMany(PlayerManager::getInstance()->resetTotalSalaryAndPlayerCount());
 		
-		$futureContracts = FutureContractManager::getInstance()->find('all', array('conditions' => array('OldContractEnd <' => $nowDate)));
+		/*签的未来合同已经到了 执行转会*/
+		$futureContracts = FutureContract::find('all', array('conditions' => array('OldContractEnd <' => $nowDate)));
         for ($i = 0;$i < count($futureContracts);$i++)
         {
-            if (empty($futureContracts[$i]['id']))
+            if (empty($futureContracts[$i]->id))
             {
-                FutureContractManager::getInstance()->delete($futureContracts[$i]['id'], false);
+                FutureContractManager::getInstance()->delete($futureContracts[$i]->id, false);
                 continue;
             }
 
-            $buyTeam = TeamManager::getInstance()->findById($futureContracts[$i]['NewTeam_id']);
+            $buyTeam = TeamManager::getInstance()->findById($futureContracts[$i]->NewTeam_id);
             
-            $playerData = PlayerManager::getInstance()->findById($futureContracts[$i]['player_id']);
-            $targetPlayer = PlayerManager::getInstance()->loadData($playerData, 'Player');
+            $targetPlayer = Player::getById($futureContracts[$i]->player_id);
             $targetPlayer->ContractBegin = $nowDate;
-            $targetPlayer->ContractEnd = $futureContracts[$i]['NewContractEnd'];
-            $targetPlayer->salary = $futureContracts[$i]['NewSalary'];
-            $targetPlayer->team_id = $futureContracts[$i]['NewTeam_id'];
-            $retiredShirts = RetiredShirtManager::getInstance()->getByTeamId($futureContracts[$i]['NewTeam_id']);
-            $usedNOs = PlayerManager::getInstance()->getUsedNOs($futureContracts[$i]['NewTeam_id']);
+            $targetPlayer->ContractEnd = $futureContracts[$i]->NewContractEnd;
+            $targetPlayer->salary = $futureContracts[$i]->NewSalary;
+            $targetPlayer->team_id = $futureContracts[$i]->NewTeam_id;
+            $retiredShirts = RetiredShirtManager::getInstance()->getByTeamId($futureContracts[$i]->NewTeam_id);
+            $usedNOs = PlayerManager::getInstance()->getUsedNOs($futureContracts[$i]->NewTeam_id);
             
             $targetPlayer->getNewShirtNo(array_merge($retiredShirts, $usedNOs));
 
-            if ($buyTeam['league_id'] == $futureContracts[$i]['league_id'])
+            if ($buyTeam['league_id'] == $targetPlayer->league_id)
             {
                 $targetPlayer->cooperate = 90;
             }
@@ -62,9 +62,9 @@ class PlayerController extends AppController
             }
 
             PlayerManager::getInstance()->saveModel($targetPlayer);
-            $this->FutureContract->delete($futureContracts[$i]['id'], false);
+            $futureContracts[$i]->delete();
 
-            NewsManager::getInstance()->add('自由球员<font color=green><strong>' . $targetPlayer->name . '</strong></font>加入了我们', $futureContracts[$i]['NewTeam_id'], $nowDate, $targetPlayer->ImgSrc);
+            NewsManager::getInstance()->add('自由球员<font color=green><strong>' . $targetPlayer->name . '</strong></font>加入了我们', $futureContracts[$i]->NewTeam_id, $nowDate, $targetPlayer->ImgSrc);
             echo('自由球员<font color=blue><strong>' . $targetPlayer->name . '</strong></font>投奔了' . $buyTeam['name'] . '<br>');flush();
 
         }
@@ -213,6 +213,8 @@ class PlayerController extends AppController
 				PlayerManager::getInstance()->update(array('ContractBegin'=> $nowDate, 'ContractEnd'=> $contractEnd , 'salary'=>$newSalary), array('id'=>$curPlayer->id));
 			}
 		}
+		
+		echo '<br/><a href="/ypn/new_day">New Day</a>';
 	}
     
     /**
@@ -646,21 +648,25 @@ class PlayerController extends AppController
 	
 	public function collect_list()
 	{
-		$playerCollects = PlayerCollect::findArray('all', array(
-				'conditions' => [],
-			)
-		);
+		$playerCollects = PlayerCollect::find('all');
 		
 		$this->data['collectPlayers'] = [];
 		
 		foreach($playerCollects as $playerCollect)
 		{
-			$curPlayer = PlayerManager::getInstance()->findById($playerCollect['player_id']);
-			$this->data['collectPlayers'][] = [
-				'player_id' => $curPlayer['id'],
-				'name' => $curPlayer['name'],
-				'collect_date' => date('Y-m-d', strtotime($playerCollect['created_at']))
-			];
+			$curPlayer = PlayerManager::getInstance()->findById($playerCollect->player_id);
+			if($curPlayer)
+			{
+				$this->data['collectPlayers'][] = [
+					'player_id' => $curPlayer['id'],
+					'name' => $curPlayer['name'],
+					'collect_date' => date('Y-m-d', strtotime($playerCollect->created_at))
+				];
+			}
+			else
+			{
+				$playerCollect->delete();
+			}
 		}
 		
 		$this->render('/collect_list');

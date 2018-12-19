@@ -22,7 +22,7 @@ class BakMatchManager extends DataManager
 			$hostTeamId = $teamList[$r['host_name']];			
 			$guestTeamId = $teamList[$r['guest_name']];
 			
-			$newMatches[] = array('PlayTime' => $r['PlayTime'], 'HostTeam_id'=>$hostTeamId, 'GuestTeam_id'=>$guestTeamId, 'class_id'=>$classId, 'host_team_id'=>$hostTeamId);
+			$newMatches[] = array('PlayTime' => $r['PlayTime'], 'HostTeam_id'=>$hostTeamId, 'GuestTeam_id'=>$guestTeamId, 'class_id'=>$classId, 'is_host_park'=>1);
 		}
 		
 		$this->table = $realTable;

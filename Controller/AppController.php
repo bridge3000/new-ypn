@@ -60,9 +60,9 @@ class AppController
     
     protected function flushNow($str)
     {
-//		echo $str;
-//        ob_flush();
-//        flush();
+		echo $str;
+        ob_flush();
+        flush();
     }
 	
 	public function flushCss()

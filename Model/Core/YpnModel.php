@@ -276,7 +276,7 @@ class YpnModel
         
         if (is_array($v) && (!empty($v)))
         {
-            $str = $k . ' in (' . implode(",", $v) . ') ';
+            $str = $k . ' IN (' . implode(",", $v) . ') ';
         }
         else
         {
