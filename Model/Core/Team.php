@@ -72,7 +72,7 @@ class Team extends YpnModel
     {
         $this->money += $num;
         
-        $this->addBill(array('info'=>$info, 'money'=>$num, 'PubTime'=>strtotime($nowDate), 'remain'=>$this->money));
+        $this->addBill(array('info'=> $info, 'money'=>$num, 'PubTime'=>strtotime($nowDate), 'remain'=>$this->money));
     }
     
     public function paySalary($nowDate)
@@ -106,7 +106,6 @@ class Team extends YpnModel
             return mt_rand(0, 1)?$this->name:$this->alias;
         }
     }
-    
 	
 	public function getNeedPoses()
 	{

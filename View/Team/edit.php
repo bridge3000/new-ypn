@@ -134,16 +134,6 @@ for ($i = 10; $i < 110; $i += 10) {
 		<td align="right" bgcolor="whitesmoke">守门员参与最后一次定位球进攻：</td>
 		<td bgcolor="#FFFFFF"><input type="checkbox" name="checkbox" id="checkbox" onclick="changeGoalkeeperAttack();" <?=($myTeam['isGoalkeeperAttack'] ? "checked" : '') ?> /></td>
 	</tr>
-	<tr>
-		<td colspan="2" align="center" bgcolor="#FFFFFF">
-			<object id="flashad" width="500" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,0,0" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"> 
-				<param value="../flash/club.swf" name="movie">  
-				<param value="autohigh" name="quality">  
-				<param value="opaque" name="wmode">  
-				<embed width="500" pluginspage="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash" type="application/x-shockwave-flash" swliveconnect="TRUE" name="flashad" wmode="opaque" quality="autohigh" src="../flash/club.swf">
-			</object>
-		</td>
-	</tr>
 </table>
 
 <script>

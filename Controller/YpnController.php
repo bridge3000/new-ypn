@@ -29,65 +29,153 @@ class YpnController extends AppController
 	public function new_day()
 	{
 		header("content-type:text/html; charset=utf-8");
-        
         $myCoach = CoachManager::getInstance()->getMyCoach();
         $myTeamId = $myCoach->team_id;
-		$nowDate = SettingManager::getInstance()->getNowDate();
+		$curDate = SettingManager::getInstance()->getNowDate();
+		$nowDate = '';
+
+		if (Match::find('count', ['conditions' => ['isPlayed'=>0, 'PlayTime'=>$curDate]]) > 0) //如果前一天有未完成赛事必须先强制打完才能执行new_day下面的逻辑
+		{
+			$this->redirect('/match/today');
+		}
+		else
+		{
+			SettingManager::getInstance()->addDate();
+			$nowDate = date('Y-m-d', strtotime($curDate . ' +1 day'));
+		}
 		
-		$thisYear = date('Y', strtotime($nowDate));
-		$weekday = date("w", strtotime($nowDate));
 		$isHoliday = YpnManager::getInstance()->checkHoliday($nowDate);
 		
-		if ($nowDate == ($thisYear . '-06-01'))
-		{
-			$this->prepareI18nMatch(); //准备国际比赛上调到国家队的球员
-		}
-		
-		$allUnplayedMatches = MatchManager::getInstance()->find('all', array(
-				'conditions' => array('isPlayed' => 0),
-				'contain' => array()
-			)
-		);
-		
-		$todayMatchTeamIds = $this->getTodayMatchTeamIds($allUnplayedMatches, $nowDate);
-		if (!empty($todayMatchTeamIds)) //开始今日比赛
-		{
-			$this->redirect('/match/play');
-		}
-
-		$this->checkTransferOverDayAndDo($nowDate, $thisYear); //如果刚刚过转会期人还没有招满
 
 		/*如果赛季比赛全完事，则进入新赛季页面*/
-		if (empty($allUnplayedMatches))
+		if (Match::find('count', ['conditions' => ['isPlayed'=>0]]) == 0)
 		{
 			$this->newSeason();
 		}
 		else
 		{
-			/*如果是FIFA-DAY的前一天则抽调国家队队员*/
-			$this->inviteFriendMatch($nowDate);
+			$allMatchHtml = $this->doDateTask($nowDate, $isHoliday, $myTeamId);
 
-			SettingManager::getInstance()->addDate();
-
-			$isTransferDay = YpnManager::getInstance()->checkTransferDay($nowDate);
-			$this->doWeekdayTask($weekday, $isTransferDay, $isHoliday, $myTeamId);
-
-			$this->oldRedirect(array('controller'=>'player', 'action'=>'pay_birthday'), false); /*过生日的队员发奖金*/
+			$this->doControllerFunction(array('controller'=>'player', 'action'=>'pay_birthday'), false); /*过生日的队员发奖金*/
 
 			/*列出近期新闻，如果不采用弹出窗口显示则不用列出*/
 			$this->set('news', NewsManager::getInstance()->getUnreadNews($myTeamId));
 			NewsManager::getInstance()->readAll($myTeamId);
 			
-			$this->training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate);
+			$this->training($isHoliday, $myTeamId, $nowDate);
 			PlayerManager::getInstance()->doNormal(); //球员日常变化
-
-//			$this->redirect('/match/today');
-			echo '<br/><a href="/ypn/new_day">New Day</a>';
+			
+			$this->set('allMatchHtml', $allMatchHtml);
+			$this->render('new_day');
 		}
 	}
 	
-	private function training($isHoliday, $todayMatchTeamIds, $myTeamId, $nowDate)
+	/**
+	 * 周每日工作
+	 * @param date $nowDate
+	 * @param bool $isHoliday
+	 * @param int $myTeamId
+	 */
+    private function doDateTask($nowDate, $isHoliday, $myTeamId)
+    {
+		$isTransferDay = YpnManager::getInstance()->checkTransferDay($nowDate);
+		$weekday = date("w", strtotime($nowDate));
+		$strHtml = '';
+		
+				
+		/*如果是FIFA-DAY的前一天则抽调国家队队员*/
+//		$this->inviteFriendMatch($nowDate);
+		
+		switch (date('m-d', strtotime($nowDate))) {
+			case '06-01':
+				$this->prepareI18nMatch(); //准备国际比赛上调到国家队的球员
+				break;
+			case '09-01':
+				$strHtml .= TeamController::getInstance()->get_young_players();
+				break;
+		}
+			
+		switch ($weekday)
+		{
+			case 0:
+				/*卖出球员*/
+				if ($isTransferDay)
+				{
+					$strHtml .= '正在进行转会交易...<br/>';
+					$strHtml .= $this->doControllerFunction(array('controller'=>'team', 'action'=>'sell_players'), false); 
+				}
+				
+				if (!$isHoliday)
+				{
+                    $strHtml .= $this->doControllerFunction(array('controller'=>'player', 'action'=>'alert_low_loyalty'), false);
+				}
+				
+				break;
+			case 1:
+				/*续约&卖出球员*/
+				if ($isTransferDay)
+				{
+					$strHtml .= '正在续约球员，请稍候...<br/>';
+					$strHtml .= $this->doControllerFunction(array('controller'=>'player', 'action'=>'continue_contract'), false); 
+				}
+
+				break;
+			case 2:
+				/*买进球员*/
+				if ($isTransferDay)
+				{
+					$strHtml .= '正在进行转会交易...<br/>';
+					$strHtml .= $this->doControllerFunction(array('controller'=>'team', 'action'=>'buy_players'), false);
+				}
+				break;
+			case 3:	
+				$strHtml .= '正在发工资...<br/>';
+                $this->doControllerFunction(array('controller'=>'team', 'action'=>'payoff'), false);
+				if (!$isHoliday && $isTransferDay)
+				{
+					$strHtml .= '正在联系友谊赛...<br/>';
+                    $this->doControllerFunction(array('controller'=>'team', 'action'=>'invite_friend_match'), false);
+				}
+				break;
+			case 4:
+				$strHtml .= 'ticket incoming...<br/>';
+                TeamManager::getInstance()->addOtherLeagueTeamSalary($myTeamId); //非意甲球队每周也有球票收入
+				$this->doControllerFunction(array('controller'=>'player', 'action'=>'drink'), false);   //增加球员个人活动的意外
+                break;
+			case 5:/*周五*/
+				if ($isTransferDay)
+				{
+					$strHtml .= '正在检查合同是否到期，请稍候...<br/>';
+					$this->doControllerFunction(array('controller'=>'player', 'action'=>'transfer_free_agent'), false); 
+                }
+				break;
+			case 6:
+				if (!$isHoliday)
+				{
+					$strHtml .= '正在检查训练值增长，请稍候...<br/>';
+					PlayerManager::getInstance()->checkTrainingAdd($nowDate);
+				}
+				break;
+		}
+		
+		return $strHtml;
+    }
+	
+	private function training($isHoliday, $myTeamId, $nowDate)
 	{
+		$todayUnplayedMatches = Match::find('all', [
+			'conditions' => [
+				'isPlayed' => 0,
+				'PlayTime' => $nowDate
+				]
+			]);
+		
+		$todayMatchTeamIds = array();
+		foreach($todayUnplayedMatches as $m)
+		{
+			array_push($todayMatchTeamIds, $m['HostTeam_id'], $m['GuestTeam_id']);
+		}
+		
 		$allTeamIds = TeamManager::getInstance()->getAllTeamIds();
 		$noMatchTeamIds = array_diff($allTeamIds, $todayMatchTeamIds); //今日没有比赛的球队ID
 		
@@ -148,34 +236,6 @@ class YpnController extends AppController
 				$targetCountry['Country'] = $tc['countries'];
 				$this->Country->uploadPlayers($targetCountry);
 			}
-		}
-	}
-	
-	private function getTodayMatchTeamIds($allUnplayedMatches, $nowDate)
-	{
-		$todayMatchTeamIds = array();
-		foreach($allUnplayedMatches as $m)
-		{
-			if ($m['PlayTime'] == $nowDate)
-			{
-				array_push($todayMatchTeamIds, $m['HostTeam_id'], $m['GuestTeam_id']);
-			}
-		}
-		return $todayMatchTeamIds;
-	}
-	
-	/**
-	 * 检测夏窗关闭抽调新人
-	 * @param type $nowDate
-	 * @param type $thisYear
-	 */
-	private function checkTransferOverDayAndDo($nowDate, $thisYear)
-	{
-		if ($nowDate == $thisYear . "-09-01")
-		{
-		    TeamController::getInstance()->get_young_players();
-			PlayerManager::getInstance()->query('update ypn_players set popular=popular-10 where team_id=0');
-			PlayerManager::getInstance()->query('update ypn_players set popular=10 where popular<10');
 		}
 	}
 	
@@ -627,79 +687,6 @@ class YpnController extends AppController
         YpnManager::getInstance()->country2Club();
     }
     
-	/**
-	 * 周每日工作
-	 * @param type $weekday
-	 * @param type $isTransferDay
-	 * @param type $isHoliday
-	 */
-    private function doWeekdayTask($weekday, $isTransferDay, $isHoliday, $myTeamId)
-    {
-		$nowDate = SettingManager::getInstance()->getNowDate();
-		switch ($weekday)
-		{
-			case 0:
-				/*卖出球员*/
-				if ($isTransferDay)
-				{
-					$this->flushNow('正在进行转会交易...');
-					$this->oldRedirect(array('controller'=>'team', 'action'=>'sell_players'), false); 
-				}
-				
-				if (!$isHoliday)
-				{
-                    $this->oldRedirect(array('controller'=>'player', 'action'=>'alert_low_loyalty'), false);
-				}
-				
-				break;
-			case 1:
-				/*续约&卖出球员*/
-				if ($isTransferDay)
-				{
-					$this->flushNow('正在续约球员，请稍候...');
-					$this->oldRedirect(array('controller'=>'player', 'action'=>'continue_contract'), false); 
-				}
-
-				break;
-			case 2:
-				/*买进球员*/
-				if ($isTransferDay)
-				{
-					$this->flushNow('正在进行转会交易...');
-					$this->oldRedirect(array('controller'=>'team', 'action'=>'buy_players'), false);
-				}
-				break;
-			case 3:	
-				$this->flushNow('正在发工资...');
-                $this->oldRedirect(array('controller'=>'team', 'action'=>'payoff'), false);
-				if (!$isHoliday && $isTransferDay)
-				{
-					$this->flushNow('正在联系友谊赛...<br/>');
-                    $this->oldRedirect(array('controller'=>'team', 'action'=>'invite_friend_match'), false);
-				}
-				break;
-			case 4:
-				$this->flushNow('ticket incoming...<br/>');
-                TeamManager::getInstance()->addOtherLeagueTeamSalary($myTeamId); //非意甲球队每周也有球票收入
-				$this->oldRedirect(array('controller'=>'player', 'action'=>'drink'), false);   //增加球员个人活动的意外
-                break;
-			case 5:/*周五*/
-				if ($isTransferDay)
-				{
-					$this->flushNow('正在检查合同是否到期，请稍候...');
-					$this->oldRedirect(array('controller'=>'player', 'action'=>'transfer_free_agent'), false); 
-                }
-				break;
-			case 6:
-				if (!$isHoliday)
-				{
-					$this->flushNow('正在检查训练值增长，请稍候...');
-					PlayerManager::getInstance()->checkTrainingAdd($nowDate);
-				}
-				break;
-		}
-    }
-	
 	protected function getRedisInstance()
 	{
 		$redis = new \Redis();

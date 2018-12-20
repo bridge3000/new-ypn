@@ -57,6 +57,8 @@ else
 		</tr>
 	<?php endforeach; ?>
 	</table>
+	
+	<div><a href="/match/play"><button type="button" class="btn btn-danger">Play</button></a></div>
 <?php 
 }
 ?>

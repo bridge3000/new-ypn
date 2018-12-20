@@ -24,6 +24,7 @@ class PlayerController extends AppController
     
     public function transfer_free_agent()
     {
+		$strHtml = '';
         $nowDate = SettingManager::getInstance()->getNowDate();
         PlayerManager::getInstance()->query("update ypn_players set team_id=0,ContractBegin=null,ContractEnd=null where ContractEnd<'" . $nowDate . "'");
 
@@ -65,9 +66,9 @@ class PlayerController extends AppController
             $futureContracts[$i]->delete();
 
             NewsManager::getInstance()->add('自由球员<font color=green><strong>' . $targetPlayer->name . '</strong></font>加入了我们', $futureContracts[$i]->NewTeam_id, $nowDate, $targetPlayer->ImgSrc);
-            echo('自由球员<font color=blue><strong>' . $targetPlayer->name . '</strong></font>投奔了' . $buyTeam['name'] . '<br>');flush();
-
+            $strHtml .= '自由球员<font color=blue><strong>' . $targetPlayer->name . '</strong></font>投奔了' . $buyTeam['name'] . '<br>';
         }
+		return $strHtml;
     }
     
     public function drink()
@@ -157,6 +158,8 @@ class PlayerController extends AppController
     
     public function alert_low_loyalty()
     {
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		
         /*长期不上场的忠诚度降低*/
         $conditions = array('loyalty <' => 60, 'isSelling ' => 0, 'condition_id <>' => 4, 'state >' => 95, 'sinew <' => 78);
         $contain = array();
@@ -182,6 +185,7 @@ class PlayerController extends AppController
 	 */
     public function continue_contract()
 	{
+		$strHtml = '';
 		$nowDate = SettingManager::getInstance()->getNowDate();
 
 		$playersArray = PlayerManager::getInstance()->query("select * from ypn_players where isSelling=0 and team_id not in (select team_id from ypn_managers) and DATE_ADD('" . $nowDate . "', INTERVAL 360 DAY)>ContractEnd and id not in (select player_id from ypn_future_contracts)"); 
@@ -191,7 +195,7 @@ class PlayerController extends AppController
 		{
 			if ($curPlayer->ClubDepending < 70)
 			{
-				$this->flushNow("<font color=blue><strong>" . $curPlayer->name . "</strong></font>被卖出了<br>");
+				$strHtml .= "<font color=blue><strong>" . $curPlayer->name . "</strong></font>被卖出了<br>";
 				
 				/*卖出*/
 				PlayerManager::getInstance()->execute("update ypn_players set isSelling=1, fee=" . $curPlayer->estimateFee($nowDate) * $curPlayer->ClubDepending / 100 . " where id=" . $curPlayer->id);
@@ -213,8 +217,7 @@ class PlayerController extends AppController
 				PlayerManager::getInstance()->update(array('ContractBegin'=> $nowDate, 'ContractEnd'=> $contractEnd , 'salary'=>$newSalary), array('id'=>$curPlayer->id));
 			}
 		}
-		
-		echo '<br/><a href="/ypn/new_day">New Day</a>';
+		return $strHtml;
 	}
     
     /**
@@ -472,7 +475,6 @@ class PlayerController extends AppController
 			//reset total salary
 			if ($curPlayer->team_id)
 			{
-				$sellTeam->money += $newPrice;
 				$sellTeam->TotalSalary -= $newSalary;
 				$sellTeam->player_count -= 1;
 				$sellTeam->addMoney($newPrice, "卖出球员{$curPlayer->name}", $nowDate);
@@ -480,7 +482,6 @@ class PlayerController extends AppController
 			}
 
 			$buyTeam = Team::getById($buyTeamId);
-			$buyTeam->money -= $newPrice;
 			$buyTeam->TotalSalary += $newSalary;
 			$buyTeam->player_count += 1;
 			$buyTeam->addMoney(-$newPrice, "买进球员{$curPlayer->name}", $nowDate);
@@ -624,7 +625,7 @@ class PlayerController extends AppController
 		$this->data['canUsedNos'] = [];
 		for($i=1;$i<100;$i++)
 		{
-			if(!in_array($i, $usedNos))
+			if(!in_array($i, $usedNos) || ($i == $curPlayer->ShirtNo) )
 			{
 				$this->data['canUsedNos'][] = $i;
 			}

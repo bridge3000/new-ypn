@@ -137,6 +137,9 @@ class DBManager
 
         return $this->execute($sql);
     }
+	
+	public function getInsertId()
+	{
+		return mysqli_insert_id($this->conn);
+	}
 } 
-
-?>

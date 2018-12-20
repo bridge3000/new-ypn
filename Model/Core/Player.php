@@ -292,65 +292,30 @@ class Player extends YpnModel
 	
 	public function getNewShirtNo($usedNOs)
     {
-    	$newNO = 30;
-    	$canUseThisNO = true;
+		$canUseThisNO = false;
+    	$newNO = 0;
     	
-    	if (in_array($newNO, $usedNOs, true))
-    	{
-    		$canUseThisNO = false;
-    	}
-    	
-    	if (!$canUseThisNO)
-    	{
-    		$canUseThisNO = true;
-        	switch ($this->position_id) 
-        	{
-	    		case 1:
-		    		$newNO = 9;
-		    	break;
-	     		case 2:
-		    		$newNO = 6;
-		    	break;  
-	    		case 3:
-		    		$newNO = 4;
-		    	break; 
-	    		case 4:
-		    		$newNO = 1;
-		    	break; 	
-	    		case 5:
-		    		$newNO = 7;
-		    	break;	
-	    		case 6:
-		    		$newNO = 8;
-		    	break;
-	    		case 7:
-		    		$newNO = 9;
-		    	break;
-	    		case 8:
-		    		$newNO = 10;
-		    	break;
-	    		case 9:
-		    		$newNO = 7;
-		    	break;	
-	    		case 10:
-		    		$newNO = 8;
-		    	break;
-	    		case 13:
-		    		$newNO = 3;
-		    	break;	
-	    		case 14:
-		    		$newNO = 2;
-		    	break;
-	    		default:
-	    			$newNO = 30;
-	    		break;
-	    	}
-	    	
-        	if (in_array($newNO, $usedNOs, true))
-	    	{
-	    		$canUseThisNO = false;
-	    	}
-    	}
+		//position_id => best_no
+		$bestNoMap = [
+			1 => 9, 
+			2 => 6,
+			3 => 4,
+			4 => 1,
+			5 => 7,
+			6 => 8,
+			7 => 9,
+			8 => 10,
+			9 => 7,
+			10 => 8,
+			13 => 3,
+			14 => 2
+			];
+
+		if (!in_array($bestNoMap[$this->position_id], $usedNOs))
+		{
+			$canUseThisNO = true;
+			$newNO = $bestNoMap[$this->position_id];
+		}
     	
     	/*如果相关位置的默认号码没有，则从12开始计算*/
     	if (!$canUseThisNO)
@@ -367,7 +332,7 @@ class Player extends YpnModel
         	while(!$canUseThisNO)
 	    	{
 	    		$canUseThisNO = true;
-                if (in_array($newNO, $usedNOs, true))
+                if (in_array($newNO, $usedNOs))
                 {
                     $canUseThisNO = false;
                     $newNO++;
@@ -391,11 +356,12 @@ class Player extends YpnModel
 		$this->fee = round(($this->estimateFee($nowDate) *  (70 + mt_rand(1, 60)) / 100), -1);
 	}
 	
-	public function setYoung($league_id, $team_id, $position_id, $firstNames, $familyNames, $countries, &$usedNOs, $nowDate, &$existPlayerNames)
+	public static function generateYoung($league_id, $team_id, $position_id, $firstNames, $familyNames, $countries, &$usedNOs, $nowDate, &$existPlayerNames)
 	{
         $fullName = "";
         $isNameExist = true;
 		$thisYear = date('Y', strtotime($nowDate));
+		$newPlayer = new static();
         
 		shuffle($countries);
 
@@ -423,126 +389,128 @@ class Player extends YpnModel
         $existPlayerNames[] = $fullName;
 		        
         /*获得号码，调用getNewNumber*/
-        $this->position_id = $position_id;
-        $this->team_id = $team_id;
+        $newPlayer->position_id = $position_id;
+        $newPlayer->team_id = $team_id;
 
         /*已经获得名字和号码开始签合同，随机生成生日、合同，角球位随机*/
-        $this->name = $fullName;
-        $this->league_id = $league_id;
-        $this->country_id = $countries[5]['id'];
-		$this->country = $countries[5]['title'];
-        $this->CornerPosition_id = mt_rand(1, 4);
-        $this->birthday = ($thisYear - mt_rand(16, 20)) . "-" . mt_rand(1, 12) . "-" . mt_rand(1,28);
-        $this->ContractBegin = $nowDate;
-        $this->ContractEnd = ($thisYear+mt_rand(1,5)) . "-6-30";
+        $newPlayer->name = $fullName;
+        $newPlayer->league_id = $league_id;
+        $newPlayer->country_id = $countries[5]['id'];
+		$newPlayer->country = $countries[5]['title'];
+        $newPlayer->CornerPosition_id = mt_rand(1, 4);
+        $newPlayer->birthday = ($thisYear - mt_rand(16, 20)) . "-" . mt_rand(1, 12) . "-" . mt_rand(1,28);
+        $newPlayer->ContractBegin = $nowDate;
+        $newPlayer->ContractEnd = ($thisYear+mt_rand(1,5)) . "-6-30";
 
-        $this->creativation = 73 + mt_rand(1, 10);
-        $this->pass = 73 + mt_rand(1, 8);
-        $this->speed = 75 + mt_rand(1, 10);
-        $this->ShotDesire = 75 + mt_rand(0, 6);
-        $this->ShotPower = 78 + mt_rand(0, 21);
-        $this->ShotAccurate = 74 + mt_rand(0, 4);
-        $this->agility = 75 + mt_rand(1, 10);
-        $this->SinewMax = 78 + mt_rand(0, 19);
-        $this->cooperate = 80;
-        $this->ShirtNo = $this->getNewShirtNo($usedNOs);
-        $this->arc = 73 + mt_rand(0, 26);
+        $newPlayer->creativation = 73 + mt_rand(1, 10);
+        $newPlayer->pass = 73 + mt_rand(1, 8);
+        $newPlayer->speed = 75 + mt_rand(1, 10);
+        $newPlayer->ShotDesire = 75 + mt_rand(0, 6);
+        $newPlayer->ShotPower = 78 + mt_rand(0, 21);
+        $newPlayer->ShotAccurate = 74 + mt_rand(0, 4);
+        $newPlayer->agility = 75 + mt_rand(1, 10);
+        $newPlayer->SinewMax = 78 + mt_rand(0, 19);
+        $newPlayer->cooperate = 80;
+        $newPlayer->ShirtNo = $newPlayer->getNewShirtNo($usedNOs);
+        $newPlayer->arc = 73 + mt_rand(0, 26);
         
         /*根据不同位置获得不同的训练方式*/
         switch ($position_id)
         {
             case 1: //forward
-                $this->ShotDesire = 80 + mt_rand(1, 10);
-                $this->ShotPower = 80 + mt_rand(1, 10);
-                $this->ShotAccurate = 76 + mt_rand(1, 10);
-                $this->qiangdian = 70 + mt_rand(1, 10);
-                $this->training_id = 1;
+                $newPlayer->ShotDesire = 80 + mt_rand(1, 10);
+                $newPlayer->ShotPower = 80 + mt_rand(1, 10);
+                $newPlayer->ShotAccurate = 76 + mt_rand(1, 10);
+                $newPlayer->qiangdian = 70 + mt_rand(1, 10);
+                $newPlayer->training_id = 1;
                 break;
             case 2://dm
-                $this->tackle = 76 + mt_rand(1, 10); 
-                $this->pinqiang = 76 + mt_rand(1, 10); 
-                $this->scope = 70 + mt_rand(1, 10); 
-                $this->close_marking = 75 + mt_rand(0, 10); 
-                $this->training_id = 3;
+                $newPlayer->tackle = 76 + mt_rand(1, 10); 
+                $newPlayer->pinqiang = 76 + mt_rand(1, 10); 
+                $newPlayer->scope = 70 + mt_rand(1, 10); 
+                $newPlayer->close_marking = 75 + mt_rand(0, 10); 
+                $newPlayer->training_id = 3;
                 break;
             case 3: //cb
-                $this->tackle = 73 + mt_rand(1, 10); 
-                $this->header = 74 + mt_rand(1, 10); 
-                $this->height = 185 + mt_rand(1, 10); 
-                $this->weight = 75 + mt_rand(1, 10); 
-                $this->close_marking = 75 + mt_rand(0, 10); 
-                $this->training_id = 3;
+                $newPlayer->tackle = 73 + mt_rand(1, 10); 
+                $newPlayer->header = 74 + mt_rand(1, 10); 
+                $newPlayer->height = 185 + mt_rand(1, 10); 
+                $newPlayer->weight = 75 + mt_rand(1, 10); 
+                $newPlayer->close_marking = 75 + mt_rand(0, 10); 
+                $newPlayer->training_id = 3;
                 break;
             case 4://gk
-                $this->ShotDesire = 30;
-                $this->save = 78 + mt_rand(1, 5);
-                $this->BallControl = 74 + mt_rand(1, 10);
-                $this->height = 185 + mt_rand(1, 10);
-                $this->weight = 75 + mt_rand(1, 10); 
-                $this->training_id = 7;
+                $newPlayer->ShotDesire = 30;
+                $newPlayer->save = 78 + mt_rand(1, 5);
+                $newPlayer->BallControl = 74 + mt_rand(1, 10);
+                $newPlayer->height = 185 + mt_rand(1, 10);
+                $newPlayer->weight = 75 + mt_rand(1, 10); 
+                $newPlayer->training_id = 7;
                 break;
             case 7: //cf
-                $this->ShotDesire = 80 + mt_rand(1, 10);
-                $this->ShotPower = 80 + mt_rand(1, 10);
-                $this->ShotAccurate = 70 + mt_rand(1, 10);
-                $this->header = 78 + mt_rand(1, 10);
-                $this->qiangdian = 74 + mt_rand(1, 10);
-                $this->height = 185 + mt_rand(1, 10);
-                $this->weight = 75 + mt_rand(1, 10); 
-                $this->training_id = 4;
+                $newPlayer->ShotDesire = 80 + mt_rand(1, 10);
+                $newPlayer->ShotPower = 80 + mt_rand(1, 10);
+                $newPlayer->ShotAccurate = 70 + mt_rand(1, 10);
+                $newPlayer->header = 78 + mt_rand(1, 10);
+                $newPlayer->qiangdian = 74 + mt_rand(1, 10);
+                $newPlayer->height = 185 + mt_rand(1, 10);
+                $newPlayer->weight = 75 + mt_rand(1, 10); 
+                $newPlayer->training_id = 4;
                 break;
             case 8: //am
-                $this->ShotDesire = 73 + mt_rand(1, 10);
-                $this->ShotPower = 80 + mt_rand(1, 10);
-                $this->ShotAccurate = 76 + mt_rand(0, 4);
-                $this->pass = 78 + mt_rand(1, 10);
-                $this->training_id = 2;
-                $this->arc = 76 + mt_rand(0, 23);
+                $newPlayer->ShotDesire = 73 + mt_rand(1, 10);
+                $newPlayer->ShotPower = 80 + mt_rand(1, 10);
+                $newPlayer->ShotAccurate = 76 + mt_rand(0, 4);
+                $newPlayer->pass = 78 + mt_rand(1, 10);
+                $newPlayer->training_id = 2;
+                $newPlayer->arc = 76 + mt_rand(0, 23);
                 break;
             case 9: //lm
             case 13: //lb
-                $this->beat = 73 + mt_rand(1, 10); 
-                $this->BallControl = 73 + mt_rand(1, 10); 
-                $this->tackle = 73 + mt_rand(1, 10); 
-                $this->close_marking = 75 + mt_rand(0, 10); 
-                $this->speed = 78 + mt_rand(1, 10); 
-                $this->pass = 73 + mt_rand(1, 10);
-                $this->LeftProperties = 100;
-                $this->MidProperties = 95;
-                $this->RightProperties = 90;
-                $this->training_id = 6;
+                $newPlayer->beat = 73 + mt_rand(1, 10); 
+                $newPlayer->BallControl = 73 + mt_rand(1, 10); 
+                $newPlayer->tackle = 73 + mt_rand(1, 10); 
+                $newPlayer->close_marking = 75 + mt_rand(0, 10); 
+                $newPlayer->speed = 78 + mt_rand(1, 10); 
+                $newPlayer->pass = 73 + mt_rand(1, 10);
+                $newPlayer->LeftProperties = 100;
+                $newPlayer->MidProperties = 95;
+                $newPlayer->RightProperties = 90;
+                $newPlayer->training_id = 6;
                 break;
             case 10: //rm
             case 14: //rb
-                $this->beat = 73 + mt_rand(1, 10); 
-                $this->BallControl = 73 + mt_rand(1, 10); 
-                $this->tackle = 73 + mt_rand(1, 10); 
-                $this->close_marking = 75 + mt_rand(0, 10); 
-                $this->speed = 78 + mt_rand(1, 10); 
-                $this->pass = 73 + mt_rand(1, 10);
-                $this->MidProperties = 90;
-                $this->training_id = 6; 
+                $newPlayer->beat = 73 + mt_rand(1, 10); 
+                $newPlayer->BallControl = 73 + mt_rand(1, 10); 
+                $newPlayer->tackle = 73 + mt_rand(1, 10); 
+                $newPlayer->close_marking = 75 + mt_rand(0, 10); 
+                $newPlayer->speed = 78 + mt_rand(1, 10); 
+                $newPlayer->pass = 73 + mt_rand(1, 10);
+                $newPlayer->MidProperties = 90;
+                $newPlayer->training_id = 6; 
                 break;
             case 5: //lw
-                $this->ShotDesire = 77 + mt_rand(1, 10);
-                $this->ShotPower = 80 + mt_rand(1, 10);
-                $this->ShotAccurate = 76 + mt_rand(0, 4);
-                $this->speed = 80 + mt_rand(1, 10);
-                $this->beat = 80 + mt_rand(1, 10);
-                $this->LeftProperties = 100;
-                $this->MidProperties = 90;
-                $this->RightProperties = 95;
-                $this->training_id = 6;
+                $newPlayer->ShotDesire = 77 + mt_rand(1, 10);
+                $newPlayer->ShotPower = 80 + mt_rand(1, 10);
+                $newPlayer->ShotAccurate = 76 + mt_rand(0, 4);
+                $newPlayer->speed = 80 + mt_rand(1, 10);
+                $newPlayer->beat = 80 + mt_rand(1, 10);
+                $newPlayer->LeftProperties = 100;
+                $newPlayer->MidProperties = 90;
+                $newPlayer->RightProperties = 95;
+                $newPlayer->training_id = 6;
                 break;
             case 6: //rw
-                $this->ShotDesire = 77 + mt_rand(1, 10);
-                $this->ShotPower = 80 + mt_rand(1, 10);
-                $this->ShotAccurate = 76 + mt_rand(0, 4);
-                $this->speed = 80 + mt_rand(1, 10);
-                $this->beat = 80 + mt_rand(1, 10);
-                $this->training_id = 6;
+                $newPlayer->ShotDesire = 77 + mt_rand(1, 10);
+                $newPlayer->ShotPower = 80 + mt_rand(1, 10);
+                $newPlayer->ShotAccurate = 76 + mt_rand(0, 4);
+                $newPlayer->speed = 80 + mt_rand(1, 10);
+                $newPlayer->beat = 80 + mt_rand(1, 10);
+                $newPlayer->training_id = 6;
                 break;
         }
+		
+		return $newPlayer;
 	}
 	
 	public function addGoal($matchClassId)

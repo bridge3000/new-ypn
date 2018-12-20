@@ -504,7 +504,7 @@ class PlayerManager extends DataManager
                 {
                     $imgSrc = $allPlayers[$i]['ImgSrc'];
                     $updateMsg = "<font color=green><strong>" . $allPlayers[$i]['name'] . "</strong></font>的<font color=red><strong>" . $t['title'] . "</strong></font>提高了";
-    //				$News->Add1($updateMsg, $players[$j]['team_id'], $nowDate, $imgSrc);
+					\Model\Core\News::create($updateMsg, $players[$j]['team_id'], $nowDate, $imgSrc);
                     $this->changeTrainingState($allPlayers[$i], $nowDate, $changedPlayers);
                 }
                 
@@ -1005,8 +1005,7 @@ class PlayerManager extends DataManager
         $names = array();
         for ($i = 0; $i < ($needPosCount); $i++)
         {
-			$newPlayer = new Player();
-            $newPlayer->setYoung($leagueId, $teamId, $position_id, $firstNames, $familyNames, $countries, $usedNOs, $nowDate, $existPlayerNames);
+            $newPlayer = Player::generateYoung($leagueId, $teamId, $position_id, $firstNames, $familyNames, $countries, $usedNOs, $nowDate, $existPlayerNames);
             
             $names[] = $newPlayer->name;
             $usedNOs[] = $newPlayer->ShirtNo;

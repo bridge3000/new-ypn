@@ -33,11 +33,12 @@ class AppController
         $this->data = array();
     }
     
-    protected function oldRedirect($data, $jumpPage = true)
+    protected function doControllerFunction($data, $jumpPage = true)
     {
         $controller = $data['controller'];
         $action = $data['action'];
         $params = isset($data['params']) ? $data['params'] : "";
+		$returnMsg = '';
         
         if ($jumpPage)
         {
@@ -49,8 +50,9 @@ class AppController
             $firstLetter = substr($controller, 0, 1);
             $ClassName = "Controller\\" . str_replace($firstLetter, strtoupper($firstLetter), $controller). "Controller";
             $m = $ClassName::getInstance();
-            $m->$action();
+            $returnMsg = $m->$action();
         }
+		return $returnMsg;
     }
 	
 	protected function redirect($path)

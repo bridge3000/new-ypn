@@ -104,7 +104,7 @@ class MainConfig
     );
     
 //    const STATIC_URL = "http://milan100-static.stor.sinaapp.com/ypn_img/";
-	const STATIC_URL = "http://test.ypn.com/";
+	const STATIC_URL = "http://test.ypn.com/uploads/";
 	const BASE_URL = "http://test.ypn.com/";
 	
 	static $uclPlayoffDates = array(
@@ -121,4 +121,6 @@ class MainConfig
 		'16' => ['5-2', '5-9'],
 		'17' => ['5-19']
 	);
+	
+	const GENERATE_YOUNG_PLAYER_FEE = 5;
 }

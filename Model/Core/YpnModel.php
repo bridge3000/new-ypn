@@ -33,14 +33,19 @@ class YpnModel
 	
 	public function save()
     {
-		$sql = $this->generateSaveSql($this, '');
-        
-        return DBManager::getInstance()->execute($sql);
+		$saveType = $this->getSaveType($this);
+        $executeResult = DBManager::getInstance()->execute($this->generateSaveSql($this, $saveType));
+		
+		if($saveType == 'INSERT')
+		{
+			$this->id = DBManager::getInstance()->getInsertId();
+		}
+		
+		return $executeResult;
     }
-
-	private function generateSaveSql($obj)
-    {
-        $sql = '';
+	
+	private function getSaveType($obj)
+	{
 		$type = '';
 		if (isset($obj->id) && $obj->id)
 		{
@@ -50,6 +55,12 @@ class YpnModel
 		{
 			$type = 'INSERT';
 		}
+		return $type;
+	}
+
+	private function generateSaveSql($obj, $type)
+    {
+        $sql = '';
 
         if ($type === 'INSERT')
         {

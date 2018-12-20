@@ -1,8 +1,11 @@
 <?php
 namespace Controller;
+
+use MainConfig;
 use Model\Core\Team;
 use Model\Core\Match;
 use Model\Core\Coach;
+use Model\Core\Player;
 use Model\Manager\NewsManager;
 use Model\Manager\PlayerManager;
 use Model\Manager\TeamManager;
@@ -22,6 +25,7 @@ class TeamController extends AppController
     
     public function payoff()
     {
+		$strHtml = '';
         $nowDate = SettingManager::getInstance()->getNowDate();
 		$allTeams = Team::find('all', ['conditions'=>['league_id <'=>100]]);
 		
@@ -31,7 +35,8 @@ class TeamController extends AppController
 			$allTeams[$i]->save();
     	}
         
-		$this->flushNow('完成<br>');
+		$strHtml .= '完成<br>';
+		return $strHtml;
     }
     
     public function list_league_rank($leagueId)
@@ -51,7 +56,7 @@ class TeamController extends AppController
 	 */
     public function sell_players()
     {
-		$this->flushNow("<link type=\"text/css\" rel=\"stylesheet\" href=\"" . \MainConfig::BASE_URL . "res/css/main.css\" />");
+		$strHtml = '';
         $nowDate = SettingManager::getInstance()->getNowDate();
     	PlayerManager::getInstance()->query("update ypn_players set isSelling=0 where team_id not in (select team_id from ypn_managers)");
     	
@@ -69,19 +74,19 @@ class TeamController extends AppController
 			$targetPlayer->fee = $sellPrice;
 			PlayerManager::getInstance()->saveModel($targetPlayer);
 			
-    		echo("<span class=\"blue_normal_span\">" . $targetPlayer->name . "</span>被以<span class=\"red_normal_span\">" . $sellPrice . "</span>W欧元的价格挂牌出售<br>");flush();
+    		$strHtml .= "<span class=\"blue_normal_span\">" . $targetPlayer->name . "</span>被以<span class=\"red_normal_span\">" . $sellPrice . "</span>W欧元的价格挂牌出售<br>";
     	}
 
         $teams = TeamManager::getInstance()->getAllComputerTeams();
     	for ($i = 0;$i < count($teams);$i++)
         {
-        	echo("<br/><span class=\"blue_bold_span\">" . $teams[$i]->name . "</span>正在转会...<br>");
+        	$strHtml .= "<br/><span class=\"blue_bold_span\">" . $teams[$i]->name . "</span>正在转会...<br>";
 
         	/*如果财政赤字则卖出队内最贵的球员*/
             if ($teams[$i]->money < 0)
             {
                 $result = PlayerManager::getInstance()->sellBestPlayer($teams[$i]->id);
-                $this->flushNow("<span class=\"blue_normal_span\">" . $result['name'] . "</span>被以<span class=\"red_normal_span\">" . $result['fee'] . "</span>W欧元卖出了<br>");
+                $strHtml .= "<span class=\"blue_normal_span\">" . $result['name'] . "</span>被以<span class=\"red_normal_span\">" . $result['fee'] . "</span>W欧元卖出了<br>";
             }
             
 			if ($teams[$i]->player_count > 33) //球员太多 需要减肥
@@ -91,18 +96,18 @@ class TeamController extends AppController
 				{
 					if($player->isSelling == 1)
 					{
-						$this->flushNow("<span class=\"blue_normal_span\">" . $player->name . "</span>被以<span class=\"red_bold_span\">" . $player->fee . "</span>W欧元的价格挂牌出售<br>");
+						$strHtml .= "<span class=\"blue_normal_span\">" . $player->name . "</span>被以<span class=\"red_bold_span\">" . $player->fee . "</span>W欧元的价格挂牌出售<br>";
 					}
 				}
 			}
         }
 		
-		echo '<br/><a href="/ypn/new_day">New Day</a>';
+		return $strHtml;
     }
     
     public function buy_players()
     {
-		$this->flushCss();
+		$strHtml = '';
     	$nowDate = SettingManager::getInstance()->getNowDate();
     	$allCanBuyPlayers = PlayerManager::getInstance()->query("select * from ypn_players where (isSelling=1 or team_id=0 or DATE_ADD('" . $nowDate . "', INTERVAL 181 DAY)>ContractEnd) and not exists(select player_id from ypn_future_contracts where ypn_future_contracts.player_id=ypn_players.id) order by ContractEnd,fee,isSelling");
 	   	$computerLeagueTeams = TeamManager::getInstance()->getComputerLeagueTeams();
@@ -123,25 +128,20 @@ class TeamController extends AppController
         		$lastLeagueId = $computerLeagueTeams[$i]->getLeagueId();
         	} 	
 			
-			$this->flushNow("<br><span class=\"blue_bold_span\">" . $computerLeagueTeams[$i]->name . "</span>正在转会<br>");
-            $this->buySomePlayers($computerLeagueTeams[$i], $allTeamUsedNOs, $allCanBuyPlayers, $futurePlayerIds, $allTeamPositionCount, $computerLeagueTeams);
+			$strHtml .= "<br><span class=\"blue_bold_span\">" . $computerLeagueTeams[$i]->name . "</span>正在转会<br>";
+            $strHtml .= $this->buySomePlayers($computerLeagueTeams[$i], $allTeamUsedNOs, $allCanBuyPlayers, $futurePlayerIds, $allTeamPositionCount, $computerLeagueTeams);
         }
         
         /*save ypn_players*/
-		$this->flushNow('正在保存数据...<br/>');
-		$teamSaveData = array();
 		foreach($computerLeagueTeams as $team)
 		{
 			if(isset($team->isChanged))
 			{
-//				$teamSaveData[] = array('id'=>$team->id, 'bills'=>$team->bills, 'money'=>$team->money);
 				unset($team->isChanged);
 				$team->save();
 			}
 		}
 		
-//		TeamManager::getInstance()->update_batch($teamSaveData);
-
 		foreach ($allCanBuyPlayers as $sellingPlayer)
         {
         	if (isset($sellingPlayer['isChanged']))
@@ -150,7 +150,8 @@ class TeamController extends AppController
 				PlayerManager::getInstance()->saveModel($sellingPlayer);
         	}
         }
-        echo('转会结束.');
+        $strHtml .= '转会结束.<br/>';
+		return $strHtml;
     }
 	
 	/**
@@ -164,6 +165,7 @@ class TeamController extends AppController
 	 */
 	private function buySomePlayers(&$curTeam, $allTeamUsedNOs, &$allCanBuyPlayers, &$futurePlayerIds, $allTeamPositionCount, &$computerLeagueTeams)
     {
+		$strHtml = '';
         $usedNOs = array_key_exists($curTeam->id, $allTeamUsedNOs) ? $allTeamUsedNOs[$curTeam->id] : array(); //已使用的号码
 
 		$myPlayerPoses = isset($allTeamPositionCount[$curTeam->id]) ? $allTeamPositionCount[$curTeam->id] : array();
@@ -172,13 +174,14 @@ class TeamController extends AppController
             $posCount = array_key_exists($positionId, $myPlayerPoses) ? $myPlayerPoses[$positionId] : 0;
             if ($posCount < $minCount)
             {
-				$newNO = $this->buySuitablePlayer($curTeam, $positionId, $usedNOs, $allCanBuyPlayers, $futurePlayerIds, $computerLeagueTeams);
+				$newNO = $this->buySuitablePlayer($curTeam, $positionId, $usedNOs, $allCanBuyPlayers, $futurePlayerIds, $computerLeagueTeams, $strHtml);
 				if ($newNO != null)
 				{
 					$usedNOs[] = $newNO;
 				}
 			}
         }
+		return $strHtml;
     }
 
     /**
@@ -189,7 +192,7 @@ class TeamController extends AppController
      * @param array[array] $allCanBuyPlayers
      * @return type
      */
-    private function buySuitablePlayer(&$buyTeam, $position_id, $usedNOs, &$allCanBuyPlayers, &$futurePlayerIds, &$computerLeagueTeams)
+    private function buySuitablePlayer(&$buyTeam, $position_id, $usedNOs, &$allCanBuyPlayers, &$futurePlayerIds, &$computerLeagueTeams, &$strHtml)
     {
         $newSalary = 0;
         $playerNO = 0;
@@ -212,7 +215,7 @@ class TeamController extends AppController
 			if ($curPlayer->team_id == 0) //free
 			{
 				$transferSucess = true;
-				$this->flushNow("<span class=\"green_bold_span\">" . $curPlayerArr['name'] . "</span>自由转会去了" . $buyTeam->name . "<br>");
+				$strHtml .= "<span class=\"green_bold_span\">" . $curPlayerArr['name'] . "</span>自由转会去了" . $buyTeam->name . "<br>";
 			}
 			else if ( ($buyTeam->money > $curPlayerArr['fee']) && $curPlayerArr['isSelling']) //normal
 			{
@@ -225,7 +228,7 @@ class TeamController extends AppController
 				{
 					$newsMsg = "<span class=\"green_bold_span\">" . $curPlayer->name . "</span>已经被" . $buyTeam->name . "成功引进";
 					$transferSucess = true;
-					$this->flushNow("<span class=\"green_bold_span\">" . $curPlayer->name . "</span>以<span class=\"red_bold_span\">" . $curPlayer->fee . "</span>万欧元去了" . $buyTeam->name . "<br>");
+					$strHtml .= "<span class=\"green_bold_span\">" . $curPlayer->name . "</span>以<span class=\"red_bold_span\">" . $curPlayer->fee . "</span>万欧元去了" . $buyTeam->name . "<br>";
 				}
 			}
 			elseif ((date("Y-m-d", strtotime("$nowDate + 181 day")) > $curPlayerArr['ContractEnd']) && ($curPlayerArr['loyalty'] < 85)) /*last 6 month，忠诚度小于85的会自由转会*/
@@ -240,8 +243,7 @@ class TeamController extends AppController
 				
 				$futurePlayerIds[] = $curPlayer->id;
 				
-				$info = "<span class=\"green_bold_span\">" . $curPlayer->name . "</span>将在6个月内自由转会加盟<span class=\"blue_normal_span\">" . $buyTeam->name . "</span>";
-				$this->flushNow($info . "<br>");  
+				$strHtml .= "<span class=\"green_bold_span\">" . $curPlayer->name . "</span>将在6个月内自由转会加盟<span class=\"blue_normal_span\">" . $buyTeam->name . "</span>";
 			}
 
 			if ($newsMsg && ($curPlayer->team_id == $myTeamId) )
@@ -416,9 +418,8 @@ class TeamController extends AppController
     
     public function get_young_players()
     {
-		ini_set('memory_limit','512M');
-		$this->flushCss();
-		$this->flushNow('转会期已经结束了，各个俱乐部正在抽调年轻球员，请稍候...<br>');
+		$strHtml = '';
+		$strHtml .= '转会期已经结束了，各个俱乐部正在抽调年轻球员，请稍候...<br>';
         
 		$nowDate = SettingManager::getInstance()->getNowDate();
         $allPlayers = PlayerManager::getInstance()->getAllPlayers();
@@ -474,9 +475,9 @@ class TeamController extends AppController
                     $names = PlayerManager::getInstance()->getLeastYoungPlayers($positionId, $count, $firstNames, $familyNames, $countries, $usedNOs, $curTeam->getLeagueId(), $curTeam->getId(), $nowDate, $existPlayerNames);
                     foreach($names as $newPlayerName)
                     {
-                        $this->flushNow("在二线队抽调了<span=\"blue_bold_span\">" . $curTeam->getName() . "</span>在二线队抽调了<span=\"green_bold_span\">" . $newPlayerName . "</span>到一线队<br>");
+                        $strHtml .= "在二线队抽调了<span=\"blue_bold_span\">" . $curTeam->getName() . "</span>在二线队抽调了<span=\"green_bold_span\">" . $newPlayerName . "</span>到一线队<br>";
 	
-						$curTeam->addMoney(-5, '抽调新队员', $nowDate);
+						$curTeam->addMoney(-\MainConfig::GENERATE_YOUNG_PLAYER_FEE, '抽调新队员', $nowDate);
 						$curTeam->player_count++;
 						$curTeam->isChanged = TRUE;
                     }
@@ -493,8 +494,11 @@ class TeamController extends AppController
 				TeamManager::getInstance()->saveModel($curTeam);
 			}
 		}
+		
+		PlayerManager::getInstance()->query('update ypn_players set popular=popular-10 where team_id=0');
+		PlayerManager::getInstance()->query('update ypn_players set popular=10 where popular<10');
     }
-	
+
 	public function ajax_change_attack($attack)
 	{
 		$myCoach = CoachManager::getInstance()->getMyCoach();
@@ -516,19 +520,53 @@ class TeamController extends AppController
 	{
 		$myCoach = CoachManager::getInstance()->getMyCoach();
 		$curTeam = TeamManager::getInstance()->findById($myCoach->team_id);
-		$bills = json_decode($curTeam['bills'], TRUE);
+		$str = str_replace('u', '\u', $curTeam['bills']);
+		$str = str_replace('P\ubTime', 'PubTime', $str);
+		$bills = json_decode($str, TRUE);
 		$bills = is_array($bills) ? $bills : array();
-//		print_r($bills);exit;
 		$this->set('bills', $bills);
 		$this->render('bill_list');
 	}
 	
 	public function ajax_change_auto_format()
 	{
-		$nowDate = SettingManager::getInstance()->getNowDate();
 		$myTeamId = CoachManager::getInstance()->getMyCoach()->team_id;
 		$isAutoFormat = $_POST['auto_format'];
 		
 		TeamManager::getInstance()->update(array('is_auto_format'=>$isAutoFormat), array('id'=>$myTeamId));
 	}
+		
+	public function ajax_generate_young()
+	{
+		$positionId = $_POST['position_id'];
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$myCoach = CoachManager::getInstance()->getMyCoach();
+		$myTeam = Team::getById($myCoach->team_id);
+		$firstNames = FirstNameManager::getInstance()->getFirstNames();
+        $familyNames = FamilyNameManager::getInstance()->getFamilyNames();
+        $countries = CountryManager::getInstance()->find('all');
+		
+		$usedNOs = [];
+		$allPlayers = Player::find('all', ['fields'=>['name', 'ShirtNo', 'team_id']]);
+		$existPlayerNames = array();
+        foreach($allPlayers as $player)
+        {
+            $existPlayerNames[] = $player->name;
+			if($player->team_id == $myCoach->team_id)
+			{
+				$usedNOs[] = $player->ShirtNo;
+			}
+        }
+		
+//		var_dump($usedNOs[0]);exit;
+		
+		$newPlayer = Player::generateYoung($myTeam->league_id, $myCoach->team_id, $positionId, $firstNames, $familyNames, $countries, $usedNOs, $nowDate, $existPlayerNames);
+		$newPlayer->save();
+		
+		$myTeam->addMoney(-MainConfig::GENERATE_YOUNG_PLAYER_FEE, "抽调年轻球员{$newPlayer->name}", $nowDate);
+		$myTeam->save();
+		
+		exit(json_encode(['code'=>1, 'player_id'=>$newPlayer->id]));
+	}
+	
 }

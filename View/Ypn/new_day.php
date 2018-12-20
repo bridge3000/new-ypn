@@ -1,5 +1,4 @@
-<a href="/match/today">today match</a>
-
+<div class="jumbotron"><?=$allMatchHtml?></div>
 <script>
 	var news = <?=json_encode($news)?>;
 	for(var i in news)

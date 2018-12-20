@@ -46,7 +46,38 @@
 		</tr>
 	<?php endforeach; ?>
 </table>
-<div>共 <?=count($players)?> 人</div>
+<div>共 <?=count($players)?> 人 </div>
+
+<table class="table table-striped">
+	<tr>
+		<th>位置</th>
+		<td>
+			<select id="position_id" class="form-control">
+			<?php foreach(MainConfig::$positions as $k=>$v): ?>
+				<option value="<?=$k?>"><?=$v?></option>
+			<?php endforeach; ?>
+			</select>
+		</td>
+		<td><button type="button" class="btn btn-warning" onclick="generateYoung()">Generate Young</button></td>
+	</tr>
+</table>
+
+<script>
+	function generateYoung()
+	{
+		var positionId = $("#position_id").val();
+		$.post("/team/ajax_generate_young", {position_id: positionId}, function(response){
+			if(response.code == 1)
+			{
+				location.href = "/player/show/"+response.player_id;
+			}
+			else
+			{
+				alert("操作失败");
+			}
+		}, 'json');
+	}
+</script>
 
 <div id="full_bg"></div>
 <div id="player_sell_div">
