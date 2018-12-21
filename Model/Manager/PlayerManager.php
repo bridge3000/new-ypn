@@ -78,8 +78,9 @@ class PlayerManager extends DataManager
 		return $punishField;
 	}
         
-    public function setShoufa($players, $matchClassId, $formattion, $isAutoFormat)
+    public function setShoufa($players, $curMatch, $formattion, $isAutoFormat)
     {
+		$matchClassId = $curMatch->class_id;
 		$punishField = $this->getPunishFieldByMatchClassId($matchClassId);
 		
 		if($isAutoFormat)
@@ -124,6 +125,12 @@ class PlayerManager extends DataManager
             {
                 $matchPlayers['bandeng'][] = $player;
             }
+			
+			/*主队加成*/
+			if( ($player->team_id == $curMatch->HostTeam_id) && $curMatch->is_host_park) 
+			{
+				$player->state += 5;
+			}
         }
         
         return $matchPlayers;
@@ -486,103 +493,25 @@ class PlayerManager extends DataManager
     public function checkTrainingAdd($nowDate)
 	{
         $trainings = MainConfig::$trainings;
-        foreach($trainings as $t)
-        {
-            $conditions['or'][$t['experience'] . " >"] = 99;
-        }
-        $fields = array('id', 'name', 'ImgSrc', 'ShotAccurateExperience', 'ShotAccurate', 'PassExperience', 'pass', 'TackleExperience', 'tackle',
-            'BallControlExperience', 'BallControl', 'BeatExperience', 'beat', 'SaveExperience', 'save', 'SinewMaxExperience', 'SinewMax',
-            'QiangdianExperience', 'qiangdian', 'HeaderExperience', 'header', 'position_id', 'training_id', 'birthday');
-        $allPlayers = $this->find('all', compact('conditions', 'fields'));    
+
+        $allPlayers = Player::find('all', ['conditions'=>['potential >'=>0]]);    
             
-		$changedPlayers = array();
 		foreach ($trainings as $id=>$t)
 		{
-			for ($i = 0;$i < count($allPlayers);$i++)
+			foreach($allPlayers as $curPlayer)
 			{
-                if ($allPlayers[$i][$t['experience']] > 99) //相应的经验值大于99，可以升级
+                if ($curPlayer->$t['experience'] > 99) //相应的经验值大于99，可以升级
                 {
-                    $imgSrc = $allPlayers[$i]['ImgSrc'];
-                    $updateMsg = "<font color=green><strong>" . $allPlayers[$i]['name'] . "</strong></font>的<font color=red><strong>" . $t['title'] . "</strong></font>提高了";
-					\Model\Core\News::create($updateMsg, $players[$j]['team_id'], $nowDate, $imgSrc);
-                    $this->changeTrainingState($allPlayers[$i], $nowDate, $changedPlayers);
+                    $updateMsg = "<font color=green><strong>" . $curPlayer->name . "</strong></font>的<font color=red><strong>" . $t['title'] . "</strong></font>提高了";
+					\Model\Core\News::create($updateMsg, $curPlayer->team_id, $nowDate, $curPlayer->ImgSrc);
+                    $curPlayer->changeTrainingState($trainings ,$nowDate);
+					
+					$curPlayer->potential--;
+					$curPlayer->$t['experience'] -= 100;
+					$curPlayer->$t["skill"] += 1;
+					$curPlayer->save();
                 }
-                
 			}
-			$this->query("update ypn_players set " . $t['experience'] . "=" . $t['experience'] . "-100, `" . $t["skill"] . "`=`" . $t["skill"] . "`+1 where " . $t['experience'] . " > 99 and `" . $t["skill"] . "` <99");
-			$this->query("update ypn_players set " . $t['experience'] . "=0 where `" . $t["skill"] . "` >98");
-		}
-		
-		$this->update_batch($changedPlayers);
-	}
-    
-	/**
-	 * 更改升级状态，最后allplayer一并修改数据库
-	 * @param type $playerData 单个player数据
-	 * @param type $trainingList 
-	 */
-    public function changeTrainingState($playerData, $nowDate, &$changedPlayers)
-	{
-        $curPlayers = $this->loadPlayers(array($playerData));
-		$curPlayer = $curPlayers[0];
-		$isChanged = false;
-		
-		switch ($playerData['position_id']) 
-		{
-			case 1:
-				$trainingIds = array(1, 9, 4, 6, 2, 5);
-				break;
-			case 2:
-				$trainingIds = array(3, 5, 2, 1, 8);
-				break;
-			case 3:
-				$trainingIds = array(9, 3, 4, 2, 5);
-				break;
-			case 4:
-				$trainingIds = array(7, 5, 9, 3, 4);
-				break;
-			case 5:
-			case 6:
-				$trainingIds = array(5, 1, 2, 3);
-				break;	
-			case 7:
-				$trainingIds = array(4, 1, 9, 5, 6);
-				break;	
-			case 8:
-				$trainingIds = array(2, 5, 1, 6, 3);
-				break;
-			case 9:
-			case 10:
-				$trainingIds = array(6, 3, 2, 1);
-				break;	
-			case 13:
-			case 14:
-				$trainingIds = array(3, 6, 9, 2);
-				break;						
-		}
-
-		$playerAge = $curPlayer->getAge($nowDate);
-		if ( ($playerAge > 30) && ($curPlayer->training_id != 8) )
-		{
-			$curPlayer->training_id = 8;
-			$isChanged = true;
-		}
-		else
-		{
-	        for ($i = 0; $i < count($trainingIds); $i++)
-            {
-				if ( (\MainConfig::$trainings[$trainingIds[$i]]['skill'] < 85) && ($curPlayer->training_id != $trainingIds[$i]) )
-				{   
-					$isChanged = true;
-					$curPlayer->training_id = $trainingIds[$i];
-					break;
-				}
-        	}
-		}
-		
-		if ($isChanged)
-		{
-			$changedPlayers[] = array('id'=>$curPlayer->id, 'training_id'=>$curPlayer->training_id);
 		}
 	}
     

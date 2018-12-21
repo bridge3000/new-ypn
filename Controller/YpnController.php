@@ -134,7 +134,7 @@ class YpnController extends AppController
 				if (!$isHoliday && $isTransferDay)
 				{
 					$strHtml .= '正在联系友谊赛...<br/>';
-                    $this->doControllerFunction(array('controller'=>'team', 'action'=>'invite_friend_match'), false);
+                    $strHtml .= $this->doControllerFunction(array('controller'=>'team', 'action'=>'invite_friend_match'), false);
 				}
 				break;
 			case 4:
@@ -173,7 +173,7 @@ class YpnController extends AppController
 		$todayMatchTeamIds = array();
 		foreach($todayUnplayedMatches as $m)
 		{
-			array_push($todayMatchTeamIds, $m['HostTeam_id'], $m['GuestTeam_id']);
+			array_push($todayMatchTeamIds, $m->HostTeam_id, $m->GuestTeam_id);
 		}
 		
 		$allTeamIds = TeamManager::getInstance()->getAllTeamIds();

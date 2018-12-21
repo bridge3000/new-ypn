@@ -81,7 +81,7 @@ class TeamManager extends DataManager
         $records = $this->find('all', array(
             'fields' => array('id', 'money', 'name', 'formattion', 'league_id', 'manager_id', 'player_count', 'bills', 'TotalSalary'),
             'conditions' => array('manager_id'=>0, 'league_id<>'=>100, 'money>'=>0),
-            'order' => array('league_id' => 'asc'),
+            'order' => ['league_id'=>'asc', 'player_count'=>'asc'],
             ));
         
 		$computerTeams = $this->loadData($records);

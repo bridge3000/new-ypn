@@ -302,6 +302,7 @@ class TeamController extends AppController
     
     public function invite_friend_match()
 	{
+		$strHtml = '';
 		$nowDate = SettingManager::getInstance()->getNowDate();
 		$fifaDates = SettingManager::getInstance()->getFifaDates();
         $myCoach = CoachManager::getInstance()->getMyCoach();
@@ -379,7 +380,7 @@ class TeamController extends AppController
 					$newMatch->class_id = 24;
 					MatchManager::getInstance()->saveModel($newMatch);
 
-					$this->flushNow('<span class="blue_bold_span">' . $allTeams[$i]->name . '</span>与<span class="blue_bold_span">' . $inviteTeam->name . '</span>将于'. $invitePlayTime . '在'. $allTeams[$i]->FieldName . '进行了友谊赛<br>');
+					$strHtml .= '<span class="blue_bold_span">' . $allTeams[$i]->name . '</span>与<span class="blue_bold_span">' . $inviteTeam->name . '</span>将于'. $invitePlayTime . '在'. $allTeams[$i]->FieldName . '进行了友谊赛<br>';
 					
 					if ($myTeamId == $inviteTeam->id) //是主队
 					{
@@ -388,6 +389,7 @@ class TeamController extends AppController
 				}
 			}
 		}
+		return $strHtml;
 	}
     
     public function edit()

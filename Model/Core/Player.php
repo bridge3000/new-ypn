@@ -413,6 +413,7 @@ class Player extends YpnModel
         $newPlayer->cooperate = 80;
         $newPlayer->ShirtNo = $newPlayer->getNewShirtNo($usedNOs);
         $newPlayer->arc = 73 + mt_rand(0, 26);
+		$newPlayer->potential = mt_rand(30, 60);
         
         /*根据不同位置获得不同的训练方式*/
         switch ($position_id)
@@ -766,5 +767,65 @@ class Player extends YpnModel
 		}
 		
 		return $bestPositionId;
+	}
+	
+	/**
+	 * 更改升级状态，最后allplayer一并修改数据库
+	 * @param type $playerData 单个player数据
+	 * @param type $trainingList 
+	 */
+    public function changeTrainingState($trainings ,$nowDate)
+	{
+		switch ($this->position_id) 
+		{
+			case 1:
+				$positionTrainingIds = array(1, 9, 4, 6, 2, 5);
+				break;
+			case 2:
+				$positionTrainingIds = array(3, 5, 2, 1, 8);
+				break;
+			case 3:
+				$positionTrainingIds = array(9, 3, 4, 2, 5);
+				break;
+			case 4:
+				$positionTrainingIds = array(7, 5, 9, 3, 4);
+				break;
+			case 5:
+			case 6:
+				$positionTrainingIds = array(5, 1, 2, 3);
+				break;	
+			case 7:
+				$positionTrainingIds = array(4, 1, 9, 5, 6);
+				break;	
+			case 8:
+				$positionTrainingIds = array(2, 5, 1, 6, 3);
+				break;
+			case 9:
+			case 10:
+				$positionTrainingIds = array(6, 3, 2, 1);
+				break;	
+			case 13:
+			case 14:
+				$positionTrainingIds = array(3, 6, 9, 2);
+				break;						
+		}
+
+		$playerAge = $this->getAge($nowDate);
+		if ( ($playerAge > 30) && ($this->training_id != 8) )
+		{
+			$this->training_id = 8;
+		}
+		else
+		{
+	        for ($i = 0; $i < count($positionTrainingIds); $i++)
+            {
+				if ( ($this->$trainings[$positionTrainingIds[$i]]['skill'] < 85) && ($this->training_id != $positionTrainingIds[$i]) )
+				{   
+					$this->training_id = $positionTrainingIds[$i];
+					break;
+				}
+        	}
+		}
+		
 	}
 }
