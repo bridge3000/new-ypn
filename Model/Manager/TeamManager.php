@@ -79,7 +79,7 @@ class TeamManager extends DataManager
     public function getComputerLeagueTeams()
     {
         $records = $this->find('all', array(
-            'fields' => array('id', 'money', 'name', 'formattion', 'league_id', 'manager_id', 'player_count', 'bills', 'TotalSalary'),
+            'fields' => array('id', 'money', 'name', 'formattion', 'league_id', 'manager_id', 'player_count', 'bills', 'total_salary'),
             'conditions' => array('manager_id'=>0, 'league_id<>'=>100, 'money>'=>0),
             'order' => ['league_id'=>'asc', 'player_count'=>'asc'],
             ));

@@ -9,10 +9,9 @@ function __autoload($class)
 
 function handleError($errno,$errstr,$errfile,$errline,$errcontext)
 {
-	echo "错误级别：" . $errno . "<br/>";
+//	echo "错误级别：" . $errno . "<br/>";
 	echo $errstr . "<br/>";
-	echo $errfile . "<br/>";
-	echo $errline . "<br/>";
+	echo $errfile . $errline . "<br/>";
 //	print_r($errcontext); //错误涉及的所有变量，太大，需要时打开
 	
 	$array = debug_backtrace();
@@ -30,7 +29,7 @@ function handleError($errno,$errstr,$errfile,$errline,$errcontext)
 			print_r($row);
 		}
     }
-    echo $html;
+    echo $html.'<hr/>';
 }
 
 set_error_handler("handleError");

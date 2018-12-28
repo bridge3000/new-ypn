@@ -5,6 +5,12 @@ class Match extends YpnModel
 {
 	protected $table = 'matches';
     private $faqiuquan = 1;
+	static $cornerPositions = array(
+        1 => '前点',
+        2 => '中点',
+        3 => '后点',
+        4 => '禁区外'
+    );
     
     public function turnFaqiuquan()
     {

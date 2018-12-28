@@ -77,7 +77,7 @@ class Team extends YpnModel
     
     public function paySalary($nowDate)
     {
-        $this->addMoney(-($this->TotalSalary), 'pay salary', $nowDate);
+        $this->addMoney(-($this->total_salary), 'pay salary', $nowDate);
     }
     
     private function addBill($data)

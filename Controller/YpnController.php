@@ -146,14 +146,14 @@ class YpnController extends AppController
 				if ($isTransferDay)
 				{
 					$strHtml .= '正在检查合同是否到期，请稍候...<br/>';
-					$this->doControllerFunction(array('controller'=>'player', 'action'=>'transfer_free_agent'), false); 
+					$strHtml .= $this->doControllerFunction(array('controller'=>'player', 'action'=>'transfer_free_agent'), false); 
                 }
 				break;
 			case 6:
 				if (!$isHoliday)
 				{
 					$strHtml .= '正在检查训练值增长，请稍候...<br/>';
-					PlayerManager::getInstance()->checkTrainingAdd($nowDate);
+					$strHtml .= $this->checkTrainingAdd($nowDate);
 				}
 				break;
 		}
@@ -584,7 +584,7 @@ class YpnController extends AppController
 			
 			$curTeam->addMoney($curTeam->sponsor, '获得赞助费', $nowDate);
 			$curTeam->addMoney($tvFee, '获得电视转播费', $nowDate);
-			$curTeam->addMoney(-$curTeam->TotalSalary, '发假期工资', $nowDate);
+			$curTeam->addMoney(-$curTeam->total_salary, '发假期工资', $nowDate);
 			
 			//随机改阵型
 			
@@ -620,14 +620,22 @@ class YpnController extends AppController
         PlayerManager::getInstance()->query("update ypn_players set SinewMax=SinewMax-2,speed=speed-2,ShotPower=ShotPower-2,agility=agility-2,pinqiang=pinqiang-2,scope=scope-2,popular=popular-3 where DATE_ADD(birthday, INTERVAL 30 YEAR)<'" . $nowDate . "'");
         PlayerManager::getInstance()->query("update ypn_players set SinewMax=SinewMax+2,ShotPower=ShotPower+2 where DATE_ADD(birthday, INTERVAL 20 YEAR)>'" . $nowDate . "'");
         PlayerManager::getInstance()->query("update ypn_players set LastSeasonScore=total_score, total_score=0, all_matches_count=0, InjuredDay=0, sinew=SinewMax, mind=mind+2,state=75,goal1Count=0,goal2Count=0,goal3Count=0,penalty1Count=0,penalty2Count=0,penalty3Count=0,Assist1Count=0,Assist2Count=0,Assist3Count=0,Tackle1Count=0,Tackle2Count=0,Tackle3Count=0,YellowCard1Count=0,YellowCard2Count=0,YellowCard3Count=0,RedCard1Count=0,RedCard2Count=0,RedCard3Count=0,punish1Count=0,punish2Count=0");
+		
+		$allClubTeams = Team::find('all', ['conditions'=>['league_id <'=>100]]);
+		foreach($allClubTeams as $team)
+		{
+			$team->player_count = Player::find('count', ['conditions'=>['team_id'=>$team->id]]);
+			$team->total_salary = Player::find('sum', ['conditions'=>['team_id'=>$team->id], 'fields'=>['salary']]);
+			$team->save();
+		}
         
         echo("<div align=center><a href='/ypn/new_day'>恭喜您完成了本赛季的教练工作，开始新的赛季将有新的希望。</a></div>");
 	}
     
-    private function resetTotalSalaryAndPlayerCount()
+    private function resettotal_salaryAndPlayerCount()
     {
         $this->flushNow('reset total salary<br>');
-		TeamManager::getInstance()->saveMany(PlayerManager::getInstance()->resetTotalSalaryAndPlayerCount());
+		TeamManager::getInstance()->saveMany(PlayerManager::getInstance()->resettotal_salaryAndPlayerCount());
     }
     
 	/**
@@ -672,7 +680,7 @@ class YpnController extends AppController
 		
 #        YpnManager::getInstance()->resetPlayerUpload();
         
-        $this->resetTotalSalaryAndPlayerCount();
+        $this->resettotal_salaryAndPlayerCount();
 		
 		$this->flushNow('all complete');
 	}	
@@ -696,9 +704,12 @@ class YpnController extends AppController
     
 	public function test()
 	{
-		$redis = $this->getRedisInstance();
-		$redis->rpush('ypn_tasks', date('Y-m-d H:i:s'));
+//		$redis = $this->getRedisInstance();
+//		$redis->rpush('ypn_tasks', date('Y-m-d H:i:s'));
+//
+		$totalSalary = Player::find('sum', ['conditions'=>['team_id'=>4], 'fields'=>['salary']]);
 		
+		var_dump($totalSalary);
 		exit("ok\n");
 	}
 	
@@ -766,5 +777,33 @@ class YpnController extends AppController
 				$seriaAMatch->save();
 			}
 		}
+	}
+	    
+    private function checkTrainingAdd($nowDate)
+	{
+		$strHtml = '';
+        $trainings = MainConfig::$trainings;
+		foreach ($trainings as $id=>$t)
+		{
+			$trainPlayers = Player::find('all', ['conditions'=>[
+				'potential >'=>0,
+				"{$t['experience']} >" => 99
+				]]); 
+				
+			foreach($trainPlayers as $curPlayer)
+			{
+				$updateMsg = "<font color=green><strong>" . $curPlayer->name . "</strong></font>的<font color=red><strong>" . $t['title'] . "</strong></font>提高了";
+				$strHtml .= $updateMsg.'<br/>';
+				News::create($updateMsg, $curPlayer->team_id, $nowDate, $curPlayer->ImgSrc);
+				$curPlayer->changeTrainingState($trainings ,$nowDate);
+
+				$curPlayer->potential--;
+				$curPlayer->$t['experience'] -= 100;
+				$curPlayer->$t["skill"] += 1;
+				$curPlayer->save();
+			}
+		}
+		
+		return $strHtml;
 	}
 }

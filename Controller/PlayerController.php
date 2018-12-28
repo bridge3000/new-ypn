@@ -14,6 +14,7 @@ use Model\Manager\YpnManager;
 use Model\Core\Player;
 use Model\Core\Team;
 use Model\Core\News;
+use Model\Core\Match;
 use Model\Core\PlayerCollect;
 use Model\Core\FutureContract;
 
@@ -28,7 +29,7 @@ class PlayerController extends AppController
         $nowDate = SettingManager::getInstance()->getNowDate();
         PlayerManager::getInstance()->query("update ypn_players set team_id=0,ContractBegin=null,ContractEnd=null where ContractEnd<'" . $nowDate . "'");
 
-		TeamManager::getInstance()->saveMany(PlayerManager::getInstance()->resetTotalSalaryAndPlayerCount());
+		TeamManager::getInstance()->saveMany(PlayerManager::getInstance()->resettotal_salaryAndPlayerCount());
 		
 		/*签的未来合同已经到了 执行转会*/
 		$futureContracts = FutureContract::find('all', array('conditions' => array('OldContractEnd <' => $nowDate)));
@@ -286,6 +287,9 @@ class PlayerController extends AppController
     
     public function chuchang($groupId = 0) 
 	{
+		ini_set("display_errors", "On");
+error_reporting(E_ALL | E_STRICT);
+
 		$this->layout = 'main';
 		header("Expires: Mon, 26 Jul 1997 05:00:00 GMT"); 
 		header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT"); 
@@ -312,7 +316,7 @@ class PlayerController extends AppController
 			PlayerManager::getInstance()->query('update ypn_players set condition_id=1 where group_id=' . $groupId . ' and team_id=' . $myCoach->team_id . ' and condition_id in(2, 3) and ' . $matchFields['fieldPunish'] . '=0');
 		}
 				
-		$players = PlayerManager::getInstance()->find('all', array(
+		$players = Player::findArray('all', array(
 				'conditions' => array('team_id' => $myCoach->team_id),
 				'order' => array('condition_id'=>'asc', 'ShirtNo'=>'asc'),
 			)
@@ -341,13 +345,26 @@ class PlayerController extends AppController
 			'conditions' => ['team_id'=>$myCoach->team_id]
 		]);
 		
+		$cornerPositions = [];
+		foreach(Match::$cornerPositions as $k=>$cornerPosition)
+		{
+			if(in_array($k, [1,2,3]))
+			{
+				$cornerPositions[$k] = mb_substr($cornerPosition, 0, 1, 'utf-8');
+			}
+			else
+			{
+				$cornerPositions[$k] = mb_substr($cornerPosition, 2, 1, 'utf-8');
+			}
+		}
+		
+		$this->set('cornerPositions', $cornerPositions);
 		$this->set('positions', $positions);
 		$this->set('players', $players);
 		$this->set('shoufaCount', count($playersCondition1));
 		$this->set('tibus', $playersCondition2);
 		$this->set('playergroups', $playergroups);
 		$this->set('groupId', $groupId);
-		$this->set('cornerpositions', MainConfig::$cornerPositions);
 		$this->set('fieldPunish', $fieldPunish);
 		$this->set('playergroups', $playergroups);
 		$this->set('teamId', $myCoach->team_id);
@@ -449,7 +466,7 @@ class PlayerController extends AppController
 				}
 				else //force buy
 				{
-					$needFee = $curPlayer->estimateFee($nowDate);		
+					$needFee = $curPlayer->liquidated_damage;		
 				}
 				
 				if ($newPrice >=  $needFee)
@@ -475,14 +492,14 @@ class PlayerController extends AppController
 			//reset total salary
 			if ($curPlayer->team_id)
 			{
-				$sellTeam->TotalSalary -= $newSalary;
+				$sellTeam->total_salary -= $newSalary;
 				$sellTeam->player_count -= 1;
 				$sellTeam->addMoney($newPrice, "卖出球员{$curPlayer->name}", $nowDate);
 				$sellTeam->save();
 			}
 
 			$buyTeam = Team::getById($buyTeamId);
-			$buyTeam->TotalSalary += $newSalary;
+			$buyTeam->total_salary += $newSalary;
 			$buyTeam->player_count += 1;
 			$buyTeam->addMoney(-$newPrice, "买进球员{$curPlayer->name}", $nowDate);
 			$buyTeam->save();
@@ -737,5 +754,15 @@ class PlayerController extends AppController
 		}
 		
 		$this->redirect("/player/collect_list");
+	}
+	
+	public function ajax_change_corner()
+	{
+		$playerId = $_POST['player_id'];
+		$cornerId = $_POST['corner_id'];
+		$curPlayer = Player::getById($playerId);
+		$curPlayer->CornerPosition_id = $cornerId;
+		$curPlayer->save();
+		exit(json_encode(['code'=>1]));
 	}
 }

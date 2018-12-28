@@ -32,7 +32,7 @@
 	</tr>
 	<tr>
 		<td align="right" bgcolor="whitesmoke">每周球员工资总额：</td>
-		<td bgcolor="#FFFFFF"><?php echo $myTeam['TotalSalary']; ?>万欧元</td>
+		<td bgcolor="#FFFFFF"><?php echo $myTeam['total_salary']; ?>万欧元</td>
 	</tr>
 	<tr>
 		<td align="right" bgcolor="whitesmoke">人 气：</td>

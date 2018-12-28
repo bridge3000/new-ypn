@@ -6,6 +6,7 @@ use Model\Core\Team;
 use Model\Core\Match;
 use Model\Core\Coach;
 use Model\Core\Player;
+use Model\Core\News;
 use Model\Manager\NewsManager;
 use Model\Manager\PlayerManager;
 use Model\Manager\TeamManager;
@@ -119,6 +120,7 @@ class TeamController extends AppController
 
     	for ($i = 0;$i < count($computerLeagueTeams);$i++) //循环所有computer team
         {
+			$curTeam = $computerLeagueTeams[$i];
 			if ( (($computerLeagueTeams[$i]->getLeagueId()) == 4) && ($computerLeagueTeams[$i]->getPlayerCount() > 25) || ($computerLeagueTeams[$i]->getPlayerCount() > 26) ) continue; //西甲球员上限25人，其余联赛26人
             
             /*如果已经切换league，则排序把本联赛球员放在名单前部*/
@@ -130,18 +132,14 @@ class TeamController extends AppController
 			
 			$strHtml .= "<br><span class=\"blue_bold_span\">" . $computerLeagueTeams[$i]->name . "</span>正在转会<br>";
             $strHtml .= $this->buySomePlayers($computerLeagueTeams[$i], $allTeamUsedNOs, $allCanBuyPlayers, $futurePlayerIds, $allTeamPositionCount, $computerLeagueTeams);
+			
+			if(isset($curTeam->isChanged))
+			{
+				unset($curTeam->isChanged);
+				$curTeam->save();
+			}
         }
         
-        /*save ypn_players*/
-		foreach($computerLeagueTeams as $team)
-		{
-			if(isset($team->isChanged))
-			{
-				unset($team->isChanged);
-				$team->save();
-			}
-		}
-		
 		foreach ($allCanBuyPlayers as $sellingPlayer)
         {
         	if (isset($sellingPlayer['isChanged']))
@@ -153,6 +151,70 @@ class TeamController extends AppController
         $strHtml .= '转会结束.<br/>';
 		return $strHtml;
     }
+	
+	/**
+	 * 豪门引援 违约金强挖
+	 * @param type $curTeam
+	 * @param type $positionId
+	 */
+	private function buyEmporPlayer($curTeam, $positionId)
+	{
+		$strHtml = '';
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$bestPlayers = Player::find('all', [
+			'conditions' => [
+				'position_id' => $positionId, 
+				'team_id <>' => $curTeam->id,
+				'team_id >' => 0,
+				'ContractBegin <' => date('Y-m-d', strtotime("$nowDate -2 year"))
+				], 
+			'order' => ['popular'=>'desc', 'fee'=>'desc'],
+			'limit' => mt_rand(10,30)
+			]);
+		
+		foreach($bestPlayers as $curPlayer)
+		{
+			if( ($curPlayer->getBestPosition() == $positionId) && mt_rand(0,1) )
+			{
+				$strHtml .= "{$curPlayer->name}谈判成功, ";
+				$newSalary = $curPlayer->getExpectedSalary($nowDate) * mt_rand(2,4);
+				
+				$sellTeam = Team::getById($curPlayer->team_id);
+				$sellTeam->addMoney($curPlayer->liquidated_damage, "{$curPlayer->name}被{$curTeam->name}强行挖走支付违约金", $nowDate);
+				$sellTeam->player_count--;
+				$sellTeam->total_salary -= $curPlayer->salary;
+				$sellTeam->save();
+				
+				$curTeam->addMoney(-$curPlayer->liquidated_damage, "引进{$curPlayer->name}支付违约金", $nowDate);
+				$curTeam->total_salary += $newSalary;
+				$curTeam->player_count++;
+				$curTeam->save();
+				
+				News::create("{$curPlayer->name}被{$curTeam->name}强行挖走", $sellTeam->id, $nowDate, $curPlayer->ImgSrc);
+				
+				$usedNOs = [];
+				$teamPlayers = Player::find('all', ['conditions'=>['team_id'=>$curTeam->id]]);
+				foreach($teamPlayers as $player)
+				{
+					$usedNOs[] = $player->ShirtNo;
+				}
+				
+				$curPlayer->getNewShirtNo($usedNOs);
+				$curPlayer->transfer($curTeam->id, $newSalary, $sellTeam->league_id, $curTeam->league_id, $nowDate, mt_rand(5,6));
+				$curPlayer->save();
+				
+				$strHtml .= "{$curTeam->name}用{$curPlayer->liquidated_damage}万欧元强行挖走了{$curPlayer->name}";
+				return $strHtml;
+			}
+			else
+			{
+				$strHtml .= "{$curPlayer->name}谈判破裂<br/> ";
+			}
+			
+		}
+		
+		return $strHtml;
+	}
 	
 	/**
 	 * NPC Team购买球员
@@ -174,10 +236,18 @@ class TeamController extends AppController
             $posCount = array_key_exists($positionId, $myPlayerPoses) ? $myPlayerPoses[$positionId] : 0;
             if ($posCount < $minCount)
             {
-				$newNO = $this->buySuitablePlayer($curTeam, $positionId, $usedNOs, $allCanBuyPlayers, $futurePlayerIds, $computerLeagueTeams, $strHtml);
-				if ($newNO != null)
+				if($curTeam->money > 10000)
 				{
-					$usedNOs[] = $newNO;
+					$strHtml = $this->buyEmporPlayer($curTeam, $positionId);
+					return $strHtml;
+				}
+				else
+				{
+					$newNO = $this->buySuitablePlayer($curTeam, $positionId, $usedNOs, $allCanBuyPlayers, $futurePlayerIds, $computerLeagueTeams, $strHtml);
+					if ($newNO != null)
+					{
+						$usedNOs[] = $newNO;
+					}
 				}
 			}
         }
@@ -254,7 +324,7 @@ class TeamController extends AppController
 			if ($transferSucess)
 			{
 				$buyTeam->player_count += 1;
-				$buyTeam->TotalSalary += $newSalary;
+				$buyTeam->total_salary += $newSalary;
 				$buyTeam->isChanged = TRUE;
 
 				if ($curPlayer->team_id > 0) //not free transfer
@@ -267,7 +337,7 @@ class TeamController extends AppController
 						{
 							$t->isChanged = TRUE;
 							$t->player_count -= 1;
-							$t->TotalSalary -= $newSalary;
+							$t->total_salary -= $newSalary;
 							$t->addMoney(-$curPlayer->fee, '卖出球员' . $curPlayer->name, $nowDate);
 							break;
 						}
@@ -294,6 +364,7 @@ class TeamController extends AppController
 				$allCanBuyPlayers[$i]['ContractBegin'] = $nowDate;
 				$allCanBuyPlayers[$i]['ContractEnd'] = date('Y', strtotime($nowDate))+mt_rand(1, 5) . "-6-30";
 				$allCanBuyPlayers[$i]['isSelling'] = 0;
+				$allCanBuyPlayers[$i]['liquidated_damage'] = mt_rand(2,10) * $curPlayer->estimateValue($nowDate);
 				$allCanBuyPlayers[$i]['isChanged'] = true;
 				return $playerNO;
 			}
@@ -420,8 +491,7 @@ class TeamController extends AppController
     
     public function get_young_players()
     {
-		$strHtml = '';
-		$strHtml .= '转会期已经结束了，各个俱乐部正在抽调年轻球员，请稍候...<br>';
+		$strHtml = '转会期已经结束了，各个俱乐部正在抽调年轻球员，请稍候...<br>';
         
 		$nowDate = SettingManager::getInstance()->getNowDate();
         $allPlayers = PlayerManager::getInstance()->getAllPlayers();
@@ -456,12 +526,11 @@ class TeamController extends AppController
 		
         $allRetiredShirts = RetiredShirtManager::getInstance()->find('all', array('fields' => array('shirt', 'team_id')));
         $allComputerTeams = TeamManager::getInstance()->getAllComputerTeams();
-        $lastPlayerId = PlayerManager::getInstance()->getLastPlayerId();
         $firstNames = FirstNameManager::getInstance()->getFirstNames();
         $familyNames = FamilyNameManager::getInstance()->getFamilyNames();
         $countries = CountryManager::getInstance()->find('all');
         $theCoach = new Coach();
-        foreach ($allComputerTeams as &$curTeam)
+        foreach ($allComputerTeams as $curTeam)
         {
             if ($curTeam->getPlayerCount() < 22)
             {
@@ -470,7 +539,7 @@ class TeamController extends AppController
                 $theCoach = clone $theCoach;
                 $theCoach->setTeam($curTeam);
                 $shirtNos = isset($teamShirtNos[$curTeam->getId()]) ? $teamShirtNos[$curTeam->getId()] : array();
-                $extractInfo = $theCoach->getYoungPlayers($allRetiredShirts, $allPlayers, $shirtNos); //获取需要抽取的名单信息
+                $extractInfo = $theCoach->getYoungPlayers($allRetiredShirts, $shirtNos); //获取需要抽取的名单信息
                 $usedNOs = $extractInfo['used_nos'];
                 foreach($extractInfo['positions'] as $positionId => $count) //按position_id遍历
                 {
@@ -481,24 +550,23 @@ class TeamController extends AppController
 	
 						$curTeam->addMoney(-\MainConfig::GENERATE_YOUNG_PLAYER_FEE, '抽调新队员', $nowDate);
 						$curTeam->player_count++;
+						$curTeam->total_salary += 0.2;
 						$curTeam->isChanged = TRUE;
                     }
                 }
             }
+			
+			if(isset($curTeam->isChanged))
+			{
+				unset($curTeam->positionInfo);
+				unset($curTeam->isChanged);
+				$curTeam->save();
+			}
         }
         
         PlayerManager::getInstance()->saveAllData();
-		foreach($allComputerTeams as $curTeam)
-		{
-			if(isset($curTeam->isChanged))
-			{
-				unset($curTeam->isChanged);
-				TeamManager::getInstance()->saveModel($curTeam);
-			}
-		}
 		
-		PlayerManager::getInstance()->query('update ypn_players set popular=popular-10 where team_id=0');
-		PlayerManager::getInstance()->query('update ypn_players set popular=10 where popular<10');
+		return $strHtml;
     }
 
 	public function ajax_change_attack($attack)

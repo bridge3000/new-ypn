@@ -490,32 +490,7 @@ class PlayerManager extends DataManager
         return $myInjuredPlayers;
 	}
     
-    public function checkTrainingAdd($nowDate)
-	{
-        $trainings = MainConfig::$trainings;
-
-        $allPlayers = Player::find('all', ['conditions'=>['potential >'=>0]]);    
-            
-		foreach ($trainings as $id=>$t)
-		{
-			foreach($allPlayers as $curPlayer)
-			{
-                if ($curPlayer->$t['experience'] > 99) //相应的经验值大于99，可以升级
-                {
-                    $updateMsg = "<font color=green><strong>" . $curPlayer->name . "</strong></font>的<font color=red><strong>" . $t['title'] . "</strong></font>提高了";
-					\Model\Core\News::create($updateMsg, $curPlayer->team_id, $nowDate, $curPlayer->ImgSrc);
-                    $curPlayer->changeTrainingState($trainings ,$nowDate);
-					
-					$curPlayer->potential--;
-					$curPlayer->$t['experience'] -= 100;
-					$curPlayer->$t["skill"] += 1;
-					$curPlayer->save();
-                }
-			}
-		}
-	}
-    
-	public function calTotalSalary($team_id)
+	public function caltotal_salary($team_id)
 	{
         $data = $this->query('select sum(salary) as total from ' . MainConfig::PREFIX . $this->table . ' where team_id=' . $team_id);
         $totalSalary = round($data[0]['total'], 2);
@@ -668,22 +643,25 @@ class PlayerManager extends DataManager
         return $cornerKickerIndex;
     }
     
-    public function qiangdian($attackPlayers, $defensePlayers, $cornerKickerId, $cornerPosition)
+    public function qiangdian($attackPlayers, $defensePlayers, $cornerKickerId, $cornerPosition, $matchClassId)
     {
         $isAttackingGet = true;
         $max = 0;
-        $headerIndex = -1;
-        $goalkeeperIndex = -1;
+        $headPlayer = NULL;
+		$goalkeeper = NULL;
+		
         for($i=0;$i<count($attackPlayers);$i++)
         {
-            if ($attackPlayers[$i]->id == $cornerKickerId)                continue;
+            if ($attackPlayers[$i]->id == $cornerKickerId)                
+				continue;
+			
             if (($attackPlayers[$i]->CornerPosition_id == $cornerPosition) && ($attackPlayers[$i]->position_id != 4) )
             {
                 $qiangdianValue = $attackPlayers[$i]->getQiangdianValue();
                 if ($qiangdianValue > $max)
                 {
                     $max = $qiangdianValue;
-                    $headerIndex = $i;
+                    $headPlayer = $attackPlayers[$i];
                 }
             }
         }
@@ -692,7 +670,7 @@ class PlayerManager extends DataManager
         {
             if ($defensePlayers[$i]->position_id == 4) 
             {
-                $goalkeeperIndex = $i;
+				$goalkeeper = $defensePlayers[$i];
             }
             
             if ($defensePlayers[$i]->CornerPosition_id == $cornerPosition)
@@ -701,35 +679,39 @@ class PlayerManager extends DataManager
                 if ($qiangdianValue > $max)
                 {
                     $max = $qiangdianValue;
-                    $headerIndex = $i;
+                    $headPlayer = $defensePlayers[$i];
                     $isAttackingGet = false;
                 }
             }
         }
         
-        if ($isAttackingGet && ($headerIndex != -1) )
+        if ($isAttackingGet && ($headPlayer) ) //进攻方抢到点
         {
-            $headerValue = $attackPlayers[$headerIndex]->getHeaderValue();
-            $saveValue = $defensePlayers[$goalkeeperIndex]->getSaveValue();
-            if ($headerValue > $saveValue)
+            $headerValue = $headPlayer->getHeaderValue();
+            $saveValue = $goalkeeper->getSaveValue();
+            if ($headerValue > $saveValue) //进球
             {
                 $result = 1;
+				
+				$headPlayer->addGoal($matchClassId);
+				$goalkeeper->onGoaled($matchClassId);
             }
-            else
+            else //扑出
             {
                 $result = 2;
+				$goalkeeper->onSaved($matchClassId);
             }
         }
-        else if ($headerIndex == -1)
+        else if (!$headPlayer) //无人抢到点
         {
             $result = 4;
         }
-        else if(!$isAttackingGet)
+        else if(!$isAttackingGet) // 防守方抢到点
         {
             $result = 3;
         }
         
-        return array('headerIndex'=>$headerIndex, 'goalkeeperIndex'=>$goalkeeperIndex, 'isAttackingGet'=>$isAttackingGet, 'result'=>$result);
+        return array('header'=>$headPlayer, 'goalkeeper'=>$goalkeeper, 'isAttackingGet'=>$isAttackingGet, 'result'=>$result);
     }
     
     public function sellBestPlayer($teamId)
@@ -1038,7 +1020,7 @@ class PlayerManager extends DataManager
 		return $allCanBuyPlayers;
 	}
 	
-	public function resetTotalSalaryAndPlayerCount()
+	public function resettotal_salaryAndPlayerCount()
     {
         $allTeamPlayerData = array();
         $allPlayers = PlayerManager::getInstance()->find('all', array(
@@ -1051,11 +1033,11 @@ class PlayerManager extends DataManager
 			if(isset($allTeamPlayerData[$player['team_id']]))
 			{
 				$allTeamPlayerData[$player['team_id']]['player_count'] += 1;
-				$allTeamPlayerData[$player['team_id']]['TotalSalary'] += $player['salary'];
+				$allTeamPlayerData[$player['team_id']]['total_salary'] += $player['salary'];
 			}
 			else
 			{
-				$allTeamPlayerData[$player['team_id']] = array('id'=>$player['team_id'], 'player_count'=>1, 'TotalSalary'=>$player['salary']);
+				$allTeamPlayerData[$player['team_id']] = array('id'=>$player['team_id'], 'player_count'=>1, 'total_salary'=>$player['salary']);
 			}
 		}
 		return $allTeamPlayerData;

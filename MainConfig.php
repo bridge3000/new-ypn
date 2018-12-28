@@ -96,12 +96,7 @@ class MainConfig
         7 => '意外',
     );
     
-    static $cornerPositions = array(
-        1 => '前点',
-        2 => '中点',
-        3 => '后点',
-        4 => '禁区外'
-    );
+
     
 //    const STATIC_URL = "http://milan100-static.stor.sinaapp.com/ypn_img/";
 	const STATIC_URL = "http://test.ypn.com/uploads/";

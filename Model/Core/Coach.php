@@ -24,7 +24,7 @@ class Coach
      * @param type $allPlayers
      * @return array
      */
-    public function getYoungPlayers($allRetiredShirts, $allPlayers, $usedNOs)
+    public function getYoungPlayers($allRetiredShirts, $usedNOs)
     {
         $needPositions = array(
             array('position_id'=>9, 'count'=>2),

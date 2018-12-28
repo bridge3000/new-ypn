@@ -142,6 +142,10 @@ class YpnModel
 		{
 			$fields = "count(*) as count";
 		}
+		elseif ($type == 'sum')
+		{
+			$fields = "sum({$fields[0]}) as field_sum";
+		}
         else if (empty($fields))
         {
             $fields = "*";
@@ -209,6 +213,11 @@ class YpnModel
         {
             $data = DBManager::getInstance()->fetch($sql);
 			$data = $data[0]['count'];
+        }
+		else if ($type == "sum")
+        {
+            $data = DBManager::getInstance()->fetch($sql);
+			$data = $data[0]['field_sum'];
         }
         return $data;
     }

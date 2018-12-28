@@ -4,6 +4,12 @@ namespace Model\Core;
 class Player extends YpnModel
 {
     public $id;
+	
+	public function getRndHeadStyle()
+	{
+		$headerStyles = ['头球攻门', '狮子甩头', '鱼跃冲顶', '回头望月'];
+		return $headerStyles[array_rand($headerStyles)];
+	}
     
     public function getId() {
         return $this->id;
@@ -817,15 +823,30 @@ class Player extends YpnModel
 		}
 		else
 		{
-	        for ($i = 0; $i < count($positionTrainingIds); $i++)
+	        foreach($positionTrainingIds as $positionTrainingId)
             {
-				if ( ($this->$trainings[$positionTrainingIds[$i]]['skill'] < 85) && ($this->training_id != $positionTrainingIds[$i]) )
+				$skill = $trainings[$positionTrainingId]['skill'];
+				if( ($this->$skill < 85) && ($this->training_id != $positionTrainingId) )
 				{   
-					$this->training_id = $positionTrainingIds[$i];
+					$this->training_id = $positionTrainingId;
 					break;
 				}
         	}
 		}
 		
+	}
+	
+	public function transfer($teamId, $newSalary, $oldLeagueId, $newLeagueId, $nowDate, $years)
+	{
+		$this->cooperate = ($oldLeagueId==$newLeagueId) ? 90 : 80;
+		$this->league_id = $newLeagueId;
+		$this->team_id = $teamId;
+		$this->ClubDepending = 80;
+		$this->loyalty = 80;
+		$this->salary = $newSalary;
+		$this->ContractBegin = $nowDate;
+		$this->ContractEnd = date('Y', strtotime($nowDate))+$years . "-6-30";
+		$this->isSelling = 0;
+		$this->liquidated_damage = mt_rand(2,10) * $this->estimateValue($nowDate);
 	}
 }
