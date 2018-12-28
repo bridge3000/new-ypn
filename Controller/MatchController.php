@@ -437,7 +437,7 @@ class MatchController extends AppController
 				}
 				else
 				{
-					$strHtml .= $penaltyResult['goal_keeper']->getRndName() . '扑救成功<br>';
+					$strHtml .= $penaltyResult['goal_keeper']->getRndName() . '扑救成功!<br>';
 				}
 				$needTurn = TRUE;
 			}
@@ -850,7 +850,7 @@ class MatchController extends AppController
 		}
 		elseif($cornerResult == 3) //防守队员扑出
 		{
-			$strHtml .= $header->getRndName() . '抢到点，';
+			$strHtml .= $header->getRndName() . '头球解围，';
 			if(mt_rand(0,1))
 			{
 				$strHtml .= '皮球滚出底线.<br/>再次获得角球,';

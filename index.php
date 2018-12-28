@@ -32,6 +32,8 @@ function handleError($errno,$errstr,$errfile,$errline,$errcontext)
     echo $html.'<hr/>';
 }
 
+ini_set("display_errors", "On");
+error_reporting(E_ALL | E_STRICT);
 set_error_handler("handleError");
 
 $controller = '';

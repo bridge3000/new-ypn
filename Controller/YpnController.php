@@ -797,9 +797,11 @@ class YpnController extends AppController
 				News::create($updateMsg, $curPlayer->team_id, $nowDate, $curPlayer->ImgSrc);
 				$curPlayer->changeTrainingState($trainings ,$nowDate);
 
+				$experienceField = $t['experience'];
+				$skillField = $t["skill"];
 				$curPlayer->potential--;
-				$curPlayer->$t['experience'] -= 100;
-				$curPlayer->$t["skill"] += 1;
+				$curPlayer->$experienceField -= 100;
+				$curPlayer->$skillField += 1;
 				$curPlayer->save();
 			}
 		}
