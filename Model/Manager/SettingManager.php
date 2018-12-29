@@ -24,11 +24,6 @@ class SettingManager extends DataManager
         return $data['today'];
     }
     
-    public function getFifaDates()
-    {
-        return MainConfig::$bakFifaDates;
-    }
-    
     public function addDate()
     {
         $data = $this->getData();

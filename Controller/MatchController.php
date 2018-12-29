@@ -35,11 +35,41 @@ class MatchController extends AppController
     public function all()
     {
         $myCoach = CoachManager::getInstance()->getMyCoach();
-        $matches = MatchManager::getInstance()->getMyAllMatches($myCoach->team_id);
         $allTeams = TeamManager::getInstance()->find('list', array('fields'=>array('id', 'name')));
+		
+		$matches = Match::findArray("all", array(
+            'conditions' => array(
+                'or' => array('HostTeam_id' => $myCoach->team_id, 'GuestTeam_id' => $myCoach->team_id),
+                ),
+            'fields' => array('id', 'PlayTime', 'HostTeam_id', 'GuestTeam_id', 'isPlayed', 'isWatched', 'class_id', 'HostGoals', 'GuestGoals', 'HostGoaler_ids', 'GuestGoaler_ids'),
+            'order'=> array('PlayTime' => 'asc')
+            ));
+		
+		$matchData = [];
+		foreach($matches as $match)
+		{
+			$match['host_team_name'] = $allTeams[$match['HostTeam_id']];
+			$match['guest_team_name'] = $allTeams[$match['GuestTeam_id']];
+			$matchData[strtotime($match['PlayTime'])] = $match;
+		}
+		
+		$fifaDates = \Model\Core\FifaDate::find('all');
+		foreach($fifaDates as $fifaDate)
+		{
+			$matchData[strtotime($fifaDate->PlayDate)] = [
+				'id' => 0,
+				'class_id' => 23,
+				'PlayTime' => $fifaDate->PlayDate,
+				'isPlayed' => 0,
+				'isWatched' => 0,
+				'host_team_name' => '',
+				'guest_team_name' => '',
+				] ;
+		}
+		
+		ksort($matchData);
         
-        $this->set('matches', $matches);
-        $this->set('allTeams', $allTeams);
+        $this->set('matches', $matchData);
         self::render("all");
     }
     
@@ -164,6 +194,7 @@ class MatchController extends AppController
 			
 			if($p->score > $maxScore)
 			{
+				$maxScore = $p->score;
 				$mvpPlayer = $p;
 			}
 		}
@@ -182,6 +213,7 @@ class MatchController extends AppController
 			
 			if($p->score > $maxScore)
 			{
+				$maxScore = $p->score;
 				$mvpPlayer = $p;
 			}
 		}
@@ -244,16 +276,20 @@ class MatchController extends AppController
                 $curMatch->guestTeam->draw++;
             }
 			
-			
 			$curMatch->guestTeam->save();
         }
-		else if ($curMatch->class_id == 3) //ucl
+		elseif($curMatch->class_id == 3) //ucl
 		{
 			UclGroupManager::getInstance()->saveResult($curMatch->hostTeam->id, $curMatch->guestTeam->id, $result);
 		}
-		else if ($curMatch->class_id == 12) //el
+		elseif($curMatch->class_id == 12) //el
 		{
 			ElGroupManager::getInstance()->saveResult($curMatch->hostTeam->id, $curMatch->guestTeam->id, $result);
+		}
+		elseif($curMatch->class_id == 23) //country friend match
+		{
+			$this->returnToClub($curMatch->hostTeam);
+			$this->returnToClub($curMatch->guestTeam);
 		}
 		
 		$curMatch->hostTeam->save();
@@ -335,7 +371,7 @@ class MatchController extends AppController
     private function assault(&$curMatch, $minutes)
     {
 		$strHtml = '';
-        $strDir = array('1'=>'left side', '2'=>'middle', '3'=>'right side');
+        $strDir = array('1'=>'左路', '2'=>'中路', '3'=>'右路');
         $attackDir = mt_rand(1, 3);
         $attackPlayers = array();
         $defensePlayers = array();
@@ -639,7 +675,7 @@ class MatchController extends AppController
 		
 		foreach($winTeams as $teamId)
 		{
-			NewsManager::getInstance()->push($msg, $teamId, $nowDate, '/res/img/afc.jpg');
+			News::create($msg, $teamId, $nowDate, '/res/img/afc.jpg');
 		}
 	}
 	

@@ -19,6 +19,8 @@ use Model\Manager\UclGroupManager;
 use Model\Manager\ElgroupManager;
 use Model\Core\Uclgroup;
 use Model\Core\Elgroup;
+use Model\Core\Country;
+use Model\Core\PlayerUpload;
 use MainConfig;
 
 class YpnController extends AppController 
@@ -84,7 +86,7 @@ class YpnController extends AppController
 		
 				
 		/*如果是FIFA-DAY的前一天则抽调国家队队员*/
-//		$this->inviteFriendMatch($nowDate);
+		$strHtml .= $this->inviteFriendMatch($nowDate);
 		
 		switch (date('m-d', strtotime($nowDate))) {
 			case '06-01':
@@ -241,12 +243,90 @@ class YpnController extends AppController
 	
 	private function inviteFriendMatch($nowDate)
 	{
-		$fifaDates = SettingManager::getInstance()->getFifaDates();
-        $tomorrow = date('Y-m-d', strtotime("$nowDate +1 day"));
-        if (in_array($tomorrow, $fifaDates, true))
-        {
-            $this->Country->inviteFriendMatch();
-        }
+		$strHtml = '';
+		$tomorrow = date('Y-m-d', strtotime("$nowDate +1 day"));
+		$isTomorrowFifaDay = \Model\Core\FifaDate::find('first', ['conditions'=>['PlayDate'=>$tomorrow]]);
+		if($isTomorrowFifaDay)
+		{
+			$strHtml .= '明日是国际足球比赛日,正在抽调队员...<br>';
+			$tomorrowMatches = [];
+			$countryTeams = Team::find('all', ['conditions'=>['league_id'=>100]]);
+			shuffle($countryTeams);
+			for($i=0;$i<count($countryTeams)/2;$i++)
+			{
+				$hostTeam = $countryTeams[$i];
+				$guestTeam = $countryTeams[array_rand($countryTeams)];
+				if( ($hostTeam != $guestTeam) && !isset($hostTeam->hasMatchTomorrow)  && !isset($guestTeam->hasMatchTomorrow) )
+				{
+					if($this->uploadCountryPlayers($hostTeam) && $this->uploadCountryPlayers($guestTeam))
+					{
+						Match::create($hostTeam->id, $guestTeam->id, $nowDate, 23, 1);
+						$hostTeam->hasMatchTomorrow = 1;
+						$guestTeam->hasMatchTomorrow = 1;
+						$strHtml .= "{$hostTeam->name}与{$guestTeam->name}将进行友谊赛...<br>";
+					}
+					else //遣散回club
+					{
+						$this->returnToClub($hostTeam);
+						$this->returnToClub($guestTeam);
+					}
+				}
+			}
+		}
+		
+		return $strHtml;
+	}
+	
+	private function uploadCountryPlayers($countryTeam)
+	{
+		$shirts = [];
+		$hasCountry = Country::find('first', ['conditions'=>['title'=>$countryTeam->name]]);
+
+		$players = Player::find('all', [
+			'conditions'=>['country_id' => $hasCountry->id,	'InjuredDay' => 0],
+			'order' => ['popular'=>'desc', 'total_score'=>'desc'],
+			'limit' => 22
+			]);
+		
+		if(count($players) == 22)
+		{
+			foreach($players as $curPlayer)
+			{
+				$newPlayerUpload = new \Model\Core\PlayerUpload();
+				$newPlayerUpload->player_id = $curPlayer->id;
+				$newPlayerUpload->club_team_id = $curPlayer->team_id;
+				$newPlayerUpload->country_team_id = $countryTeam->id;
+				$newPlayerUpload->club_shirt_no = $curPlayer->ShirtNo;
+				$newPlayerUpload->save();
+				
+				$curPlayer->setBestShirtNo($shirts);
+				$curPlayer->team_id = $countryTeam->id;
+				$curPlayer->save();
+				
+				$shirts[] = $curPlayer->ShirtNo;
+			}
+			
+			return TRUE;
+		}
+		else
+		{
+			return FALSE;
+		}
+	}
+	
+	public function returnAllToClub()
+	{
+		$uploads = PlayerUpload::find('all');
+		foreach($uploads as $upload)
+		{
+			$curPlayer = Player::getById($upload->player_id);
+			$curPlayer->team_id = $upload->club_team_id;
+			$curPlayer->ShirtNo = $upload->club_shirt_no;
+			$curPlayer->save();
+			$upload->delete();
+		}
+		
+		exit('success');
 	}
 	
 	/**

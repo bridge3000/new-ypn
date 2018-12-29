@@ -7,38 +7,44 @@
 		<th>体力</th>
 		<th>磨合度</th>
 		<th>生日</th>
+		<th>得分</th>
+		<th>场次</th>
+		<th>场均得分</th>
 		<th>合同</th>
 		<th>操作</th>
 	</tr>
-	<?php foreach ($players as $curCollectPlayer): 	?>
+	<?php foreach ($players as $curPlayer): 	?>
 		<tr>
-			<td><?= $curCollectPlayer['ShirtNo'] ?></td>
-			<td><a href="/player/show/<?= $curCollectPlayer['id'] ?>" class="player_name" value="<?= $curCollectPlayer['id'] ?>"><?= $curCollectPlayer['name'] ?></a></td>
-			<td><?=MainConfig::$positions[$curCollectPlayer['position_id']]?></td>
-			<td><?=$curCollectPlayer['state']?></td>
+			<td><?= $curPlayer['ShirtNo'] ?></td>
+			<td><a href="/player/show/<?= $curPlayer['id'] ?>" class="player_name" value="<?= $curPlayer['id'] ?>"><?= $curPlayer['name'] ?></a></td>
+			<td><?=MainConfig::$positions[$curPlayer['position_id']]?></td>
+			<td><?=$curPlayer['state']?></td>
 			<td>
 			<?php
-			if ($curCollectPlayer['sinew'] < 78) {
-				echo "<font color=red>" . $curCollectPlayer['sinew'] . "</font>";
+			if ($curPlayer['sinew'] < 78) {
+				echo "<font color=red>" . $curPlayer['sinew'] . "</font>";
 			} else {
-				echo $curCollectPlayer['sinew'];
+				echo $curPlayer['sinew'];
 			}
 			?>
 			</td>
-			<td><?= $curCollectPlayer['cooperate'] ?></td>
+			<td><?= $curPlayer['cooperate'] ?></td>
 			<td>
-				<?php if (date('md', strtotime($curCollectPlayer['birthday'])) == date('md', strtotime($nowDate))): ?>
-					<a href="javascript:;" value="<?= $curCollectPlayer['id'] ?>" class="birthday_link">今日生日</a>
+				<?php if (date('md', strtotime($curPlayer['birthday'])) == date('md', strtotime($nowDate))): ?>
+					<a href="javascript:;" value="<?= $curPlayer['id'] ?>" class="birthday_link">今日生日</a>
 				<?php else: ?>
-					<?= $curCollectPlayer['birthday'] ?>
+					<?= $curPlayer['birthday'] ?>
 				<?php endif; ?>
 			</td>
-			<td><?=date('Y.m.d', strtotime($curCollectPlayer['ContractBegin']))?> - <?=date('Y.m.d', strtotime($curCollectPlayer['ContractEnd']))?></td>
+			<td><?= $curPlayer['total_score'] ?></td>
+			<td><?= $curPlayer['all_matches_count'] ?></td>
+			<td><?= $curPlayer['all_matches_count'] ? round( $curPlayer['total_score']/$curPlayer['all_matches_count'],2) :0 ?></td>
+			<td><?=date('Y.m.d', strtotime($curPlayer['ContractBegin']))?> - <?=date('Y.m.d', strtotime($curPlayer['ContractEnd']))?></td>
 			<td>
 				<a href="">解约</a>
 				
-			<?php if( strtotime($curCollectPlayer['ContractEnd'])-strtotime($nowDate) < 12*30*24*3600): ?>
-				<a href="/player/show/<?= $curCollectPlayer['id'] ?>">
+			<?php if( strtotime($curPlayer['ContractEnd'])-strtotime($nowDate) < 12*30*24*3600): ?>
+				<a href="/player/show/<?= $curPlayer['id'] ?>">
 					<button class="btn btn-info">续约</button>
 				</a>
 			<?php endif; ?>

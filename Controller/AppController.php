@@ -81,4 +81,17 @@ class AppController
 	{
 		exit(json_encode(['code'=>$code, 'data'=>$data]));
 	}
+		
+	protected function returnToClub(\Model\Core\Team $countryTeam)
+	{
+		$uploads = \Model\Core\PlayerUpload::find('all', ['conditions'=>['country_team_id'=>$countryTeam->id]]);
+		foreach($uploads as $upload)
+		{
+			$curPlayer = \Model\Core\Player::getById($upload->player_id);
+			$curPlayer->team_id = $upload->club_team_id;
+			$curPlayer->ShirtNo = $upload->club_shirt_no;
+			$curPlayer->save();
+			$upload->delete();
+		}
+	}
 }

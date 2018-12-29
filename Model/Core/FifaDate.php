@@ -1,7 +1,7 @@
 <?php
 namespace Model\Core;
 
-class FifaDate {
+class FifaDate extends YpnModel {
 	public $id;
     public $PlayDate;
 }

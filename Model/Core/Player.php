@@ -4,6 +4,7 @@ namespace Model\Core;
 class Player extends YpnModel
 {
     public $id;
+	public $condition_id; //1首发 2板凳 3场外 4受伤
 	
 	public function getRndHeadStyle()
 	{
@@ -37,10 +38,6 @@ class Player extends YpnModel
 
     public function setName($name) {
         $this->name = $name;
-    }
-
-    public function setAlias($alias) {
-        $this->alias = $alias;
     }
 
     public function setShirtNo($ShirtNo) {
@@ -409,7 +406,7 @@ class Player extends YpnModel
         $newPlayer->ContractEnd = ($thisYear+mt_rand(1,5)) . "-6-30";
 
         $newPlayer->creativation = 73 + mt_rand(1, 10);
-        $newPlayer->pass = 73 + mt_rand(1, 8);
+        $newPlayer->pass = 70 + mt_rand(1, 10);
         $newPlayer->speed = 75 + mt_rand(1, 10);
         $newPlayer->ShotDesire = 75 + mt_rand(0, 6);
         $newPlayer->ShotPower = 78 + mt_rand(0, 21);
@@ -418,8 +415,8 @@ class Player extends YpnModel
         $newPlayer->SinewMax = 78 + mt_rand(0, 19);
         $newPlayer->cooperate = 80;
         $newPlayer->ShirtNo = $newPlayer->getNewShirtNo($usedNOs);
-        $newPlayer->arc = 73 + mt_rand(0, 26);
-		$newPlayer->potential = mt_rand(30, 60);
+        $newPlayer->arc = 73 + mt_rand(0, 10);
+		$newPlayer->potential = mt_rand(20, 50);
         
         /*根据不同位置获得不同的训练方式*/
         switch ($position_id)
@@ -427,7 +424,7 @@ class Player extends YpnModel
             case 1: //forward
                 $newPlayer->ShotDesire = 80 + mt_rand(1, 10);
                 $newPlayer->ShotPower = 80 + mt_rand(1, 10);
-                $newPlayer->ShotAccurate = 76 + mt_rand(1, 10);
+                $newPlayer->ShotAccurate = 76 + mt_rand(1, 5);
                 $newPlayer->qiangdian = 70 + mt_rand(1, 10);
                 $newPlayer->training_id = 1;
                 break;
@@ -474,12 +471,12 @@ class Player extends YpnModel
                 break;
             case 9: //lm
             case 13: //lb
-                $newPlayer->beat = 73 + mt_rand(1, 10); 
-                $newPlayer->BallControl = 73 + mt_rand(1, 10); 
+                $newPlayer->beat = 73 + mt_rand(1, 7); 
+                $newPlayer->BallControl = 73 + mt_rand(1, 7); 
                 $newPlayer->tackle = 73 + mt_rand(1, 10); 
-                $newPlayer->close_marking = 75 + mt_rand(0, 10); 
+                $newPlayer->close_marking = 75 + mt_rand(0, 5); 
                 $newPlayer->speed = 78 + mt_rand(1, 10); 
-                $newPlayer->pass = 73 + mt_rand(1, 10);
+                $newPlayer->pass = 73 + mt_rand(1, 7);
                 $newPlayer->LeftProperties = 100;
                 $newPlayer->MidProperties = 95;
                 $newPlayer->RightProperties = 90;
@@ -487,12 +484,12 @@ class Player extends YpnModel
                 break;
             case 10: //rm
             case 14: //rb
-                $newPlayer->beat = 73 + mt_rand(1, 10); 
-                $newPlayer->BallControl = 73 + mt_rand(1, 10); 
+                $newPlayer->beat = 73 + mt_rand(1, 7); 
+                $newPlayer->BallControl = 73 + mt_rand(1, 7); 
                 $newPlayer->tackle = 73 + mt_rand(1, 10); 
-                $newPlayer->close_marking = 75 + mt_rand(0, 10); 
+                $newPlayer->close_marking = 75 + mt_rand(0, 5); 
                 $newPlayer->speed = 78 + mt_rand(1, 10); 
-                $newPlayer->pass = 73 + mt_rand(1, 10);
+                $newPlayer->pass = 73 + mt_rand(1, 7);
                 $newPlayer->MidProperties = 90;
                 $newPlayer->training_id = 6; 
                 break;
@@ -501,7 +498,7 @@ class Player extends YpnModel
                 $newPlayer->ShotPower = 80 + mt_rand(1, 10);
                 $newPlayer->ShotAccurate = 76 + mt_rand(0, 4);
                 $newPlayer->speed = 80 + mt_rand(1, 10);
-                $newPlayer->beat = 80 + mt_rand(1, 10);
+                $newPlayer->beat = 70 + mt_rand(1, 10);
                 $newPlayer->LeftProperties = 100;
                 $newPlayer->MidProperties = 90;
                 $newPlayer->RightProperties = 95;
@@ -512,7 +509,7 @@ class Player extends YpnModel
                 $newPlayer->ShotPower = 80 + mt_rand(1, 10);
                 $newPlayer->ShotAccurate = 76 + mt_rand(0, 4);
                 $newPlayer->speed = 80 + mt_rand(1, 10);
-                $newPlayer->beat = 80 + mt_rand(1, 10);
+                $newPlayer->beat = 70 + mt_rand(1, 10);
                 $newPlayer->training_id = 6;
                 break;
         }

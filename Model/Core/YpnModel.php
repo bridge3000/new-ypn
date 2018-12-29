@@ -131,7 +131,7 @@ class YpnModel
 	
 	public static function findArray($type, $option = array())
     {
-		$data = array();
+		$data = NULL;
         $fields = array();
         if (array_key_exists('fields', $option))
         {
@@ -187,11 +187,6 @@ class YpnModel
 			}
         }
 		
-		if(\MainConfig::DB_DEGUG)
-		{
-			error_log(date('Y-m-d H:i:s') . ': ' . $sql . "\n", 3, dirname(dirname(__DIR__)) . '/Logs/sql.log');
-		}
-
         if ($type == "all")
         {
             $data = DBManager::getInstance()->fetch($sql);
@@ -255,7 +250,7 @@ class YpnModel
                 $orStr = " and (1=2 ";
                 foreach($conditions['or'] as $k1 => $v1)
                 {
-                    $orStr .= ' or ' . $this->explainValue($k1, $v1);
+                    $orStr .= ' or ' . self::explainValue($k1, $v1);
                 }
 
                 $orStr .= ") ";
@@ -279,14 +274,17 @@ class YpnModel
 	
 	private static function loadOne($arr)
     {
-		$newInstance = new static();
-		foreach($arr as $k=>$v)
+		$newInstance = NULL;
+		if($arr)
 		{
-			$k = str_replace("-", "_", $k);
+			$newInstance = new static();
+			foreach($arr as $k=>$v)
+			{
+				$k = str_replace("-", "_", $k);
 
-			$newInstance->$k = $v;
+				$newInstance->$k = $v;
+			}
 		}
-        
         return $newInstance;
     }
 	

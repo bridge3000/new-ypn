@@ -26,7 +26,7 @@ class DBManager
     {
 		if(MainConfig::DB_DEGUG)
 		{
-			error_log(date('Y-m-d H:i:s') . ': ' . $sql . "\n", 3, dirname(dirname(__DIR__)) . '/Logs/sql.log');
+			error_log(date('Y-m-d H:i:s') . ': ' . $sql . "\n", 3, dirname(dirname(__DIR__)) . '/Logs/'.date('Ymd').'_sql.log');
 		}
 		
         $result = mysqli_query(DBManager::getInstance()->conn, $sql);
@@ -65,6 +65,11 @@ class DBManager
 
     public function fetch($sql)
 	{
+		if(MainConfig::DB_DEGUG)
+		{
+			error_log(date('Y-m-d H:i:s') . ': ' . $sql . "\n", 3, dirname(dirname(__DIR__)) . '/Logs/'.date('Ymd').'_sql.log');
+		}
+		
 	    $data = array();
         
         $query = mysqli_query(DBManager::getInstance()->conn, $sql);
