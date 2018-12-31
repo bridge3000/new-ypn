@@ -392,10 +392,13 @@ class MatchController extends AppController
             $attackTeam = $curMatch->guestTeam;
             $defenseTeam = $curMatch->hostTeam;
         }
-        
+		
 		$strHtml .= "<br/><span class=\"bg-info\">{$minutes}分钟</span>, {$attackTeam->getRndName()} 在{$strDir[$attackDir]}进攻，";
         $collisionResult = PlayerManager::getInstance()->collision($attackDir, $attackPlayers['shoufa'], $defensePlayers['shoufa'], $curMatch->class_id);
-        if ($collisionResult['result'] == 1)
+		$passer = $attackPlayers['shoufa'][$collisionResult['attackerIndex']];
+		$tackler = $defensePlayers['shoufa'][$collisionResult['defenserIndex']];
+		
+        if ($collisionResult['result'] == 1) //形成射门
         {
             $strHtml .= $attackPlayers['shoufa'][$collisionResult['attackerIndex']]->getRndName() .  '突破成功后传球，';
 			$shotResult = PlayerManager::getInstance()->shot($collisionResult['attackerIndex'], $attackPlayers, $defensePlayers, $attackDir, $curMatch->class_id);
@@ -421,8 +424,31 @@ class MatchController extends AppController
 					break;
             } 
         }
-		else if ($collisionResult['result'] == 2)
+		else if ($collisionResult['result'] == 2) //防守方犯规
 		{
+			$injuredResult = mt_rand(1,10);
+			$injuredDay = mt_rand(1, 20);
+			if($injuredResult < 4) //进攻球员受伤
+			{
+				$passer->onInjured($injuredDay);
+				unset($passer->score);
+				unset($passer->yellow_today);
+				$passer->save();
+				$strHtml .= "{$passer->name}被换下场，需要休养{$injuredDay}天，";
+				$strHtml .= $this->substitution($attackPlayers, $passer->position_id);
+				array_splice($attackPlayers['shoufa'], $collisionResult['attackerIndex'], 1);
+			}
+			elseif($injuredResult == 5) //防守方受伤
+			{
+				$tackler->onInjured($injuredDay);
+				unset($tackler->score);
+				unset($tackler->yellow_today);
+				$tackler->save();
+				$strHtml .= "{$tackler->name}被换下场，需要休养{$injuredDay}天，";
+				$strHtml .= $this->substitution($defensePlayers, $tackler->position_id);
+				array_splice($defensePlayers['shoufa'], $collisionResult['defenserIndex'], 1);
+			}
+			
 			$strHtml .= $defensePlayers['shoufa'][$collisionResult['defenserIndex']]->getRndName() . '犯规,';
 			$foulResult = $defensePlayers['shoufa'][$collisionResult['defenserIndex']]->foul($curMatch->class_id);
 			if($foulResult == 1)
@@ -1155,5 +1181,64 @@ class MatchController extends AppController
 		$html .= '</table>';
 	
 		return $html;
+	}
+	
+	/**
+	 * 换人
+	 * @param type $players 本队大名单所有球员
+	 * @param type $positionId
+	 * @return string
+	 */
+	private function substitution($players, $positionId)
+	{
+		$strHtml = '';
+		$newPlayer = NULL;
+		foreach($players['bandeng'] as $player) //找相同位置的替补队员，找到就完美解决
+		{
+			if($player->position_id == $positionId)
+			{
+				$newPlayer = $player;
+			}
+		}
+		
+		if(!$newPlayer)
+		{
+			if($positionId != 4) //非守门员的场上位置
+			{
+				foreach($players['bandeng'] as $player) //首先找不是守门员的替补队员
+				{
+					if($player->position_id != 4)
+					{
+						$newPlayer = $player;
+					}
+				}
+				
+				if(!$newPlayer) //还没找到就找所有
+				{
+					foreach($players['bandeng'] as $player)
+					{
+						$newPlayer = $player;
+					}
+				}
+			}
+			else //如果替补席没有守门员
+			{
+				foreach($players['bandeng'] as $player)
+				{
+					$newPlayer = $player;
+				}
+			}
+		}
+		
+		if($newPlayer)
+		{
+			$players['shoufa'][] = $newPlayer;
+			$strHtml .= "{$newPlayer->name}被换上场<br/>";
+		}
+		else
+		{
+			$strHtml .= "替补席无人可换";
+		}
+		return $strHtml;
 	}
 }

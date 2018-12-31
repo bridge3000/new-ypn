@@ -846,4 +846,10 @@ class Player extends YpnModel
 		$this->isSelling = 0;
 		$this->liquidated_damage = mt_rand(2,10) * $this->estimateValue($nowDate);
 	}
+	
+	public function onInjured($injuredDay)
+	{
+		$this->condition_id = 4;
+		$this->InjuredDay = $injuredDay;
+	}
 }
