@@ -426,6 +426,9 @@ class MatchController extends AppController
         }
 		else if ($collisionResult['result'] == 2) //防守方犯规
 		{
+			$strHtml .= $defensePlayers['shoufa'][$collisionResult['defenserIndex']]->getRndName() . '犯规,';
+			$foulResult = $defensePlayers['shoufa'][$collisionResult['defenserIndex']]->foul($curMatch->class_id);
+			
 			$injuredResult = mt_rand(1,10);
 			$injuredDay = mt_rand(1, 20);
 			if($injuredResult < 4) //进攻球员受伤
@@ -448,9 +451,7 @@ class MatchController extends AppController
 				$strHtml .= $this->substitution($defensePlayers, $tackler->position_id);
 				array_splice($defensePlayers['shoufa'], $collisionResult['defenserIndex'], 1);
 			}
-			
-			$strHtml .= $defensePlayers['shoufa'][$collisionResult['defenserIndex']]->getRndName() . '犯规,';
-			$foulResult = $defensePlayers['shoufa'][$collisionResult['defenserIndex']]->foul($curMatch->class_id);
+
 			if($foulResult == 1)
 			{
 				$strHtml .= '领到一张黄牌<br>';
@@ -597,11 +598,11 @@ class MatchController extends AppController
 		MatchManager::getInstance()->insertBatch();
 		
 		//reward and news
-		$msg = '晋级16，prize=' . $reward . 'W';
+		$msg = '欧冠晋级16强，奖金' . $reward . '万欧元';
 		
 		foreach($successTeamIds as $teamId)
 		{
-			NewsManager::getInstance()->push($msg, $teamId, $nowDate, '/res/img/EuroChampion.jpg');
+			News::create($msg, $teamId, $nowDate, '/res/img/EuroChampion.jpg');
 		}
 		
 		$successTeamArr = TeamManager::getInstance()->find('all', array(

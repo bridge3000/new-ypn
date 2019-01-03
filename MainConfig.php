@@ -103,7 +103,8 @@ class MainConfig
 	const BASE_URL = "http://test.ypn.com/";
 	
 	static $uclPlayoffDates = array(
-		'8' => array(array('2-13','2-14'),array('2-20','2-21'),array('3-6','3-7'), array('3-13','3-14')), //八分之一
+//		'8' => array(array('2-13','2-14'),array('2-20','2-21'),array('3-6','3-7'), array('3-13','3-14')), //八分之一
+		'8' => [['2-13', '3-6'], ['2-14', '3-7'], ['2-20', '3-13'], ['2-21', '3-14']],
 		'4' => array('4-9','4-16'),
 		'half' => array('4-30','5-7'),
 		'final' => ['5-29']
