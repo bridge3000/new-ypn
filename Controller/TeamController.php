@@ -371,13 +371,23 @@ class TeamController extends AppController
         }
     }
     
+	/**
+	 * 俱乐部友谊赛
+	 * @return string
+	 */
     public function invite_friend_match()
 	{
 		$strHtml = '';
 		$nowDate = SettingManager::getInstance()->getNowDate();
-		$fifaDates = SettingManager::getInstance()->getFifaDates();
         $myCoach = CoachManager::getInstance()->getMyCoach();
         $myTeamId = $myCoach->team_id;
+		
+		$fifaDates = [];
+		$records = \Model\Core\FifaDate::find('all');
+		foreach($records as $record)
+		{
+			$fifaDates[] = $record->PlayDate;
+		}
                
 		/*循环主队*/
         $allTeamArray = TeamManager::getInstance()->find('all', array(

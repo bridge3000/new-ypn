@@ -445,16 +445,15 @@ class PlayerManager extends DataManager
 		$trainings = MainConfig::$trainings;
 		
 		/*这里改为了体力大于等于80的训练值才可能上升，如果是训练体力，需要重新设置*/
-		foreach ($trainings as $id=>$training)
+		foreach ($trainings as $trainingId=>$training)
         {
-			if ($id == 8) //sinew
+			$trainingCondition = ["training_id"=>$trainingId, 'condition_id <' => 4, 'team_id'=> $trainingTeamsId];
+			if ($trainingId != 8) //体能训练不需要有潜力点
 			{
-                $this->update(array($training['experience'] => $training['experience'] . "+1"), array("training_id" => $id, 'condition_id <' => 4, 'team_id'=> $trainingTeamsId));
-			}
-			else
-			{
-                $this->update(array($training['experience'] => $training['experience'] . "+1"), array("training_id" => $id, 'condition_id <' => 4, 'team_id'=> $trainingTeamsId, 'sinew>' => 79));
+				$trainingCondition['potential >'] = 0;
             }
+			
+			$this->update(array($training['experience'] => $training['experience'] . "+1"), $trainingCondition);
         }
         
         $this->update(array('sinew'=>'sinew-10', 'state'=>'state+3'), array('condition_id<>'=>4, 'team_id'=>$trainingTeamsId));

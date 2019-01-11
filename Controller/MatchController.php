@@ -662,7 +662,7 @@ class MatchController extends AppController
 		$newsMsg = '晋级欧冠四分之一决赛了';
 		foreach($winTeamIds as $teamId)
 		{
-			NewsManager::getInstance()->push($newsMsg, $teamId, $nowDate, '/res/img/EuroChampion.jpg');
+			News::create($newsMsg, $teamId, $nowDate, '/res/img/EuroChampion.jpg');
 		}
 	}
 	
@@ -865,7 +865,7 @@ class MatchController extends AppController
 		
 		foreach($successTeamIds as $teamId)
 		{
-			NewsManager::getInstance()->push($msg, $teamId, $nowDate, '/res/img/EuroChampion.jpg');
+			News::create($msg, $teamId, $nowDate, '/res/img/EuroChampion.jpg');
 		}
 		
 		$successTeamArr = TeamManager::getInstance()->find('all', array(
@@ -1173,7 +1173,7 @@ class MatchController extends AppController
 				$secondMatch->GuestTeam_id = $hostTeam->id;
 				$secondMatch->class_id = $nextClassId;
 				$secondMatch->PlayTime = $year . '-' . $playDates[1];
-				$secondMatch->host_team_id = 1;
+				$secondMatch->is_host_park = 1;
 				$secondMatch->save();
 			}
 			

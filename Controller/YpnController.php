@@ -47,7 +47,6 @@ class YpnController extends AppController
 		}
 		
 		$isHoliday = YpnManager::getInstance()->checkHoliday($nowDate);
-		
 
 		/*如果赛季比赛全完事，则进入新赛季页面*/
 		if (Match::find('count', ['conditions' => ['isPlayed'=>0]]) == 0)
@@ -186,7 +185,7 @@ class YpnController extends AppController
 			$myInjuredPlayers = PlayerManager::getInstance()->train($noMatchTeamIds, $myTeamId);
             foreach ($myInjuredPlayers as $mip)
             {
-                NewsManager::getInstance()->add("<font color=red>" . $mip['name'] . "</font>在训练中受伤，需要休息" . $mip['InjuredDay'] . "天。", $mip['team_id'], $nowDate, $mip['ImgSrc']);	
+                News::create("<font color=red>" . $mip['name'] . "</font>在训练中受伤，需要休息" . $mip['InjuredDay'] . "天。", $mip['team_id'], $nowDate, $mip['ImgSrc']);	
             }
 		}
 		else //假期检测是否世界大赛期间
@@ -356,7 +355,7 @@ class YpnController extends AppController
 		);
 
 		foreach ($managers as $manager) {
-			NewsManager::getInstance()->add("本年度FIFA足球先生是<font color=green><strong>" . $fifaMvp->name . "</strong></font>", $manager->team_id, $nowDate, "/img/fifa.gif");
+			News::create("本年度FIFA足球先生是<font color=green><strong>" . $fifaMvp->name . "</strong></font>", $manager->team_id, $nowDate, "/img/fifa.gif");
 		}
 
         PlayerManager::getInstance()->query("update ypn_players set popular=99 where popular>99");

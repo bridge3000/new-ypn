@@ -252,14 +252,13 @@ class PlayerController extends AppController
 					$conditions['ContractEnd <'] = $sixMonthLater;
 			}
 
-			$records = PlayerManager::getInstance()->find('all', array(
+			$players = Player::find('all', array(
 				'conditions' => $conditions,
-				'fields' => array('id', 'name', 'team_id', 'position_id', 'fee', 'salary', 'popular', 'ContractBegin', 'ContractEnd', 'birthday', 'LeftProperties', 'MidProperties', 'RightProperties'),
+				'fields' => ['id', 'name', 'team_id', 'position_id', 'fee', 'salary', 'popular', 'ContractBegin', 'ContractEnd', 'birthday', 'ImgSrc', 'LeftProperties', 'MidProperties', 'RightProperties'],
 				'order' => array('fee'=>'desc', 'salary'=>'desc','popular'=>'desc', 'id'=>'desc'),
 				'limit' => array(($curPage-1)*$perPage, $perPage)
 			));
 
-			$players = PlayerManager::getInstance()->loadData($records);
 
 			$recordCount = PlayerManager::getInstance()->find('count', array(
 				'conditions' => $conditions
@@ -287,9 +286,6 @@ class PlayerController extends AppController
     
     public function chuchang($groupId = 0) 
 	{
-		ini_set("display_errors", "On");
-error_reporting(E_ALL | E_STRICT);
-
 		$this->layout = 'main';
 		header("Expires: Mon, 26 Jul 1997 05:00:00 GMT"); 
 		header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT"); 
