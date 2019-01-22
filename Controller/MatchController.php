@@ -211,6 +211,11 @@ class MatchController extends AppController
 				$p->cooperate = 100;
 			}
 			
+			if(!isset($p->score))
+			{
+				var_dump($p);
+			}
+			
 			if($p->score > $maxScore)
 			{
 				$maxScore = $p->score;
@@ -437,9 +442,9 @@ class MatchController extends AppController
 				unset($passer->score);
 				unset($passer->yellow_today);
 				$passer->save();
-				$strHtml .= "{$passer->name}被换下场，需要休养{$injuredDay}天，";
+				$strHtml .= "{$passer->name}<span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\" style='color:red;font-weight:bold'></span>被换下场，需要休养{$injuredDay}天，";
 				$strHtml .= $this->substitution($attackPlayers, $passer->position_id);
-				array_splice($attackPlayers['shoufa'], $collisionResult['attackerIndex'], 1);
+				$attackPlayers['shoufa'] = array_splice($attackPlayers['shoufa'], $collisionResult['attackerIndex'], 1);
 			}
 			elseif($injuredResult == 5) //防守方受伤
 			{
@@ -447,9 +452,9 @@ class MatchController extends AppController
 				unset($tackler->score);
 				unset($tackler->yellow_today);
 				$tackler->save();
-				$strHtml .= "{$tackler->name}被换下场，需要休养{$injuredDay}天，";
+				$strHtml .= "{$tackler->name}<span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\" style='color:red;font-weight:bold'></span>被换下场，需要休养{$injuredDay}天，";
 				$strHtml .= $this->substitution($defensePlayers, $tackler->position_id);
-				array_splice($defensePlayers['shoufa'], $collisionResult['defenserIndex'], 1);
+				$defensePlayers['shoufa'] = array_splice($defensePlayers['shoufa'], $collisionResult['defenserIndex'], 1);
 			}
 
 			if($foulResult == 1)
@@ -1190,7 +1195,7 @@ class MatchController extends AppController
 	 * @param type $positionId
 	 * @return string
 	 */
-	private function substitution($players, $positionId)
+	private function substitution(&$players, $positionId)
 	{
 		$strHtml = '';
 		$newPlayer = NULL;

@@ -346,4 +346,10 @@ class YpnModel
 		$sql = "DELETE FROM " . MainConfig::PREFIX . "{$this->getTable()} WHERE id={$this->id}";
 		DBManager::getInstance()->execute($sql);
 	}
+	
+	public static function truncate()
+	{
+		$sql = "TRUNCATE " . MainConfig::PREFIX . "{$this->getTable()}";
+		DBManager::getInstance()->execute($sql);
+	}
 }

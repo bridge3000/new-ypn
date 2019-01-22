@@ -141,7 +141,7 @@ class YpnManager extends DataManager
 		return $isTransferDay;
 	}
     
-    function checkWorldCupDay($nowDate)
+    public function checkWorldCupDay($nowDate)
 	{
 		$thisYear = date('Y', strtotime($nowDate));
 		

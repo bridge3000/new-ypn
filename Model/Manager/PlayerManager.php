@@ -845,7 +845,7 @@ class PlayerManager extends DataManager
     
     public function resetPlayers()
     {
-        $ignoreFields = array();
+        $ignoreFields = ['is_push_baidu'];
         DBManager::getInstance()->copyTable(MainConfig::PREFIX . 'bak_players', MainConfig::PREFIX . $this->table, $ignoreFields);
     }
     

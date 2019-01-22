@@ -514,7 +514,7 @@ class PlayerController extends AppController
 			$curPlayer->salary = $newSalary;
 			$curPlayer->ContractBegin = $nowDate;
 			$curPlayer->ClubDepending = 80;
-			$curPlayer->setBestShirtNo(PlayerManager::getInstance()->getExistNos());
+			$curPlayer->setBestShirtNo(PlayerManager::getInstance()->getExistNos($buyTeamId));
 			$curPlayer->ContractEnd = $newContractEnd;
 			$curPlayer->save();
 		}
@@ -758,6 +758,36 @@ class PlayerController extends AppController
 		$cornerId = $_POST['corner_id'];
 		$curPlayer = Player::getById($playerId);
 		$curPlayer->CornerPosition_id = $cornerId;
+		$curPlayer->save();
+		exit(json_encode(['code'=>1]));
+	}
+	
+	public function ajax_set_pinqiang()
+	{
+		$playerId = $_POST['player_id'];
+		$pinqiang = $_POST['pinqiang'];
+		$curPlayer = Player::getById($playerId);
+		$curPlayer->pinqiang = $pinqiang;
+		$curPlayer->save();
+		exit(json_encode(['code'=>1]));
+	}
+	
+	public function ajax_set_shot_desire()
+	{
+		$playerId = $_POST['player_id'];
+		$shotDesire = $_POST['shot_desire'];
+		$curPlayer = Player::getById($playerId);
+		$curPlayer->shot_desire = $shotDesire;
+		$curPlayer->save();
+		exit(json_encode(['code'=>1]));
+	}
+		
+	public function ajax_set_scope()
+	{
+		$playerId = $_POST['player_id'];
+		$scope = $_POST['scope'];
+		$curPlayer = Player::getById($playerId);
+		$curPlayer->scope = $scope;
 		$curPlayer->save();
 		exit(json_encode(['code'=>1]));
 	}

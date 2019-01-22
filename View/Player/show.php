@@ -1,6 +1,6 @@
 <div id="MessageDiv" class="alert alert-danger" role="alert" style="display:none;"></div>
 <table class="table table-striped">
-	<tr><th>照片</th><td><img src="<?=  MainConfig::STATIC_URL.$curPlayer->ImgSrc?>" /></td></tr>
+<!--	<tr><th>照片</th><td><img src="<?=  MainConfig::STATIC_URL.$curPlayer->ImgSrc?>" /></td></tr>-->
 	<tr><th>姓名</th><td><?=$curPlayer->name?></td></tr>
 	<tr>
 		<th>号码</th>
@@ -21,6 +21,10 @@
 			<button type="button" id="btnShowContinue" class="btn btn-danger">续约</button>
 		</td>
 	</tr>
+	<tr><th>拼抢</th><td><div id="sliderPinqiang"></div></td></tr>
+	<tr><th>射门欲望</th><td><div id="sliderShotDesire"></div></td></tr>
+	<tr><th>范围</th><td><div id="sliderScope"></div></td></tr>
+	
 	<tr id="continue_contract" style="display:none">
 		<th></th>
 		<td>
@@ -82,5 +86,45 @@
 				showMessage('danger', "续约失败,想要"+response.data.expected_salary+"W/周");
 			}
 		}, 'json');
+	});
+
+	$("#sliderPinqiang").slider({
+		value: <?=$curPlayer->pinqiang?>,
+		stop: function( event, ui ) {
+			console.log(ui.value);
+			var postData = {
+				player_id: <?=$curPlayer->id?>,
+				pinqiang: ui.value
+			};
+			
+			$.post("/player/ajax_set_pinqiang", postData, function(response){
+			}, 'json');
+		}
+	});
+	
+	$("#sliderShotDesire").slider({
+		value: <?=$curPlayer->ShotDesire?>,
+		stop: function( event, ui ) {
+			var postData = {
+				player_id: <?=$curPlayer->id?>,
+				shot_desire: ui.value
+			};
+			
+			$.post("/player/ajax_set_shot_desire", postData, function(response){
+			}, 'json');
+		}
+	});
+		
+	$("#sliderScope").slider({
+		value: <?=$curPlayer->scope?>,
+		stop: function( event, ui ) {
+			var postData = {
+				player_id: <?=$curPlayer->id?>,
+				scope: ui.value
+			};
+			
+			$.post("/player/ajax_set_scope", postData, function(response){
+			}, 'json');
+		}
 	});
 </script>

@@ -22,6 +22,7 @@ use Model\Core\Elgroup;
 use Model\Core\Country;
 use Model\Core\PlayerUpload;
 use MainConfig;
+use Model\Core\BakTeam;
 
 class YpnController extends AppController 
 {
@@ -182,11 +183,7 @@ class YpnController extends AppController
 		
 		if (!$isHoliday) //不是假期要训练
 		{
-			$myInjuredPlayers = PlayerManager::getInstance()->train($noMatchTeamIds, $myTeamId);
-            foreach ($myInjuredPlayers as $mip)
-            {
-                News::create("<font color=red>" . $mip['name'] . "</font>在训练中受伤，需要休息" . $mip['InjuredDay'] . "天。", $mip['team_id'], $nowDate, $mip['ImgSrc']);	
-            }
+			$this->trainInjured($noMatchTeamIds, $myTeamId);
 		}
 		else //假期检测是否世界大赛期间
 		{
@@ -206,12 +203,21 @@ class YpnController extends AppController
 				$wcTeams = PlayerManager::getInstance()->query('select team_id from ypn_eurocup_groups');
 				for ($i = 0;$i < count($wcTeams);$i++)
 				{
-					$allTeamIds[$i] = $wcTeams[$i]['ypn_eurocup_groups']['team_id'];
+					$allTeamIds[$i] = $wcTeams[$i]['team_id'];
 				}
 				unset($wcTeams);
 
-				PlayerManager::getInstance()->training($noMatchTeamIds, $myTeamId);
+				$this->trainInjured($noMatchTeamIds, $myTeamId);
 			}
+		}
+	}
+	
+	private function trainInjured($noMatchTeamIds, $myTeamId)
+	{
+		$myInjuredPlayers = PlayerManager::getInstance()->train($noMatchTeamIds, $myTeamId);
+		foreach ($myInjuredPlayers as $mip)
+		{
+			News::create("<font color=red>" . $mip['name'] . "</font>在训练中受伤，需要休息" . $mip['InjuredDay'] . "天。", $mip['team_id'], $nowDate, $mip['ImgSrc']);	
 		}
 	}
 	
@@ -220,7 +226,8 @@ class YpnController extends AppController
 	 */
 	private function prepareI18nMatch()
 	{
-		if (YpnManager::getInstance()->checkWorldCupDay())
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		if (YpnManager::getInstance()->checkWorldCupDay($nowDate))
 		{
 			$targetCountries = YpnManager::getInstance()->query('select * from countries where title in (select name from ypn_teams where id in(select team_id from ypn_worldcup_groups))');
 			foreach($targetCountries as $tc)
@@ -761,6 +768,8 @@ class YpnController extends AppController
         
         $this->resettotal_salaryAndPlayerCount();
 		
+		\Model\Core\PlayerCollect::truncate();
+		
 		$this->flushNow('all complete');
 	}	
 	
@@ -886,5 +895,46 @@ class YpnController extends AppController
 		}
 		
 		return $strHtml;
+	}
+	
+	//从文件导入league matches
+	public function importTxtLeague()
+	{
+		//文本文件格式 每行 "2019/8/19 0:00|切沃|尤文图斯"
+		exit('exit');
+		$file = "d://yj.txt";
+		$content = file_get_contents($file);
+		$arr = explode("\r", $content);
+		
+		foreach($arr as $a)
+		{
+			$infos = explode("|", $a);
+			$playTime = $infos[0];
+			$hostTeamName = trim($infos[1]);
+			$guestTeamName = trim($infos[2]);
+			
+			$hostTeam = BakTeam::find('first', ['conditions'=>['name'=>$hostTeamName]]);
+			if(!$hostTeam)
+			{
+				die($hostTeamName. '不存在!');
+			}
+			
+			$guestTeam = BakTeam::find('first', ['conditions'=>['name'=>$guestTeamName]]);
+			if(!$guestTeam)
+			{
+				die($guestTeamName. '不存在!');
+			}
+			
+			$newMatch = new \Model\Core\BakMatch;
+			$newMatch->HostTeam_id = $hostTeam->id;
+			$newMatch->GuestTeam_id = $guestTeam->id;
+			$newMatch->class_id = 1;
+			$newMatch->PlayTime = $playTime;
+			$newMatch->is_host_park = 1;
+			$newMatch->save();
+		}
+		
+		
+		exit('success');
 	}
 }

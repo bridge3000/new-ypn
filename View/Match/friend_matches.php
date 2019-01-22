@@ -3,7 +3,7 @@ use Util\FormHelper;
 ?>
 <table class="tb_style_1">
 	<tr><th>球 队</th><td><?=  FormHelper::select("guest_team_id", $teamList, "", array('id'=>'guest_team_id'))?></td></tr>
-	<tr><th>日 期</th><td><input type="text" id="play_date" value="<?=date('Y-m-d', strtotime($nowDate)+24*3600)?>"></td></tr>
+	<tr><th>日 期</th><td><input type="date" id="play_date" value="<?=date('Y-m-d', strtotime($nowDate)+24*3600)?>"></td></tr>
 	<tr><th></th><td><input type="button" id="btnInvite" value="提交"></td></tr>
 </table>
 
