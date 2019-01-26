@@ -1,6 +1,8 @@
+<link href="/res/css/bootstrapSwitch.css" rel="stylesheet">
+<script src="/res/js/bootstrapSwitch.js"></script>
 <span id="spMsg"></span>
 
-<table width="500" border="0" cellspacing="1" cellpadding="3" align="center" bgcolor="#CCCCCC">
+<table class="table">
 	<tr>
 		<td align="right" bgcolor="whitesmoke">队 标：</td>
 		<td bgcolor="#FFFFFF"><img src="" /></td>
@@ -108,27 +110,15 @@ foreach ($myPlayers as $k => $v) {
 		</td></tr>
 	<tr>
 		<td align="right" bgcolor="whitesmoke">自动设置阵容：</td>
-		<td bgcolor="#FFFFFF"><input type="checkbox" id="chkAutoFormat" <?=($myTeam['is_auto_format']?"checked":"")?> /></td>
+		<td bgcolor="#FFFFFF">
+			<div class="switch">
+				<input type="checkbox" id="chkAutoFormat" <?=($myTeam['is_auto_format']?"checked":"")?> />
+			</div>
+		</td>
 	</tr>
 	<tr>
-		<td align="right" bgcolor="whitesmoke">攻击程度：</td>
-		<td bgcolor="#FFFFFF">
-			<table border="0" cellspacing="0" cellpadding="3">
-				<tr>
-<?php
-for ($i = 10; $i < 110; $i += 10) {
-	$bgColor = "";
-	if ($i == $myTeam['attack']) {
-		$bgColor = "red";
-	}
-	?>
-						<td class="attack_td" value="<?=$i?>" style="cursor:pointer;background-color:<?=$bgColor; ?>" onclick="changeAttack(<?=$i?>);"><?=$i?></td>
-						<?php
-					}
-					?>
-				</tr>
-			</table>		
-		</td>
+		<th>攻击程度：</th>
+		<td><div id="sliderAttack"></div></td>
 	</tr>
 	<tr>
 		<td align="right" bgcolor="whitesmoke">守门员参与最后一次定位球进攻：</td>
@@ -137,21 +127,12 @@ for ($i = 10; $i < 110; $i += 10) {
 </table>
 
 <script>
-	function changeAttack(attackRate)
-	{
-		$.get("/index.php?c=team&a=ajax_change_attack&p=" + attackRate, {}, function (attack) {
-			$(".attack_td").each(function(){
-				if ($(this).attr("value") == attack)
-				{
-					$(this).css("background-color", "red");
-				}
-				else
-				{
-					$(this).css("background-color", "white");
-				}
-			});
-		});
-	}
+	$("#sliderAttack").slider({
+		value: <?=$myTeam['attack']?>,
+		stop: function( event, ui ) {
+			$.get("/team/ajax_change_attack/" + ui.value, {}, function (attack) {});
+		}
+	});
 
 	function changeGoalkeeperAttack()
 	{
@@ -160,15 +141,10 @@ for ($i = 10; $i < 110; $i += 10) {
 		});
 	}
 
-	$("#chkAutoFormat").click(function(){
-		
+	$("#chkAutoFormat").change(function(){
 		var isChecked = $(this).is(':checked');
 		isAutoFormat = isChecked ? 1 : 0;
-		console.log(isAutoFormat);
-		
-		$.post("ajax_change_auto_format/", {auto_format:isAutoFormat}, function () {
-
-		});
+		$.post("ajax_change_auto_format/", {auto_format:isAutoFormat}, function () {});
 	});
 
 	function changeKicker(kickerType, kickerId)

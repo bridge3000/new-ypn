@@ -1,10 +1,16 @@
-<table class="tb_style_1">
-    <caption>xxx</caption>
+<table class="table">
+    <caption>联赛积分榜</caption>
     <tr><th>rank</th><th>team</th><th>win</th><th>draw</th><th>lose</th><th>goal</th><th>lost</th><th>jsq</th><th>score</th></tr>
 <?php foreach($teams as $k=>$curTeam): ?>
         <tr>
 			<td><?= ($k+1) ?></td>
-			<td><?php echo $curTeam['name'] ?></td>
+			<td>
+			<?php if($curTeam['id'] == $myTeamId): ?>
+				<span style="color: green;font-weight: bold"><?= $curTeam['name'] ?></span>
+			<?php else: ?>
+				<?= $curTeam['name'] ?>
+			<?php endif; ?>
+			</td>
 			<td><?php echo $curTeam['win'] ?></td>
 			<td><?php echo $curTeam['draw'] ?></td>
 			<td><?php echo $curTeam['lose'] ?></td>

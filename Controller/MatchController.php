@@ -180,16 +180,31 @@ class MatchController extends AppController
 		$curMatch->isPlayed = 1;
 		$mvpPlayer = NULL;
 		$maxScore = 0;
+		$result = 0; //1host win 2guestwin 3draw 
+		if ($curMatch->HostGoals > $curMatch->GuestGoals)
+		{
+			$result = 1;
+		}
+		else if ($curMatch->HostGoals < $curMatch->GuestGoals)
+		{
+			$result = 2;
+		}
+		else
+		{
+			$result = 3;
+		}
+		
 		foreach($curMatch->hostPlayers['shoufa'] as &$p)
 		{
-			$p->sinew -= 30;
-			if($p->cooperate < 100)
+			$p->consumeSinew();
+			$p->addCooperate(2);
+			if($result == 1)
 			{
-				$p->cooperate += 2;
+				$p->state += 2;
 			}
-			if($p->cooperate > 100)
+			elseif($result == 2)
 			{
-				$p->cooperate = 100;
+				$p->state -= 1;
 			}
 			
 			if($p->score > $maxScore)
@@ -201,19 +216,15 @@ class MatchController extends AppController
 
 		foreach($curMatch->guestPlayers['shoufa'] as &$p)
 		{
-			$p->sinew -= 30;
-			if($p->cooperate < 100)
+			$p->consumeSinew();
+			$p->addCooperate(2);
+			if($result == 2)
 			{
-				$p->cooperate += 2;
+				$p->state += 2;
 			}
-			if($p->cooperate > 100)
+			elseif($result == 1)
 			{
-				$p->cooperate = 100;
-			}
-			
-			if(!isset($p->score))
-			{
-				var_dump($p);
+				$p->state -= 1;
 			}
 			
 			if($p->score > $maxScore)
@@ -233,20 +244,6 @@ class MatchController extends AppController
 		
 		//player需要更新的属性需要在下面的函数中写入列表
 		PlayerManager::getInstance()->saveMatchResult($curMatch->hostPlayers['shoufa'], $curMatch->guestPlayers['shoufa']);
-		
-		$result = 0; //1host win 2guestwin 3draw 
-		if ($curMatch->HostGoals > $curMatch->GuestGoals)
-		{
-			$result = 1;
-		}
-		else if ($curMatch->HostGoals < $curMatch->GuestGoals)
-		{
-			$result = 2;
-		}
-		else
-		{
-			$result = 3;
-		}
 				
 		if($curMatch->is_host_park)
 		{
@@ -400,8 +397,8 @@ class MatchController extends AppController
 		
 		$strHtml .= "<br/><span class=\"bg-info\">{$minutes}分钟</span>, {$attackTeam->getRndName()} 在{$strDir[$attackDir]}进攻，";
         $collisionResult = PlayerManager::getInstance()->collision($attackDir, $attackPlayers['shoufa'], $defensePlayers['shoufa'], $curMatch->class_id);
-		$passer = $attackPlayers['shoufa'][$collisionResult['attackerIndex']];
-		$tackler = $defensePlayers['shoufa'][$collisionResult['defenserIndex']];
+		$passer = ($collisionResult['attackerIndex'] != -1) ? $attackPlayers['shoufa'][$collisionResult['attackerIndex']] : NULL;
+		$tackler = ($collisionResult['defenserIndex'] != -1) ? $defensePlayers['shoufa'][$collisionResult['defenserIndex']] : NULL;
 		
         if ($collisionResult['result'] == 1) //形成射门
         {
@@ -427,12 +424,17 @@ class MatchController extends AppController
 					$strHtml .= '发动反击,';
 					$needTurn = TRUE;
 					break;
+				case 4:
+					$strHtml .= '无人抢到点<br/>';
+					$strHtml .= '发动反击,';
+					$needTurn = TRUE;
+					break;
             } 
         }
 		else if ($collisionResult['result'] == 2) //防守方犯规
 		{
-			$strHtml .= $defensePlayers['shoufa'][$collisionResult['defenserIndex']]->getRndName() . '犯规,';
-			$foulResult = $defensePlayers['shoufa'][$collisionResult['defenserIndex']]->foul($curMatch->class_id);
+			$strHtml .= $tackler->getRndName() . '犯规,';
+			$foulResult = $tackler->foul($curMatch->class_id);
 			
 			$injuredResult = mt_rand(1,10);
 			$injuredDay = mt_rand(1, 20);
@@ -444,7 +446,10 @@ class MatchController extends AppController
 				$passer->save();
 				$strHtml .= "{$passer->name}<span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\" style='color:red;font-weight:bold'></span>被换下场，需要休养{$injuredDay}天，";
 				$strHtml .= $this->substitution($attackPlayers, $passer->position_id);
-				$attackPlayers['shoufa'] = array_splice($attackPlayers['shoufa'], $collisionResult['attackerIndex'], 1);
+				if($collisionResult['attackerIndex'] != -1) //-1会删所有元素
+				{
+					array_splice($attackPlayers['shoufa'], $collisionResult['attackerIndex'], 1);
+				}
 			}
 			elseif($injuredResult == 5) //防守方受伤
 			{
@@ -454,7 +459,10 @@ class MatchController extends AppController
 				$tackler->save();
 				$strHtml .= "{$tackler->name}<span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\" style='color:red;font-weight:bold'></span>被换下场，需要休养{$injuredDay}天，";
 				$strHtml .= $this->substitution($defensePlayers, $tackler->position_id);
-				$defensePlayers['shoufa'] = array_splice($defensePlayers['shoufa'], $collisionResult['defenserIndex'], 1);
+				if($collisionResult['defenserIndex'] != -1)
+				{
+					array_splice($defensePlayers['shoufa'], $collisionResult['defenserIndex'], 1);
+				}
 			}
 
 			if($foulResult == 1)
@@ -583,6 +591,8 @@ class MatchController extends AppController
 			$matchPairs[] = array(array($alTeamIds[$i][0], $alTeamIds[($i+1)][1]), array($alTeamIds[$i][1], $alTeamIds[($i+1)][0])); //两match一组，同日进行
 			array_push($successTeamIds, $alTeamIds[$i][0], $alTeamIds[($i+1)][1], $alTeamIds[$i][1], $alTeamIds[($i+1)][0]);
 		}
+		
+		//$matchPairs = [ [[a1,b2], [a2,b1]], [[c1,d2], [c2,d1]]]
 		
 		foreach($matchPairs as $k=>$mp)
 		{
@@ -890,51 +900,91 @@ class MatchController extends AppController
     {
 		$strHtml = '';
         $cornerKickerIndex = PlayerManager::getInstance()->getCornerKickerIndex($attackPlayers['shoufa'], $cornerKickerId);
-		$cornerDir = array_rand(Match::$cornerPositions);
-        $strHtml .= $attackPlayers['shoufa'][$cornerKickerIndex]->name . '主罚角球，皮球飞到'.Match::$cornerPositions[$cornerDir].',';
-        $cornerData = PlayerManager::getInstance()->qiangdian($attackPlayers['shoufa'], $defensePlayers['shoufa'], $attackPlayers['shoufa'][$cornerKickerIndex]->id, $cornerDir, $curMatch->class_id);
-		$header = $cornerData['header'];
+		$cornerPosition = array_rand(Match::$cornerPositions);
+        
+		$isHigh = 0;
+		if(in_array($cornerPosition, [1,2,3]))
+		{
+			$isHigh = mt_rand(0,3) ? 1 : 0;
+		}
+		$strHtml .= $attackPlayers['shoufa'][$cornerKickerIndex]->name . '主罚角球，皮球' . ($isHigh?'飞':'横扫') . '到'.Match::$cornerPositions[$cornerPosition].',';
+        $cornerData = PlayerManager::getInstance()->qiangdian($attackPlayers['shoufa'], $defensePlayers['shoufa'], $attackPlayers['shoufa'][$cornerKickerIndex]->id, $cornerPosition, $isHigh);
+		$shoter = $cornerData['header'];
 		$goalkeeper = $cornerData['goalkeeper'];
-		$cornerResult = $cornerData['result'];
-		if($cornerResult == 1)
-		{
-			$strHtml .= $header->getRndName() . $header->getRndHeadStyle() . '，球进了.';
-			$strHtml .= $this->goal($curMatch);
-			$needTurn = true;
-		}
-		elseif($cornerResult == 2) //守门员扑出
-		{
-			$strHtml .= $header->getRndName() . $header->getRndHeadStyle() . '，' . $goalkeeper->name . '扑出了,';
-			if(mt_rand(0,1))
-			{
-				$strHtml .= '皮球滚出底线.<br/>再次获得角球,';
-				$strHtml .= $this->corner($attackPlayers, $defensePlayers, $cornerKickerId, $curMatch, $needTurn);
-			}
-			else
-			{
-				$strHtml .= '皮球飞出禁区,开始反击<br/>';
-				$needTurn = true;
-			}
-		}
-		elseif($cornerResult == 3) //防守队员扑出
-		{
-			$strHtml .= $header->getRndName() . '头球解围，';
-			if(mt_rand(0,1))
-			{
-				$strHtml .= '皮球滚出底线.<br/>再次获得角球,';
-				$strHtml .= $this->corner($attackPlayers, $defensePlayers, $cornerKickerId, $curMatch, $needTurn);
-			}
-			else
-			{
-				$strHtml .= '皮球飞出禁区,开始反击<br/>';
-				$needTurn = true;
-			}
-		}
-		elseif($cornerResult == 4)
-		{
+		$isAttackingGet = $cornerData['isAttackingGet'];
+		
+		if (!$shoter) //无人抢到点
+        {
 			$strHtml .= "没人抢到点, 门球.";
 			$needTurn = true;
-		}
+        }
+		else if ($isAttackingGet && ($shoter) ) //进攻方抢到点
+        {
+            $saveValue = $goalkeeper->getSaveValue();
+			$isGoal = FALSE;
+			
+			$strHtml .= $shoter->getRndName();
+			
+			if($cornerPosition == 4)
+			{
+				$distance = mt_rand(16, 20);
+				$shotValue = $shoter->getLongShotValue($distance);
+				$strHtml .= "在{$distance}米外" . $shoter->getRndLongShotStyle();
+			}
+			else
+			{
+				if($isHigh)
+				{
+					$shotValue = $shoter->getHeaderValue();
+					$strHtml .= $shoter->getRndHeadStyle();
+				}
+				else
+				{
+					$shotValue = $shoter->getShotValue(2);
+					$strHtml .= '抢点射门';
+				}
+			}
+			
+			if ($shotValue > $saveValue) //进球
+			{
+				$strHtml .=  '，球进了.';
+				$strHtml .= $this->goal($curMatch);
+				$needTurn = true;
+
+				$shoter->addGoal($curMatch->class_id);
+				$goalkeeper->onGoaled($curMatch->class_id);
+				$isGoal = TRUE;
+			}
+			else
+            {
+				$goalkeeper->onSaved($curMatch->class_id);
+				$strHtml .= $goalkeeper->name . '扑出了,';
+				if(mt_rand(0,1))
+				{
+					$strHtml .= '皮球滚出底线.<br/>再次获得角球,';
+					$strHtml .= $this->corner($attackPlayers, $defensePlayers, $cornerKickerId, $curMatch, $needTurn);
+				}
+				else
+				{
+					$strHtml .= '皮球飞出禁区,开始反击<br/>';
+					$needTurn = true;
+				}
+            }
+        }
+        else if(!$isAttackingGet) // 防守方抢到点
+        {
+			$strHtml .= $shoter->getRndName() . '头球解围，';
+			if(mt_rand(0,1))
+			{
+				$strHtml .= '皮球滚出底线.<br/>再次获得角球,';
+				$strHtml .= $this->corner($attackPlayers, $defensePlayers, $cornerKickerId, $curMatch, $needTurn);
+			}
+			else
+			{
+				$strHtml .= '皮球飞出禁区,开始反击<br/>';
+				$needTurn = true;
+			}
+        }
         
 		return $strHtml;
     }
@@ -1238,8 +1288,19 @@ class MatchController extends AppController
 		
 		if($newPlayer)
 		{
+			$newPlayer->condition_id = 1;
+			$newPlayer->sinew = $newPlayer->SinewMax;
 			$players['shoufa'][] = $newPlayer;
 			$strHtml .= "{$newPlayer->name}被换上场<br/>";
+			
+			foreach($players['bandeng'] as $k=>$player)
+			{
+				if($player->id == $newPlayer->id)
+				{
+					array_splice($players['bandeng'], $k, 1);
+					break;
+				}
+			}
 		}
 		else
 		{

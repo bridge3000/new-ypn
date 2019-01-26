@@ -777,7 +777,7 @@ class PlayerController extends AppController
 		$playerId = $_POST['player_id'];
 		$shotDesire = $_POST['shot_desire'];
 		$curPlayer = Player::getById($playerId);
-		$curPlayer->shot_desire = $shotDesire;
+		$curPlayer->ShotDesire = $shotDesire;
 		$curPlayer->save();
 		exit(json_encode(['code'=>1]));
 	}

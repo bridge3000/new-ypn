@@ -68,6 +68,7 @@ class YpnController extends AppController
 			PlayerManager::getInstance()->doNormal(); //球员日常变化
 			
 			$this->set('allMatchHtml', $allMatchHtml);
+			$this->set('cdnUrl', MainConfig::STATIC_URL);
 			$this->render('new_day');
 		}
 	}
@@ -214,6 +215,7 @@ class YpnController extends AppController
 	
 	private function trainInjured($noMatchTeamIds, $myTeamId)
 	{
+		$nowDate = SettingManager::getInstance()->getNowDate();
 		$myInjuredPlayers = PlayerManager::getInstance()->train($noMatchTeamIds, $myTeamId);
 		foreach ($myInjuredPlayers as $mip)
 		{
@@ -285,6 +287,9 @@ class YpnController extends AppController
 	
 	private function uploadCountryPlayers($countryTeam)
 	{
+		$nowDate = SettingManager::getInstance()->getNowDate();
+		$myCoach = CoachManager::getInstance()->getMyCoach();
+		
 		$shirts = [];
 		$hasCountry = Country::find('first', ['conditions'=>['title'=>$countryTeam->name]]);
 
@@ -304,6 +309,11 @@ class YpnController extends AppController
 				$newPlayerUpload->country_team_id = $countryTeam->id;
 				$newPlayerUpload->club_shirt_no = $curPlayer->ShirtNo;
 				$newPlayerUpload->save();
+				
+				if($curPlayer->team_id == $myCoach->team_id)
+				{
+					News::create("{$curPlayer->name}被抽调到了{$countryTeam->name}国家队", $myCoach->team_id, $nowDate, $curPlayer->ImgSrc);
+				}
 				
 				$curPlayer->setBestShirtNo($shirts);
 				$curPlayer->team_id = $countryTeam->id;

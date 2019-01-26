@@ -10,6 +10,7 @@ else
 {
 ?>
 	<div align=center><a href="<?=  MainConfig::BASE_URL?>match/watch_today">全选</a></div>
+	<div><a href="/match/play"><button type="button" class="btn btn-danger">Play</button></a></div>
 	<table class="table table-bordered">
 	<tr>
 		<th>比赛</th>
@@ -70,3 +71,4 @@ function watchMatch(match_id)
 	});
 }
 </script>
+

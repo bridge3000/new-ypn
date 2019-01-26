@@ -20,7 +20,7 @@
 				<?php foreach ($players as $curPlayer): ?>
 					<tr>
 						<td><?= $curPlayer['ShirtNo'] ?></td>
-						<td><a href="javascript:;" class="player_name" value="<?= $curPlayer['id'] ?>"><?= $curPlayer['name'] ?></a></td>
+						<td><a href="/player/show/<?= $curPlayer['id'] ?>" class="player_name"><?= $curPlayer['name'] ?></a></td>
 						<td>
 							<select id="sel_position" onchange="changePosition(<?= $curPlayer['id'] ?>, this.value)">
 								<?php foreach (MainConfig::$positions as $k => $v): ?>
@@ -114,17 +114,6 @@
 		</td>
 	</tr>
 </table>
-
-<div id="full_bg"></div>
-
-<div id="player_div">
-	<table class="tb_style_1">
-		<tr><th>姓名</th><td id="player_name"></td></tr>
-		<tr><th>状态</th><td id="player_state"></td></tr>
-		<tr><th>体能</th><td id="player_sinew"></td></tr>
-		<tr><th></th><td></td></tr>
-	</table>
-</div>
 
 <script>
 	var players = <?= json_encode($players) ?>;

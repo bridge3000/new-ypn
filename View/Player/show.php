@@ -1,6 +1,6 @@
 <div id="MessageDiv" class="alert alert-danger" role="alert" style="display:none;"></div>
 <table class="table table-striped">
-<!--	<tr><th>照片</th><td><img src="<?=  MainConfig::STATIC_URL.$curPlayer->ImgSrc?>" /></td></tr>-->
+	<tr><th>照片</th><td><img src="<?=  MainConfig::STATIC_URL.$curPlayer->ImgSrc?>" /></td></tr>
 	<tr><th>姓名</th><td><?=$curPlayer->name?></td></tr>
 	<tr>
 		<th>号码</th>
@@ -14,6 +14,11 @@
 	</tr>
 	<tr><th>年龄</th><td><?=$curPlayer->birthday?></td></tr>
 	<tr><th>工资</th><td><span id="spanSalary"><?=$curPlayer->salary?></span>W / 周</td></tr>
+	
+	<tr><th>身高</th><td><?=$curPlayer->height?></td></tr>
+	<tr><th>抢点</th><td><?=$curPlayer->qiangdian?></td></tr>
+	<tr><th>头球</th><td><?=$curPlayer->header?></td></tr>
+	
 	<tr>
 		<th>合同</th>
 		<td>

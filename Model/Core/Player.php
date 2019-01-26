@@ -11,6 +11,12 @@ class Player extends YpnModel
 		$headerStyles = ['头球攻门', '狮子甩头', '鱼跃冲顶', '回头望月'];
 		return $headerStyles[array_rand($headerStyles)];
 	}
+	
+	public function getRndLongShotStyle()
+	{
+		$headerStyles = ['百步穿杨', '起脚怒射'];
+		return $headerStyles[array_rand($headerStyles)];
+	}
     
     public function getId() {
         return $this->id;
@@ -147,9 +153,17 @@ class Player extends YpnModel
         return $cornerValue;
     }
     
-    public function getQiangdianValue()
+    public function getQiangdianValue($isHigh)
     {
-        $qiangdianValue = ($this->qiangdian * 2 + mt_rand(-20, 20)) * $this->state / 100 + $this->height;
+		$qiangdianValue = 0;
+		if($isHigh)
+		{
+			$qiangdianValue = ($this->qiangdian * 2 + mt_rand(-20, 20)) * $this->state / 100 + $this->height;
+		}
+        else
+		{
+			$qiangdianValue = ($this->qiangdian  + mt_rand(-10, 10)) * $this->state / 100;
+		}
         return $qiangdianValue;
     }
     
@@ -851,5 +865,26 @@ class Player extends YpnModel
 	{
 		$this->condition_id = 4;
 		$this->InjuredDay = $injuredDay;
+	}
+	
+	public function getLongShotValue($distance)
+    {
+		$shotValue = ($this->ShotPower-($distance-16) + $this->ShotAccurate + mt_rand(-20, 20)) / 2 * $this->state / 100;
+        
+        return $shotValue;
+    }
+	
+	public function addCooperate($num)
+	{
+		$this->cooperate += $num;
+		if($this->cooperate > 100)
+		{
+			$this->cooperate = 100;
+		}
+	}
+	
+	public function consumeSinew()
+	{
+		$this->sinew -= ($this->pinqiang+$this->ShotDesire+$this->scope) / 3;
 	}
 }

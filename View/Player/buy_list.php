@@ -12,7 +12,7 @@ use Util\FormHelper;
 		<tr><th>photo</th><th>name</th><th>team</th><th>pos</th><th>dirs</th><th>age</th><th>fee</th><th>salary</th><th>contract-begin</th><th>contract-end</th><th>操作</th></tr>
 	<?php foreach ($players as $curPlayer): ?>
 			<tr>
-				<td><img src="/uploads/<?= $curPlayer->ImgSrc ?>" style="width:60px" /></td>
+				<td><img src="/<?= $curPlayer->ImgSrc ?>" style="width:60px" /></td>
 				<td><?= $curPlayer->name ?></td>
 				<td><?= (($curPlayer->team_id ? $teamList[$curPlayer->team_id] : '自由球员')) ?></td>
 				<td><?= MainConfig::$positions[$curPlayer->position_id] ?></td>

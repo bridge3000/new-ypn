@@ -42,6 +42,8 @@ class TeamController extends AppController
     
     public function list_league_rank($leagueId)
     {
+		$myCoach = CoachManager::getInstance()->getMyCoach();
+        $myTeamId = $myCoach->team_id;
         $teams = TeamManager::getInstance()->find('all', array(
             'conditions' => array('league_id'=>$leagueId),
             'fields' => array('id', 'name', 'win', 'lose', 'draw', 'goals', 'lost', 'draw', 'score', 'goals-lost as jingshengqiu'),
@@ -49,6 +51,7 @@ class TeamController extends AppController
         ));
         
         $this->set('teams', $teams);
+		$this->set('myTeamId', $myTeamId);
         $this->render('list_league_rank');
     }
     
@@ -87,7 +90,10 @@ class TeamController extends AppController
             if ($teams[$i]->money < 0)
             {
                 $result = PlayerManager::getInstance()->sellBestPlayer($teams[$i]->id);
-                $strHtml .= "<span class=\"blue_normal_span\">" . $result['name'] . "</span>被以<span class=\"red_normal_span\">" . $result['fee'] . "</span>W欧元卖出了<br>";
+				if($result)
+				{
+					$strHtml .= "<span class=\"blue_normal_span\">" . $result['name'] . "</span>被以<span class=\"red_normal_span\">" . $result['fee'] . "</span>W欧元卖出了<br>";
+				}
             }
             
 			if ($teams[$i]->player_count > 33) //球员太多 需要减肥
@@ -313,7 +319,7 @@ class TeamController extends AppController
 				
 				$futurePlayerIds[] = $curPlayer->id;
 				
-				$strHtml .= "<span class=\"green_bold_span\">" . $curPlayer->name . "</span>将在6个月内自由转会加盟<span class=\"blue_normal_span\">" . $buyTeam->name . "</span>";
+				$strHtml .= "<span class=\"green_bold_span\">" . $curPlayer->name . "</span>将在6个月内自由转会加盟<span class=\"blue_normal_span\">" . $buyTeam->name . "</span><br/>";
 			}
 
 			if ($newsMsg && ($curPlayer->team_id == $myTeamId) )
@@ -538,7 +544,7 @@ class TeamController extends AppController
         $allComputerTeams = TeamManager::getInstance()->getAllComputerTeams();
         $firstNames = FirstNameManager::getInstance()->getFirstNames();
         $familyNames = FamilyNameManager::getInstance()->getFamilyNames();
-        $countries = CountryManager::getInstance()->find('all');
+        $countries = \Model\Core\Country::findArray('all');
         $theCoach = new Coach();
         foreach ($allComputerTeams as $curTeam)
         {
