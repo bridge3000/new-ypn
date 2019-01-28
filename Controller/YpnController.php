@@ -238,7 +238,7 @@ class YpnController extends AppController
 				$this->Country->uploadPlayers($targetCountry);
 			}
 		}
-		else if (YpnManager::getInstance()->checkEuroCupDay())
+		else if (YpnManager::getInstance()->checkEuroCupDay($nowDate))
 		{
 			$targetCountries = YpnManager::getInstance()->query('select * from countries where title in (select name from ypn_teams where id in(select team_id from euro_cup_groups))');
 			foreach($targetCountries as $tc)
@@ -802,12 +802,12 @@ class YpnController extends AppController
     
 	public function test()
 	{
+		
+		var_dump(MainConfig::$elPlayoffDates[16][0]);exit;
+		
 //		$redis = $this->getRedisInstance();
 //		$redis->rpush('ypn_tasks', date('Y-m-d H:i:s'));
 //
-		$totalSalary = Player::find('sum', ['conditions'=>['team_id'=>4], 'fields'=>['salary']]);
-		
-		var_dump($totalSalary);
 		exit("ok\n");
 	}
 	

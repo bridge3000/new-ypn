@@ -111,7 +111,7 @@ class MainConfig
 	);
 	
 	static $elPlayoffDates = array(
-		'16' => array(array('2-13','2-21'),array('2-15','2-22')), 
+		'13' => array(array('2-13','2-21'),array('2-15','2-22')), 
 		'14' => ['3-7', '3-14'], //八分之一 用match_class_id做键
 		'15' => ['4-11', '4-18'],
 		'16' => ['5-2', '5-9'],

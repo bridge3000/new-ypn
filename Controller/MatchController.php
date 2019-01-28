@@ -6,6 +6,7 @@ use Model\Core\Player;
 use Model\Core\News;
 use Model\Core\Match;
 use Model\Core\Team;
+use Model\Collection\PlayerCollection;
 use Model\Manager\MatchManager;
 use Model\Manager\TeamManager;
 use Model\Manager\SettingManager;
@@ -864,8 +865,12 @@ class MatchController extends AppController
 		
 		for($i=0;$i<$successTeamCount;$i+=2)
 		{
-			$playDate1 = $nextYear . '-' . MainConfig::$elPlayoffDates[16][floor($i*2/$successTeamCount)][0];
-			$playDate2 = $nextYear . '-' . MainConfig::$elPlayoffDates[16][floor($i*2/$successTeamCount)][1];
+//			var_dump($successTeamCount, floor($i*2/$successTeamCount), MainConfig::$elPlayoffDates[16][floor($i*2/$successTeamCount)][0]);exit;
+			$playDate1 = $nextYear . '-' . MainConfig::$elPlayoffDates[13][floor($i*2/$successTeamCount)][0];
+			$playDate2 = $nextYear . '-' . MainConfig::$elPlayoffDates[13][floor($i*2/$successTeamCount)][1];
+			
+			
+//			var_dump($playDate1, $playDate2);exit;
 			
 			$hostTeamId = $successTeamIds[$i];
 			$guestTeamId = $successTeamIds[$i+1];
@@ -966,6 +971,7 @@ class MatchController extends AppController
 				}
 				else
 				{
+					//快速反击或阵地战
 					$strHtml .= '皮球飞出禁区,开始反击<br/>';
 					$needTurn = true;
 				}
@@ -1306,6 +1312,85 @@ class MatchController extends AppController
 		{
 			$strHtml .= "替补席无人可换";
 		}
+		return $strHtml;
+	}
+	
+	public function quickAttack(PlayerCollection $attackPlayerCollection, PlayerCollection $defensePlayerCollection, $goalkeeper, &$needTurn)
+	{
+		$distance = mt_rand(60, 80); //每20米需要1个人, 或传或奔袭
+		$needTurn = FALSE;
+		$strHtml = "开始快速反击,";
+		$attacker = $attackPlayerCollection->popRndPlayer();
+		$defenser = $defensePlayerCollection->popRndPlayer();
+		
+		do {
+			$attackAction = $attacker->getAttackRndAction();
+			
+			if($attackAction == 1) //pass
+			{
+				$defenseAction = $defenser->getDefenseRndAction();
+				if($defenseAction == 1) //盯人
+				{
+					$attacker = $attackPlayerCollection->popRndPlayer();
+					$defenser = $defensePlayerCollection->popRndPlayer();
+					
+					if(count($attackPlayerCollection) > 0)
+					{
+						$strHtml .= "{$attacker->getRndName()}把球传出,";
+					}
+					else
+					{
+						
+						
+						
+					}
+					
+				}
+				elseif($defenseAction == 2) //上抢
+				{
+					$strHtml .= "{$defenser->getRndName()}上抢,";
+					if( ($defenser->tackle + mt_rand(-10,10)) > ($attacker->BallControl) + mt_rand(-10, 10) )
+					{
+						$needTurn = TRUE;
+						$strHtml .= "单挑成功,快速反击结束<br/>";
+					}
+					else
+					{
+						$strHtml .= "没有抢到, {$attacker->getRndName()}把球传出,";
+					}
+				}
+			}
+			elseif($attackAction == 2) //beat
+			{
+				if( ($attacker->beat) + mt_rand(-10, 10) > ($defenser->tackle + mt_rand(-10,10)) )
+				{
+					$strHtml .= "{$attacker->getRndName()}突破了{$defenser->getRndName()}继续带球,";
+					$defenser = $defensePlayerCollection->popRndPlayer();
+					if(!$defenser)
+					{
+						$strHtml .= "{$attacker->getRndName()}把球带到禁区前形成单刀,";
+						
+						
+						
+						
+						
+						
+					}
+				}
+				else
+				{
+					$needTurn = TRUE;
+					$strHtml .= "{$defenser->getRndName()}断下了{$attacker->getRndName()}的球,快速反击结束<br/>";
+				}
+			}
+			
+			if(!$needTurn)
+			{
+				$distance -= mt_rand(10, 20);
+				$strHtml .= "进攻向前推进了{$distance}米";
+			}
+		}while($distance>0 || !$hasFailed);//最后一个人没有partner就必须奔袭或就地射门
+		
 		return $strHtml;
 	}
 }

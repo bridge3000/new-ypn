@@ -866,7 +866,7 @@ class Player extends YpnModel
 		$this->condition_id = 4;
 		$this->InjuredDay = $injuredDay;
 	}
-	
+
 	public function getLongShotValue($distance)
     {
 		$shotValue = ($this->ShotPower-($distance-16) + $this->ShotAccurate + mt_rand(-20, 20)) / 2 * $this->state / 100;
@@ -886,5 +886,45 @@ class Player extends YpnModel
 	public function consumeSinew()
 	{
 		$this->sinew -= ($this->pinqiang+$this->ShotDesire+$this->scope) / 3;
+	}
+	
+	/**
+	 * 
+	 * @return int 1传球 2过人
+	 */
+	public function getAttackRndAction()
+	{
+		$action = 0;
+		
+		if(($this->pass+mt_rand(-10,10)) > ($this->beat+mt_rand(-10,10)))
+		{
+			$action = 1;
+		}
+		else
+		{
+			$action = 2;
+		}
+		
+		return $action;
+	}
+	
+	/**
+	 * 
+	 * @return int 1盯人 2上抢
+	 */
+	public function getDefenseRndAction()
+	{
+		$action = 0;
+		
+		if(($this->close_marking+mt_rand(-10,10)) > ($this->tackle+mt_rand(-10,10)))
+		{
+			$action = 1;
+		}
+		else
+		{
+			$action = 2;
+		}
+		
+		return $action;
 	}
 }
