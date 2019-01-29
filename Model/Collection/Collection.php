@@ -6,7 +6,13 @@ namespace Model\Collection;
  *
  * @author Administrator
  */
-class Collection
+class Collection implements Countable
 {
-	protected $data = [];
+	protected $items = [];
+	
+	 //Countable
+    public function count()
+    {
+        return count($this->items);
+	}
 }

@@ -29,8 +29,8 @@ class YpnManager extends DataManager
 		for ($i = 0;$i < count($allElgroups);$i++)
 		{
 			$this->WorldcupGroup->create();
-			$this->request->data['Worldcupgroup']['GroupName'] = $allElgroups[$i]['BakWorldcupGroup']['GroupName'];
-			$this->request->data['Worldcupgroup']['team_id'] = $allElgroups[$i]['BakWorldcupGroup']['team_id'];
+			$this->request->items['Worldcupgroup']['GroupName'] = $allElgroups[$i]['BakWorldcupGroup']['GroupName'];
+			$this->request->items['Worldcupgroup']['team_id'] = $allElgroups[$i]['BakWorldcupGroup']['team_id'];
 			$this->WorldcupGroup->saveModel($this->data);
 		}
 		unset($allElgroups);

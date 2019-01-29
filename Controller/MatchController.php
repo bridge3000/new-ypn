@@ -1320,76 +1320,93 @@ class MatchController extends AppController
 		$distance = mt_rand(60, 80); //每20米需要1个人, 或传或奔袭
 		$needTurn = FALSE;
 		$strHtml = "开始快速反击,";
+		$strHtml .= $this->oneVone($attackPlayerCollection, $defensePlayerCollection, $distance);
+		return $strHtml;
+	}
+	
+	private function oneVone()
+	{
 		$attacker = $attackPlayerCollection->popRndPlayer();
 		$defenser = $defensePlayerCollection->popRndPlayer();
 		
-		do {
-			$attackAction = $attacker->getAttackRndAction();
-			
-			if($attackAction == 1) //pass
+		
+		
+	}
+	
+//	$distance>0 || !$hasFailed
+	private function doBeat($attacker, $defenser)
+	{
+		$strHtml = '';
+		
+		$defenseAction = $defenser->getDefenseRndAction();
+			if($defenseAction == 1) //盯人
 			{
-				$defenseAction = $defenser->getDefenseRndAction();
-				if($defenseAction == 1) //盯人
+				$attacker = $attackPlayerCollection->popRndPlayer();
+				$defenser = $defensePlayerCollection->popRndPlayer();
+
+				if(count($attackPlayerCollection) > 0)
 				{
-					$attacker = $attackPlayerCollection->popRndPlayer();
-					$defenser = $defensePlayerCollection->popRndPlayer();
-					
-					if(count($attackPlayerCollection) > 0)
+					if($attackAction == 1) //pass
 					{
 						$strHtml .= "{$attacker->getRndName()}把球传出,";
 					}
-					else
+					elseif($attackAction == 2) //beat
 					{
-						
-						
-						
-					}
-					
-				}
-				elseif($defenseAction == 2) //上抢
-				{
-					$strHtml .= "{$defenser->getRndName()}上抢,";
-					if( ($defenser->tackle + mt_rand(-10,10)) > ($attacker->BallControl) + mt_rand(-10, 10) )
-					{
-						$needTurn = TRUE;
-						$strHtml .= "单挑成功,快速反击结束<br/>";
-					}
-					else
-					{
-						$strHtml .= "没有抢到, {$attacker->getRndName()}把球传出,";
-					}
-				}
-			}
-			elseif($attackAction == 2) //beat
-			{
-				if( ($attacker->beat) + mt_rand(-10, 10) > ($defenser->tackle + mt_rand(-10,10)) )
-				{
-					$strHtml .= "{$attacker->getRndName()}突破了{$defenser->getRndName()}继续带球,";
-					$defenser = $defensePlayerCollection->popRndPlayer();
-					if(!$defenser)
-					{
-						$strHtml .= "{$attacker->getRndName()}把球带到禁区前形成单刀,";
-						
-						
-						
-						
-						
-						
+						if( ($attacker->beat) + mt_rand(-10, 10) > ($defenser->tackle + mt_rand(-10,10)) )
+						{
+							$strHtml .= "{$attacker->getRndName()}突破了{$defenser->getRndName()}继续带球,";
+							$defenser = $defensePlayerCollection->popRndPlayer();
+							if(!$defenser)
+							{
+								$strHtml .= "{$attacker->getRndName()}把球带到禁区前形成单刀,";
+
+
+
+
+
+
+							}
+						}
+						else
+						{
+							$needTurn = TRUE;
+							$strHtml .= "{$defenser->getRndName()}断下了{$attacker->getRndName()}的球,快速反击结束<br/>";
+						}
 					}
 				}
 				else
 				{
+					$this->doBeat($attacker, $defense);
+
+
+				}
+				
+				$attackAction = $attacker->getAttackRndAction();
+			
+
+
+			}
+			elseif($defenseAction == 2) //上抢
+			{
+				$strHtml .= "{$defenser->getRndName()}上抢,";
+				if( ($defenser->tackle + mt_rand(-10,10)) > ($attacker->BallControl) + mt_rand(-10, 10) )
+				{
 					$needTurn = TRUE;
-					$strHtml .= "{$defenser->getRndName()}断下了{$attacker->getRndName()}的球,快速反击结束<br/>";
+					$strHtml .= "单挑成功,快速反击结束<br/>";
+				}
+				else
+				{
+					$strHtml .= "没有抢到, {$attacker->getRndName()}把球传出,";
 				}
 			}
 			
 			if(!$needTurn)
 			{
-				$distance -= mt_rand(10, 20);
-				$strHtml .= "进攻向前推进了{$distance}米";
+				$curDistance = mt_rand(10, 20);
+				$distance -= $curDistance;
+				$strHtml .= "进攻向前推进了{$curDistance}米";
 			}
-		}while($distance>0 || !$hasFailed);//最后一个人没有partner就必须奔袭或就地射门
+		
 		
 		return $strHtml;
 	}
