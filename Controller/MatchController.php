@@ -23,6 +23,7 @@ class MatchController extends AppController
     public $layout = "main";
     private $isWatch = 0;
 	private $replay = '';
+	private $curMatch;
     
     public function today()
     {
@@ -109,6 +110,7 @@ class MatchController extends AppController
         //play
         foreach ($todayMatches as $curMatch)
         {
+			$this->curMatch = $curMatch;
 			$this->replay = '';
 			$curMatch->hostTeam = $matchTeams[$curMatch->HostTeam_id];
 			$curMatch->guestTeam = $matchTeams[$curMatch->GuestTeam_id];
@@ -521,7 +523,7 @@ class MatchController extends AppController
 		}
         else
         {
-            $strHtml .= $defensePlayers['shoufa'][$collisionResult['defenserIndex']]->getRndName() . 'defense succes,';
+            $strHtml .= $defensePlayers['shoufa'][$collisionResult['defenserIndex']]->getRndName() . '防守成功,';
 			$needTurn = TRUE;
         }
         
@@ -921,7 +923,7 @@ class MatchController extends AppController
 		if (!$shoter) //无人抢到点
         {
 			$strHtml .= "没人抢到点, 门球.";
-			$needTurn = true;
+			$this->curMatch->turnFaqiuquan();
         }
 		else if ($isAttackingGet && ($shoter) ) //进攻方抢到点
         {
@@ -954,7 +956,7 @@ class MatchController extends AppController
 			{
 				$strHtml .=  '，球进了.';
 				$strHtml .= $this->goal($curMatch);
-				$needTurn = true;
+				$this->curMatch->turnFaqiuquan();
 
 				$shoter->addGoal($curMatch->class_id);
 				$goalkeeper->onGoaled($curMatch->class_id);
@@ -973,7 +975,7 @@ class MatchController extends AppController
 				{
 					//快速反击或阵地战
 					$strHtml .= '皮球飞出禁区,开始反击<br/>';
-					$needTurn = true;
+					$strHtml .= $this->quickAttack();
 				}
             }
         }
@@ -988,7 +990,7 @@ class MatchController extends AppController
 			else
 			{
 				$strHtml .= '皮球飞出禁区,开始反击<br/>';
-				$needTurn = true;
+				$strHtml .= $this->quickAttack();
 			}
         }
         
@@ -1009,11 +1011,11 @@ class MatchController extends AppController
         return $str;
     }
 	
-	private function goal($curMatch)
+	private function goal($curMatch=NULL)
 	{
 		$strHtml = '';
-		$curMatch->saveGoal();
-		$strHtml .= '<span class="bg-danger">' . $curMatch->hostTeam->name . $curMatch->HostGoals . "</span>:<span class=\"bg-success\">" . $curMatch->GuestGoals . $curMatch->guestTeam->name . "</span><br>";
+		$this->curMatch->saveGoal();
+		$strHtml .= '<span class="bg-danger">' . $this->curMatch->hostTeam->name . $this->curMatch->HostGoals . "</span>:<span class=\"bg-success\">" . $this->curMatch->GuestGoals . $this->curMatch->guestTeam->name . "</span><br>";
 		return $strHtml;
 	}
     
@@ -1315,98 +1317,215 @@ class MatchController extends AppController
 		return $strHtml;
 	}
 	
-	public function quickAttack(PlayerCollection $attackPlayerCollection, PlayerCollection $defensePlayerCollection, $goalkeeper, &$needTurn)
+	public function quickAttack()
 	{
+		$this->curMatch->turnFaqiuquan();
+		$attackPlayerCollection = new PlayerCollection();
+		$defensePlayerCollection = new PlayerCollection();
+		if ($this->curMatch->getFaqiuquan())
+        {
+            $attackTeam = $this->curMatch->hostTeam;
+            $defenseTeam = $this->curMatch->guestTeam;
+			$attackPlayerCollection->loadQuickCollection($this->curMatch->hostPlayers['shoufa']);
+			$defensePlayerCollection->loadQuickCollection($this->curMatch->guestPlayers['shoufa']);
+			$goalkeeper = PlayerCollection::findGoalkeeper($this->curMatch->guestPlayers['shoufa']);
+        }
+        else
+        {
+            $attackTeam = $this->curMatch->guestTeam;
+            $defenseTeam = $this->curMatch->hostTeam;
+			$attackPlayerCollection->loadQuickCollection($this->curMatch->guestPlayers['shoufa']);
+			$defensePlayerCollection->loadQuickCollection($this->curMatch->hostPlayers['shoufa']);
+			$goalkeeper = PlayerCollection::findGoalkeeper($this->curMatch->hostPlayers['shoufa']);
+        }
+		
 		$distance = mt_rand(60, 80); //每20米需要1个人, 或传或奔袭
-		$needTurn = FALSE;
-		$strHtml = "开始快速反击,";
-		$strHtml .= $this->oneVone($attackPlayerCollection, $defensePlayerCollection, $distance);
-		return $strHtml;
-	}
-	
-	private function oneVone()
-	{
+		$strHtml = "{$attackTeam->getRndName()}开始快速反击,前场" . count($attackPlayerCollection) . "打" . count($defensePlayerCollection) . ",";
+		
 		$attacker = $attackPlayerCollection->popRndPlayer();
 		$defenser = $defensePlayerCollection->popRndPlayer();
 		
+		if(!$attacker)
+		{
+			$strHtml .= "{$attackTeam->getRndName()}禁区外无人接应,反击失败,{$defenseTeam->getRndName()}转入进攻<br/>";
+			$this->curMatch->turnFaqiuquan();
+		}
+		elseif(!$defenser)
+		{
+			$strHtml .= "没有防守队员,{$attacker->getRndName()}奔袭{$distance}米直接冲向对方禁区,";
+			$strHtml .= $this->oneOnOne($attacker, $goalkeeper);
+		}
+		else
+		{
+			$strHtml .= $this->oneVone($attacker, $defenser, $goalkeeper, $attackPlayerCollection, $defensePlayerCollection, $distance);
+		}
 		
+		return $strHtml;
+	}
+
+	/**
+	 * 单刀
+	 * @param Player $attacker
+	 * @param Player $goalkeeper
+	 * @return string
+	 */
+	private function oneOnOne(Player $attacker, Player $goalkeeper)
+	{
+		$strHtml = "{$attacker->getRndName()}获得单刀,";
 		
+		if($goalkeeper->getGoalKeepRndAction() == 1) //禁区内
+		{
+			$strHtml .= "{$goalkeeper->getRndName()}在球门区内严阵以待,{$attacker->getRndName()}{$attacker->getRndShotStyle()},";
+			if( ($attacker->ShotAccurate+$attacker->mind+mt_rand(0,20))/2 > $goalkeeper->save+mt_rand(-10,10))
+			{
+				$attacker->addGoal($this->curMatch->class_id);
+				$goalkeeper->onGoaled($this->curMatch->class_id);
+				$strHtml .= "轻松得分<br/>";
+				$strHtml .= $this->goal();
+				$this->curMatch->turnFaqiuquan();
+			}
+			else
+			{
+				$strHtml .= "{$goalkeeper->getRndName()}将球扑出<br/>";
+				$goalkeeper->onSaved($this->curMatch->class_id);
+				$this->curMatch->turnFaqiuquan();
+			}
+		}
+		else //出击
+		{
+			$strHtml .= "{$goalkeeper->getRndName()}弃门出击,";
+			if($goalkeeper->tackle+mt_rand(-10,10) > $attacker->beat+mt_rand(-10,10))
+			{
+				$strHtml .= "将其拿下<br/>";
+				$goalkeeper->addTackle($this->curMatch->class_id);
+			}
+			else 
+			{
+				$strHtml .= "{$attacker->getRndName()}轻松{$attacker->getRndBeatStyle()}{$goalkeeper->getRndName()}后推射空门得手<br/>";
+				$attacker->addGoal($this->curMatch->class_id);
+				$goalkeeper->onGoaled($this->curMatch->class_id);
+				$strHtml .= $this->goal();
+				$this->curMatch->turnFaqiuquan();
+			}
+		}
+			
+		return $strHtml;
 	}
 	
-//	$distance>0 || !$hasFailed
-	private function doBeat($attacker, $defenser)
+	/**
+	 * 单挑
+	 * @param Player $attacker
+	 * @param Player $defenser
+	 * @param PlayerCollection $attackPlayerCollection
+	 * @param PlayerCollection $defensePlayerCollection
+	 * @param type $distance
+	 * @return type
+	 */
+	private function oneVone(Player $attacker, Player $defenser, Player $goalkeeper, PlayerCollection $attackPlayerCollection, PlayerCollection $defensePlayerCollection, $distance)
 	{
 		$strHtml = '';
 		
 		$defenseAction = $defenser->getDefenseRndAction();
-			if($defenseAction == 1) //盯人
+		if($defenseAction == 1) //盯人
+		{
+			$strHtml .= $this->passOrBeat($attacker, $defenser, $goalkeeper, $attackPlayerCollection, $defensePlayerCollection, $distance);
+		}
+		elseif($defenseAction == 2) //上抢
+		{
+			$strHtml .= "{$defenser->getRndName()}上抢,";
+			if( ($defenser->tackle + mt_rand(-10,10)) > ($attacker->BallControl) + mt_rand(-10, 10) )
 			{
-				$attacker = $attackPlayerCollection->popRndPlayer();
-				$defenser = $defensePlayerCollection->popRndPlayer();
-
-				if(count($attackPlayerCollection) > 0)
-				{
-					if($attackAction == 1) //pass
-					{
-						$strHtml .= "{$attacker->getRndName()}把球传出,";
-					}
-					elseif($attackAction == 2) //beat
-					{
-						if( ($attacker->beat) + mt_rand(-10, 10) > ($defenser->tackle + mt_rand(-10,10)) )
-						{
-							$strHtml .= "{$attacker->getRndName()}突破了{$defenser->getRndName()}继续带球,";
-							$defenser = $defensePlayerCollection->popRndPlayer();
-							if(!$defenser)
-							{
-								$strHtml .= "{$attacker->getRndName()}把球带到禁区前形成单刀,";
-
-
-
-
-
-
-							}
-						}
-						else
-						{
-							$needTurn = TRUE;
-							$strHtml .= "{$defenser->getRndName()}断下了{$attacker->getRndName()}的球,快速反击结束<br/>";
-						}
-					}
-				}
-				else
-				{
-					$this->doBeat($attacker, $defense);
-
-
-				}
-				
-				$attackAction = $attacker->getAttackRndAction();
-			
-
-
+				$strHtml .= "将{$attacker->getRndName()}断下,快速反击结束<br/>";
+				$this->curMatch->turnFaqiuquan();
 			}
-			elseif($defenseAction == 2) //上抢
+			else
 			{
-				$strHtml .= "{$defenser->getRndName()}上抢,";
-				if( ($defenser->tackle + mt_rand(-10,10)) > ($attacker->BallControl) + mt_rand(-10, 10) )
-				{
-					$needTurn = TRUE;
-					$strHtml .= "单挑成功,快速反击结束<br/>";
-				}
-				else
-				{
-					$strHtml .= "没有抢到, {$attacker->getRndName()}把球传出,";
-				}
+				$strHtml .= "没有抢到,";
+				$strHtml .= $this->passOrBeat($attacker, $defenser, $goalkeeper, $attackPlayerCollection, $defensePlayerCollection, $distance);
 			}
-			
-			if(!$needTurn)
-			{
-				$curDistance = mt_rand(10, 20);
-				$distance -= $curDistance;
-				$strHtml .= "进攻向前推进了{$curDistance}米";
-			}
+		}
+
+		return $strHtml;
+	}
+	
+	private function passOrBeat($attacker, $defenser, $goalkeeper, $attackPlayerCollection, $defensePlayerCollection, $distance)
+	{
+		$strHtml = '';
 		
+		if(count($attackPlayerCollection) > 0) //有人可传
+		{
+			$attackAction = $attacker->getAttackRndAction();
+			if($attackAction == 1) //pass
+			{
+				$distance -= mt_rand(10, 20);
+				$strHtml .= "{$attacker->getRndName()}把球传给";
+				$attacker = $attackPlayerCollection->popRndPlayer();
+				$strHtml .= "{$attacker->getRndName()},";
+				if($distance <= 0) //已到达射程
+				{
+					$strHtml .= $this->oneOnOne($attacker, $goalkeeper);
+				}
+				else
+				{
+					$defenser = $defensePlayerCollection->popRndPlayer();
+					if($defenser)
+					{
+						$strHtml .= $this->oneVone($attacker, $defenser, $goalkeeper, $attackPlayerCollection, $defensePlayerCollection, $distance);
+					}
+					else
+					{
+						$strHtml .= $this->oneOnOne($attacker, $goalkeeper);
+					}
+				}
+
+			}
+			elseif($attackAction == 2) //beat
+			{
+				$strHtml .= $this->doBeat($attacker, $defenser, $goalkeeper, $attackPlayerCollection, $defensePlayerCollection, $distance);
+			}
+		}
+		else
+		{
+			$strHtml .= $this->doBeat($attacker, $defenser, $goalkeeper, $attackPlayerCollection, $defensePlayerCollection, $distance);
+		}
+		
+		return $strHtml;
+	}
+	
+	/**
+	 * 过人
+	 * @param Player $attacker
+	 * @param Player $defenser
+	 */
+	private function doBeat(Player $attacker, Player $defenser, Player $goalkeeper, PlayerCollection $attackPlayerCollection, PlayerCollection $defensePlayerCollection, $distance)
+	{
+		$strHtml = "{$attacker->getRndName()}{$attacker->getRndBeatStyle()},";
+		if( ($attacker->beat + $attacker->speed + $attacker->agility + mt_rand(-30, 30)) > ($defenser->tackle + $defenser->speed + $defenser->agility + mt_rand(-30,30)) ) //给过了
+		{
+			$strHtml .= "过掉{$defenser->getRndName()}后继续带球,";
+			$defenser = $defensePlayerCollection->popRndPlayer();
+			if($defenser)
+			{
+				$distance -= mt_rand(10, 20);
+				if($distance > 0)
+				{
+					$strHtml .= $this->oneVone($attacker, $defenser, $goalkeeper, $attackPlayerCollection, $defensePlayerCollection, $distance);
+				}
+				else
+				{
+					$strHtml .= $this->oneOnOne($attacker, $goalkeeper);
+				}
+			}
+			else
+			{
+				$strHtml .= $this->oneOnOne($attacker, $goalkeeper);
+			}
+		}
+		else
+		{
+			$strHtml .= "{$defenser->getRndName()}断下了{$attacker->getRndName()}的球,快速反击结束<br/>";
+			$this->curMatch->turnFaqiuquan();
+		}
 		
 		return $strHtml;
 	}

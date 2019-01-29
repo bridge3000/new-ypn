@@ -442,11 +442,6 @@ class PlayerManager extends DataManager
 			$defenseShoufaPlayers[$tacklerIndex]->addTackle($matchClassId);
 		}
 		
-//		if($passerIndex == -1 || $tacklerIndex == -1)
-//		{
-//			var_dump($passerIndex, $tacklerIndex, $attackPower, $defensePower);
-//		}
-		
         return array('result'=>$result, 'attackerIndex'=>$passerIndex, 'defenserIndex'=>$tacklerIndex);
     }
     

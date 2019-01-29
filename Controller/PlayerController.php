@@ -44,6 +44,9 @@ class PlayerController extends AppController
             $buyTeam = TeamManager::getInstance()->findById($futureContracts[$i]->NewTeam_id);
             
             $targetPlayer = Player::getById($futureContracts[$i]->player_id);
+			if(!$targetPlayer)
+				continue;
+			
             $targetPlayer->ContractBegin = $nowDate;
             $targetPlayer->ContractEnd = $futureContracts[$i]->NewContractEnd;
             $targetPlayer->salary = $futureContracts[$i]->NewSalary;
@@ -199,7 +202,7 @@ class PlayerController extends AppController
 				$strHtml .= "<font color=blue><strong>" . $curPlayer->name . "</strong></font>被卖出了<br>";
 				
 				/*卖出*/
-				PlayerManager::getInstance()->execute("update ypn_players set isSelling=1, fee=" . $curPlayer->estimateFee($nowDate) * $curPlayer->ClubDepending / 100 . " where id=" . $curPlayer->id);
+				PlayerManager::getInstance()->query("update ypn_players set isSelling=1, fee=" . $curPlayer->estimateFee($nowDate) * $curPlayer->ClubDepending / 100 . " where id=" . $curPlayer->id);
 			}
 			else
 			{

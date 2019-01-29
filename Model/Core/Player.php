@@ -17,6 +17,18 @@ class Player extends YpnModel
 		$headerStyles = ['百步穿杨', '起脚怒射'];
 		return $headerStyles[array_rand($headerStyles)];
 	}
+	
+	public function getRndShotStyle()
+	{
+		$headerStyles = ['推射', '挑射'];
+		return $headerStyles[array_rand($headerStyles)];
+	}
+	
+	public function getRndBeatStyle()
+	{
+		$headerStyles = ['踩单车', '强行超车', '人球分过', '穿裆过人'];
+		return $headerStyles[array_rand($headerStyles)];
+	}
     
     public function getId() {
         return $this->id;
@@ -917,6 +929,26 @@ class Player extends YpnModel
 		$action = 0;
 		
 		if(($this->close_marking+mt_rand(-10,10)) > ($this->tackle+mt_rand(-10,10)))
+		{
+			$action = 1;
+		}
+		else
+		{
+			$action = 2;
+		}
+		
+		return $action;
+	}
+	
+	/**
+	 * 
+	 * @return int 1门内 2出击
+	 */
+	public function getGoalKeepRndAction()
+	{
+		$action = 0;
+		
+		if(($this->save+mt_rand(-10,10)) > ($this->tackle+mt_rand(-10,10)))
 		{
 			$action = 1;
 		}

@@ -1,6 +1,8 @@
 <?php
 namespace Model\Collection;
 
+use Countable;
+
 /**
  * 集合基类
  *
@@ -9,6 +11,11 @@ namespace Model\Collection;
 class Collection implements Countable
 {
 	protected $items = [];
+	
+	public function __construct($items=[])
+	{
+		$this->items = $items;
+	}
 	
 	 //Countable
     public function count()
