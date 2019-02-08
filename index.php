@@ -66,7 +66,8 @@ if (isset($_GET['c'])) //问号传参
 else if (!empty($slashParams)) //根据斜线分割
 {
 	$tmpArr = explode("/", $slashParams[0]);
-//	print_r($tmpArr);exit;
+
+	
 	
 	$controller = $tmpArr[0];
 	if(isset($tmpArr[1]))
@@ -77,6 +78,8 @@ else if (!empty($slashParams)) //根据斜线分割
 	{
 		$action = 'index';
 	}
+	
+//	var_dump($controller, $action);exit;
 	
 	for($i=2;$i<count($tmpArr);$i++)
 	{
@@ -89,9 +92,6 @@ else
 	$action = 'today';
 }
 
-//die(php_sapi_name());
-
-//if(preg_match("/cli/i", php_sapi_name()))
 if(php_sapi_name() == "cli")
 {
 	$controller = $argv[1];
@@ -101,4 +101,5 @@ if(php_sapi_name() == "cli")
 
 $firstLetter = substr($controller, 0, 1);
 $ClassName = "Controller\\" . str_replace($firstLetter, strtoupper($firstLetter), $controller). "Controller";
+
 call_user_func_array(array($ClassName::getInstance(), $action), $params);
