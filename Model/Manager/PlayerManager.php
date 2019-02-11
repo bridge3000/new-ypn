@@ -574,9 +574,9 @@ class PlayerManager extends DataManager
      */
     public function shot($passerIndex, &$attackPlayers, &$defensePlayers, $attackDir, $matchClassId)
     {
-        $shoterIndex = -1;
         $goalkeeperIndex = -1;
         $max = 0;
+		$shoter = NULL;
 		
         for($i=0;$i<count($attackPlayers['shoufa']);$i++)
         {
@@ -587,7 +587,7 @@ class PlayerManager extends DataManager
             if ($shotRate > $max)
             {
                 $max = $shotRate;
-                $shoterIndex = $i;
+				$shoter = $attackPlayers['shoufa'][$i];
             }
         }
         
@@ -600,23 +600,22 @@ class PlayerManager extends DataManager
             }
         }
         
-        $shotResultData = array('shoterIndex'=>$shoterIndex, 'goalkeeperIndex'=>$goalkeeperIndex);
+        $shotResultData = ['shoter'=>$shoter, 'goalkeeperIndex'=>$goalkeeperIndex];
 		
 		if($goalkeeperIndex == -1)
 		{
 			var_dump($defensePlayers);exit;
 		}
 		
-		if($shoterIndex == -1)
+		if(!$shoter)
 		{
 			$shotResultData['result'] = 4;
 		}
 		else
 		{
-			if ($attackPlayers['shoufa'][$shoterIndex]->getShotValue($attackDir) > $defensePlayers['shoufa'][$goalkeeperIndex]->getSaveValue())
+			if ($shoter->getShotValue($attackDir) > $defensePlayers['shoufa'][$goalkeeperIndex]->getSaveValue())
 			{
 				$shotResultData['result'] = 1;
-				$attackPlayers['shoufa'][$shoterIndex]->addGoal($matchClassId);
 				$defensePlayers['shoufa'][$goalkeeperIndex]->onGoaled($matchClassId);
 			}
 			else
@@ -1025,16 +1024,19 @@ class PlayerManager extends DataManager
 		$shoufaPlayers = array_merge($hostShoufaPlayers, $guestShoufaPlayers);
 		foreach($shoufaPlayers as $p)
 		{
-			$v = array();
-			foreach($keys as $k)
-			{
-				$v[$k] = $p->$k;
-			}
-			$v['total_score'] = $p->total_score + $p->score;
-			$v['all_matches_count'] = $p->all_matches_count + 1;
-			$values[] = $v;
+//			$v = array();
+//			foreach($keys as $k)
+//			{
+//				$v[$k] = $p->$k;
+//			}
+//			$v['total_score'] = $p->total_score + $p->score;
+//			$v['all_matches_count'] = $p->all_matches_count + 1;
+//			$values[] = $v;
+			
+			$p->all_matches_count += 1;
+			$p->save();
 		}
-		$this->update_batch($values);
+//		$this->update_batch($values);
 	}
 	
 	/**
@@ -1081,7 +1083,6 @@ class PlayerManager extends DataManager
 		if($penaltyKicker->getPenaltyValue() > $goalKeeper->getPenaltySaveValue())
 		{
 			$result = 1;
-			$penaltyKicker->addGoal($matchClassId);
 			$penaltyKicker->addPenalty($matchClassId);
 		}
 		else
@@ -1138,7 +1139,6 @@ class PlayerManager extends DataManager
 		if($freeKicker->getFreeValue() > $goalKeeper->getFreeSaveValue())
 		{
 			$result = 1;
-			$freeKicker->addGoal($matchClassId);
 		}
 		else
 		{

@@ -802,11 +802,14 @@ class YpnController extends AppController
     
 	public function test()
 	{
+		$this->curMatch = new Match();
+		$this->curMatch->hostPlayers['shoufa'] = [1,2,3,4,5];
 		
-		var_dump(MainConfig::$elPlayoffDates[16][0]);exit;
+		$arr = $this->curMatch->hostPlayers['shoufa'];
 		
-//		$redis = $this->getRedisInstance();
-//		$redis->rpush('ypn_tasks', date('Y-m-d H:i:s'));
+		unset( $arr[2]);
+		
+		print_r($this->curMatch->hostPlayers['shoufa']);exit;
 //
 		exit("ok\n");
 	}

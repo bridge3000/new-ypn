@@ -29,6 +29,12 @@ class Player extends YpnModel
 		$headerStyles = ['踩单车', '强行超车', '人球分过', '穿裆过人'];
 		return $headerStyles[array_rand($headerStyles)];
 	}
+	
+	public function getRndSaveStyle()
+	{
+		$headerStyles = ['鱼跃侧扑', '奋力扑救'];
+		return $headerStyles[array_rand($headerStyles)];
+	}
     
     public function getId() {
         return $this->id;
@@ -557,6 +563,19 @@ class Player extends YpnModel
 		$this->$goalField++;
 		$this->ShotAccurateExperience += 2;
 		$this->score += 4;
+		if(isset($this->goal_today))
+		{
+			$this->goal_today++;
+		}
+		else
+		{
+			$this->goal_today = 1;
+		}
+		
+		if($this->goal_today == 3)
+		{
+			$this->popular++;
+		}
 	}
 	
 	public function onSaved($matchClassId)
@@ -882,7 +901,16 @@ class Player extends YpnModel
 	public function getLongShotValue($distance)
     {
 		$shotValue = ($this->ShotPower-($distance-16) + $this->ShotAccurate + mt_rand(-20, 20)) / 2 * $this->state / 100;
-        
+        return $shotValue;
+    }
+	
+	/**
+	 * 远射欲望值
+	 * @return type
+	 */
+	public function getLongShotDesire()
+    {
+		$shotValue = ($this->ShotPower + $this->ShotAccurate + $this->ShotDesire + mt_rand(-30, 30)) * ($this->state/100);
         return $shotValue;
     }
 	
@@ -958,5 +986,18 @@ class Player extends YpnModel
 		}
 		
 		return $action;
+	}
+	
+	public function save()
+	{
+		if(isset($this->score))
+		{
+			$this->total_score += $this->score;
+			unset($this->score);
+		}
+		
+		unset($this->yellow_today);
+		unset($this->goal_today);
+		parent::save();
 	}
 }

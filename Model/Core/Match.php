@@ -83,4 +83,18 @@ class Match extends YpnModel
 		$newMatch->is_host_park = $isHostPark;
 		$newMatch->save();
 	}
+	
+	public function save()
+	{
+		unset($this->hostTeam);
+		unset($this->guestTeam);
+		unset($this->hostPlayers);
+		unset($this->guestPlayers);
+		unset($this->hostShoufaCollection);
+		unset($this->hostBandengCollection);
+		unset($this->guestShoufaCollection);
+		unset($this->guestBandengCollection);
+			
+		parent::save();
+	}
 }

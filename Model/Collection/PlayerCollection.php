@@ -10,7 +10,6 @@ use Model\Core\Player;
  */
 class PlayerCollection extends Collection
 {
-	
 	public function popRndPlayer()
 	{
 		if(empty($this->items))
@@ -52,5 +51,38 @@ class PlayerCollection extends Collection
 				return $player;
 			}
 		}
+	}
+	
+	public function getLongShoter()
+	{
+		$max = 0;
+		$shoter = NULL;
+		foreach($this->items as $player)
+		{
+			$longShotDesire = $player->getLongShotDesire();
+			if($longShotDesire > $max)
+			{
+				$max = $longShotDesire;
+				$shoter = $player;
+			}
+		}
+		
+		return $shoter;
+	}
+	
+	public function getGoalkeeper()
+	{
+		$max = 0;
+		$goalkeeper = NULL;
+		foreach($this->items as $player)
+		{
+			if($player->position_id == 4)
+			{
+				$goalkeeper = $player;
+				break;
+			}
+		}
+		
+		return $goalkeeper;
 	}
 }
