@@ -85,4 +85,9 @@ class PlayerCollection extends Collection
 		
 		return $goalkeeper;
 	}
+	
+	public function getChildren($attackDir)
+	{
+		
+	}
 }

@@ -561,7 +561,11 @@ class Player extends YpnModel
 			$goalField = 'Goal2Count';
 		}
 		$this->$goalField++;
-		$this->ShotAccurateExperience += 2;
+		if($this->potential > 0)
+		{
+			$this->ShotAccurateExperience += 2;
+		}
+		
 		$this->score += 4;
 		if(isset($this->goal_today))
 		{
