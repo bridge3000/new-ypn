@@ -1057,4 +1057,12 @@ class Player extends YpnModel
 		unset($this->goal_today);
 		parent::save();
 	}
+	
+	public function wantShot($distance, $angel)
+	{
+		if(($this->ShotDesire + $this->ShotPower+mt_rand(-10,10))/2 > ($distance+50))
+		{
+			return TRUE;
+		}
+	}
 }

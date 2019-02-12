@@ -258,11 +258,11 @@ class MatchController extends AppController
 		$strHtml = '';
 		
 		//找到进攻和防守的子集
-		$attackPlayerCollection = $attackShoufaCollection->getChildren($attackDir, TRUE);
-		$defensePlayerCollection = $defenseShoufaCollection->getChildren($attackDir, FALSE);
+		$sideAttackCollection = $attackShoufaCollection->getChildren($attackDir, TRUE);
+		$sideDefenseCollection = $defenseShoufaCollection->getChildren($attackDir, FALSE);
 		
-		$attacker = $attackPlayerCollection->popRndPlayer();
-		$defenser = $defensePlayerCollection->popRndPlayer();
+		$attacker = $sideAttackCollection->popRndPlayer();
+		$defenser = $sideDefenseCollection->popRndPlayer();
 		
 		if(!$attacker)
 		{
@@ -278,13 +278,13 @@ class MatchController extends AppController
 		{
 			$distance = mt_rand(50, 70);
 
-			$strHtml .= $this->oneVsOne($distance, $attacker, $defenser, $attackPlayerCollection, $defensePlayerCollection, $attackShoufaCollection, $defenseShoufaCollection, $attackDir, $attackTeam, $defenseTeam);
+			$strHtml .= $this->oneVsOne($distance, $attacker, $defenser, $sideAttackCollection, $sideDefenseCollection, $attackShoufaCollection, $defenseShoufaCollection, $attackDir, $attackTeam, $defenseTeam);
 		}
 		
 		return $strHtml;
 	}
 	
-	private function oneVsOne($distance, $attacker, $defenser, $attackPlayerCollection, $defensePlayerCollection, $attackShoufaCollection, $defenseShoufaCollection, $attackDir, $attackTeam, $defenseTeam)
+	private function oneVsOne($distance, Player $attacker, $defenser, $attackPlayerCollection, PlayerCollection $defensePlayerCollection, $attackShoufaCollection, PlayerCollection $defenseShoufaCollection, $attackDir, $attackTeam, $defenseTeam)
 	{
 		$strHtml = '';
 		
@@ -329,12 +329,36 @@ class MatchController extends AppController
 			if($attacker->getBeatValue($attackDir) > $defenser->getTackleValue($defenseDir))
 			{
 				$strHtml .= "{$attacker->getRndName()}突破了{$defenser->getRndName()},";
+				$angel = mt_rand(10, 90); //与球门中心的角度
 				
 				$newDefenser = $defensePlayerCollection->popRndPlayer();
 				$distance -= mt_rand(10,20);
 				if( ($distance <= 0) || !$newDefenser)
 				{
 					$strHtml .= $this->passCenter($attackDir, $attacker, $attackShoufaCollection,$defenseShoufaCollection, $attackTeam, $defenseTeam);
+				}
+				elseif($attacker->wantShot($distance, $angel)) //内切
+				{
+					$goalkeeper = $defenseShoufaCollection->getGoalkeeper();
+					$strHtml .= "内切后{$distance}米外射门，";
+					
+					if($attacker->getLongShotValue($distance) > $goalkeeper->getSaveValue())
+					{
+						$strHtml .= $this->goal($attacker);
+					}
+					else
+					{
+						$goalkeeper->onSaved($this->curMatch->class_id);
+						$strHtml .= "{$goalkeeper->getRndName()}把球扑出";
+						if(mt_rand(0,1))
+						{
+							$this->corner($attackTeam, $defenseTeam, $attackShoufaCollection, $defenseShoufaCollection);
+						}
+						else
+						{
+							$this->curMatch->turnFaqiuquan();
+						}
+					}
 				}
 				else
 				{
@@ -521,7 +545,7 @@ class MatchController extends AppController
 		$goalkeeper = $defenseCollection->getGoalkeeper();
 		
 		$strHtml .= "{$shoter->getRndName()}在{$distance}米外{$shoter->getRndLongShotStyle()},{$goalkeeper->getRndName()}{$shoter->getRndSaveStyle()},";
-		if($shoter->getShotValue($distance) > $goalkeeper->getSaveValue())
+		if($shoter->getLongShotValue($distance) > $goalkeeper->getSaveValue())
 		{
 			$strHtml .= $this->goal($shoter);
 		}
