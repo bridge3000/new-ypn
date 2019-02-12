@@ -6,6 +6,12 @@ class Player extends YpnModel
     public $id;
 	public $condition_id; //1首发 2板凳 3场外 4受伤
 	
+	public static $dirProperties = [
+		1 => ['field'=>'LeftProperties', 'title'=>'左路'], 
+		2 => ['field'=>'MidProperties', 'title'=>'中路'], 
+		3 => ['field'=>'RightProperties', 'title'=>'右路']
+		];
+	
 	public function getRndHeadStyle()
 	{
 		$headerStyles = ['头球攻门', '狮子甩头', '鱼跃冲顶', '回头望月'];
@@ -127,16 +133,51 @@ class Player extends YpnModel
         return $defensePower;
     }
     
+	/**
+	 * 争夺可能性
+	 * @param type $dirField
+	 * @return type
+	 */
     public function getPassRate($dirField)
     {
         $rate = ($this->BallControl + $this->pass + $this->arc + 30 - mt_rand(1, 60)) * $this->state * $this->$dirField * $this->creativation;
         return $rate;
+    }
+	
+	public function getPassValue($attackDir, $isHigh)
+    {
+		$dirField = self::$dirProperties[$attackDir]['field'];
+		$passValue = 0;
+		if($isHigh)
+		{
+			$passValue = ($this->pass + $this->arc/10 + mt_rand(-10, 10)) * $this->state / 100 * $this->$dirField / 100;
+		}
+		else
+		{
+			$passValue = ($this->pass + mt_rand(-10, 10)) * $this->state / 100 * $this->$dirField / 100;
+		}
+        
+        return $passValue;
+    }
+	
+	public function getBeatValue($attackDir)
+    {
+		$dirField = self::$dirProperties[$attackDir]['field'];
+        $beatValue = ($this->beat * $this->$dirField / 100 + $this->speed + mt_rand(-20, 20)) * $this->state / 100;
+        return $beatValue;
     }
     
     public function getTackleRate($dirField)
     {
         $rate = ($this->tackle + $this->close_marking + $this->pinqiang + 30 - mt_rand(1, 60)) * $this->state * $this->$dirField * $this->creativation;
         return $rate;
+    }
+	
+	public function getTackleValue($dir)
+    {
+		$dirField = self::$dirProperties[$dir]['field'];
+        $value = ($this->tackle * $this->$dirField / 100 + $this->speed + mt_rand(-20, 20)) * $this->state / 100;
+        return $value;
     }
     
     public function getShotRate()
@@ -161,10 +202,14 @@ class Player extends YpnModel
     
     public function getSaveValue()
     {
-        $saveValue = (($this->save + $this->agility + mt_rand(-20, 20))/2 * $this->state / 100  + $this->height/2) / 2;
+        $saveValue = (($this->save + $this->agility + mt_rand(-20, 20)) * $this->state / 100  + $this->height/2) / 3;
         return $saveValue;
     }
     
+	/**
+	 * 角球值
+	 * @return type
+	 */
     public function getCornerValue()
     {
         $cornerValue = ($this->arc + $this->pass + mt_rand(-20, 20)) / 2 * $this->state / 100;
@@ -584,7 +629,11 @@ class Player extends YpnModel
 	
 	public function onSaved($matchClassId)
 	{
-		$this->SaveExperience += 2;
+		if($this->potential > 0)
+		{
+			$this->SaveExperience += 2;
+		}
+		
 		$this->score += 2;
 	}
 	
@@ -625,7 +674,11 @@ class Player extends YpnModel
 			$tackleField = 'Tackle2Count';
 		}
 		$this->$tackleField++;
-		$this->TackleExperience += 1;
+		if($this->potential > 0)
+		{
+			$this->TackleExperience += 1;
+		}
+		
 		$this->score += 1;
 	}
 	

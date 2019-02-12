@@ -802,16 +802,24 @@ class YpnController extends AppController
     
 	public function test()
 	{
-		$this->curMatch = new Match();
-		$this->curMatch->hostPlayers['shoufa'] = [1,2,3,4,5];
-		
-		$arr = $this->curMatch->hostPlayers['shoufa'];
-		
-		unset( $arr[2]);
-		
-		print_r($this->curMatch->hostPlayers['shoufa']);exit;
+//		$players = Player::find('all', [
+//			'conditions' => ['team_id'=>4],
+//			'limit'=>2,
+//			]);
+//		
+//		$playerCollection = new \Model\Collection\PlayerCollection($players);
+//		
 //
-		exit("ok\n");
+//		var_dump($playerCollection->toArray());
+
+		
+		$arr = ['a','b','c','d'];
+//		unset($arr[2]);
+		
+		array_splice($arr, 2, 1);
+		
+		var_dump($arr);
+		
 	}
 	
 	/**

@@ -2,6 +2,7 @@
 namespace Model\Manager;
 use MainConfig;
 use Model\Core\Player;
+use Model\Collection\PlayerCollection;
 
 class PlayerManager extends DataManager 
 {
@@ -352,85 +353,85 @@ class PlayerManager extends DataManager
         return $shotResultData;
     }
     
-    public function getCornerKickerIndex($attackShoufaPlayers, $cornerKickerId)
-    {
-        $cornerKickerIndex = -1;
-        $isGetCornerKicker = false;
-        for($i=0;$i<count($attackShoufaPlayers);$i++)
-        {
-            if ($attackShoufaPlayers[$i]->id == $cornerKickerId)
-            {
-                $cornerKickerIndex = $i;
-                $isGetCornerKicker = true;
-                break;
-            }
-        }
-        
-        if (!$isGetCornerKicker)
-        {
-            $max = 0;
-            $maxIndex = -1;
-            $attackPlayerCount = count($attackShoufaPlayers);
-            for($i=0;$i<$attackPlayerCount;$i++)
-            {
-                $cornerValue = $attackShoufaPlayers[$i]->getCornerValue();
-                if ($cornerValue > $max)
-                {
-                    $max = $cornerValue;
-                    $maxIndex = $i;
-                }
-            }
-            
-            $cornerKickerIndex = $maxIndex;
-        }
-        
-        return $cornerKickerIndex;
-    }
+//    public function getCornerKickerIndex($attackShoufaPlayers, $cornerKickerId)
+//    {
+//        $cornerKickerIndex = -1;
+//        $isGetCornerKicker = false;
+//        for($i=0;$i<count($attackShoufaPlayers);$i++)
+//        {
+//            if ($attackShoufaPlayers[$i]->id == $cornerKickerId)
+//            {
+//                $cornerKickerIndex = $i;
+//                $isGetCornerKicker = true;
+//                break;
+//            }
+//        }
+//        
+//        if (!$isGetCornerKicker)
+//        {
+//            $max = 0;
+//            $maxIndex = -1;
+//            $attackPlayerCount = count($attackShoufaPlayers);
+//            for($i=0;$i<$attackPlayerCount;$i++)
+//            {
+//                $cornerValue = $attackShoufaPlayers[$i]->getCornerValue();
+//                if ($cornerValue > $max)
+//                {
+//                    $max = $cornerValue;
+//                    $maxIndex = $i;
+//                }
+//            }
+//            
+//            $cornerKickerIndex = $maxIndex;
+//        }
+//        
+//        return $cornerKickerIndex;
+//    }
     
-    public function qiangdian($attackPlayers, $defensePlayers, $cornerKickerId, $cornerPosition, $isHigh)
-    {
-        $isAttackingGet = true;
-        $max = 0;
-        $headPlayer = NULL;
-		$goalkeeper = NULL;
-		
-        for($i=0;$i<count($attackPlayers);$i++)
-        {
-            if ($attackPlayers[$i]->id == $cornerKickerId)                
-				continue;
-			
-            if (($attackPlayers[$i]->CornerPosition_id == $cornerPosition) && ($attackPlayers[$i]->position_id != 4) )
-            {
-                $qiangdianValue = $attackPlayers[$i]->getQiangdianValue($isHigh);
-                if ($qiangdianValue > $max)
-                {
-                    $max = $qiangdianValue;
-                    $headPlayer = $attackPlayers[$i];
-                }
-            }
-        }
-        
-        for($i=0;$i<count($defensePlayers);$i++)
-        {
-            if ($defensePlayers[$i]->position_id == 4) 
-            {
-				$goalkeeper = $defensePlayers[$i];
-            }
-            
-            if ($defensePlayers[$i]->CornerPosition_id == $cornerPosition)
-            {
-                $qiangdianValue = $defensePlayers[$i]->getQiangdianValue($isHigh);
-                if ($qiangdianValue > $max)
-                {
-                    $max = $qiangdianValue;
-                    $headPlayer = $defensePlayers[$i];
-                    $isAttackingGet = false;
-                }
-            }
-        }
-        
-        return array('header'=>$headPlayer, 'goalkeeper'=>$goalkeeper, 'isAttackingGet'=>$isAttackingGet);
-    }
+//    public function qiangdian($attackPlayers, $defensePlayers, $cornerKickerId, $cornerPosition, $isHigh)
+//    {
+//        $isAttackingGet = true;
+//        $max = 0;
+//        $headPlayer = NULL;
+//		$goalkeeper = NULL;
+//		
+//        for($i=0;$i<count($attackPlayers);$i++)
+//        {
+//            if ($attackPlayers[$i]->id == $cornerKickerId)                
+//				continue;
+//			
+//            if (($attackPlayers[$i]->CornerPosition_id == $cornerPosition) && ($attackPlayers[$i]->position_id != 4) )
+//            {
+//                $qiangdianValue = $attackPlayers[$i]->getQiangdianValue($isHigh);
+//                if ($qiangdianValue > $max)
+//                {
+//                    $max = $qiangdianValue;
+//                    $headPlayer = $attackPlayers[$i];
+//                }
+//            }
+//        }
+//        
+//        for($i=0;$i<count($defensePlayers);$i++)
+//        {
+//            if ($defensePlayers[$i]->position_id == 4) 
+//            {
+//				$goalkeeper = $defensePlayers[$i];
+//            }
+//            
+//            if ($defensePlayers[$i]->CornerPosition_id == $cornerPosition)
+//            {
+//                $qiangdianValue = $defensePlayers[$i]->getQiangdianValue($isHigh);
+//                if ($qiangdianValue > $max)
+//                {
+//                    $max = $qiangdianValue;
+//                    $headPlayer = $defensePlayers[$i];
+//                    $isAttackingGet = false;
+//                }
+//            }
+//        }
+//        
+//        return array('header'=>$headPlayer, 'goalkeeper'=>$goalkeeper, 'isAttackingGet'=>$isAttackingGet);
+//    }
     
     public function sellBestPlayer($teamId)
     {
@@ -741,27 +742,6 @@ class PlayerManager extends DataManager
 		return $allTeamPlayerData;
     }
 	
-	public function saveMatchResult($hostShoufaPlayers, $guestShoufaPlayers)
-	{
-		$keys = ['id', 'Goal1Count', 'Penalty1Count', 'Assist1Count', 'Tackle1Count', 'Punish1Count', 'ShotAccurateExperience', 'PassExperience', 'YellowCard1Count', 'RedCard1Count', 'sinew', 'cooperate'];
-		$values = array();
-		$shoufaPlayers = array_merge($hostShoufaPlayers, $guestShoufaPlayers);
-		foreach($shoufaPlayers as $p)
-		{
-//			$v = array();
-//			foreach($keys as $k)
-//			{
-//				$v[$k] = $p->$k;
-//			}
-//			$v['total_score'] = $p->total_score + $p->score;
-//			$v['all_matches_count'] = $p->all_matches_count + 1;
-//			$values[] = $v;
-			
-			$p->all_matches_count += 1;
-			$p->save();
-		}
-//		$this->update_batch($values);
-	}
 	
 	/**
 	 * 
@@ -771,12 +751,12 @@ class PlayerManager extends DataManager
 	 * @param int $matchClassId
 	 * @return int 1goal 2save
 	 */
-	public function penalty(&$attackShoufaPlayers, &$defenseShoufaPlayers, $teamPenaltyKickerId, $matchClassId)
+	public function penalty(PlayerCollection $attackShoufaCollection, PlayerCollection $defenseShoufaCollection, $teamPenaltyKickerId, $matchClassId)
 	{
 		$result = 1;
 		$max = 0;
 		$penaltyKicker = NULL;
-		foreach($attackShoufaPlayers as &$p)
+		foreach($attackShoufaCollection as &$p)
 		{
 			if($p->id == $teamPenaltyKickerId)
 			{
@@ -794,15 +774,7 @@ class PlayerManager extends DataManager
 		}
 		
 		//goalkeeper
-		$goalKeeper = NULL;
-		foreach($defenseShoufaPlayers as &$p)
-		{
-			if($p->position_id == 4)
-			{
-				$goalKeeper = $p;
-				break;
-			}
-		}
+		$goalKeeper = $defenseShoufaCollection->getGoalkeeper();
 		
 		if($penaltyKicker->getPenaltyValue() > $goalKeeper->getPenaltySaveValue())
 		{
@@ -813,7 +785,10 @@ class PlayerManager extends DataManager
 		{
 			$result = 2;
 			$goalKeeper->score += 4;
-			$goalKeeper->SaveExperience += 4;
+			if($goalKeeper->potential > 0)
+			{
+				$goalKeeper->SaveExperience += 4;
+			}
 		}
 		
 		return array('result'=>$result, 'penalty_kicker'=>$penaltyKicker, 'goal_keeper'=>$goalKeeper) ;
