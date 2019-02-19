@@ -11,6 +11,7 @@ else
 ?>
 	<div align=center><a href="<?=  MainConfig::BASE_URL?>match/watch_today">全选</a></div>
 	<div><a href="/match/play"><button type="button" class="btn btn-danger">Play</button></a></div>
+	<div class="jumbotron" style="display: none"></div>
 	<table class="table table-bordered">
 	<tr>
 		<th>比赛</th>
@@ -25,36 +26,27 @@ else
 	?>
 		<tr>
             <td><?php echo MainConfig::$matchClasses[$match['class_id']]; ?></td>
-		<td align="right"><?php echo $match['HostGoaler_ids']; ?><?php echo  $allTeams[$match['HostTeam_id']]; ?>		</td>
-		<td>
-		<?php
-		if ($match['isPlayed'])
-		{
-			echo $match['HostGoals'] . ' ：' . $match['GuestGoals'];
-		}
-		else
-		{
-			echo '- ：-';
-		}
-		?>
-        </td>
-		<td align="left"><?=$allTeams[$match['GuestTeam_id']]?><?=$match['GuestGoaler_ids']?></td>
-		<td>
-	<?php
-		if ($match['isPlayed'])
-		{
-	?>
-			<a href="replay/<?php echo $match['id']; ?>"><img border="0" src="" /></a>
-	<?php
-		}
-		else
-		{
-	?>
-			<input type="checkbox" name="checkbox" id="cb<?php echo $match['id']; ?>" <?php if ($match['isWatched']) echo (" checked"); ?> onclick="watchMatch(<?php echo $match['id']; ?>);" />
-	<?php
-		}
-	?>
-		</td>
+			<td align="right"><?php echo $match['HostGoaler_ids']; ?><?php echo  $allTeams[$match['HostTeam_id']]; ?>		</td>
+			<td>
+			<?php
+			if ($match['isPlayed'])
+			{
+				echo $match['HostGoals'] . ' ：' . $match['GuestGoals'];
+			}
+			else
+			{
+				echo '- ：-';
+			}
+			?>
+			</td>
+			<td align="left"><?=$allTeams[$match['GuestTeam_id']]?><?=$match['GuestGoaler_ids']?></td>
+			<td>
+			<?php if($match['isPlayed']): ?>
+				<img border="0" src="/res/img/replay.gif" onclick="reply(<?=$match['id']?>)" />
+			<?php else: ?>
+				<input type="checkbox" name="checkbox" id="cb<?=$match['id']?>" <?php if ($match['isWatched']) echo (" checked"); ?> onclick="watchMatch(<?php echo $match['id']; ?>);" />
+			<?php endif; ?>
+			</td>
 		</tr>
 	<?php endforeach; ?>
 	</table>
@@ -64,11 +56,18 @@ else
 }
 ?>
 <script>
-function watchMatch(match_id)
-{
-	$.get("/index.php?c=match&a=watch&p=" + match_id, {}, function(data){
-		//
-	});
-}
+	function watchMatch(match_id)
+	{
+		$.get("/match/watch/" + match_id, {}, function(data){
+			//
+		});
+	}
+	
+	function reply(matchId)
+	{
+		$.get("/match/ajax_get_reply/" + matchId, {}, function(reply){
+			$(".jumbotron").html(reply).fadeIn();
+		});
+	}
 </script>
 

@@ -219,7 +219,7 @@ class Player extends YpnModel
     public function getQiangdianValue($isHigh)
     {
 		$qiangdianValue = 0;
-		if($isHigh)
+		if($isHigh == 1) //高球
 		{
 			$qiangdianValue = ($this->qiangdian * 2 + mt_rand(-20, 20)) * $this->state / 100 + $this->height;
 		}

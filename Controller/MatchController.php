@@ -180,6 +180,8 @@ class MatchController extends AppController
 			}
 			$strHtml .= $this->assault(($i+1)*$perMinutes);
 		}
+		
+		$this->curMatch->replay = $strHtml;
 		return $strHtml;
     }
 	
@@ -301,16 +303,17 @@ class MatchController extends AppController
 		$attackAction = $attacker->getAttackRndAction();
 		if($attackAction == 1) //pass
 		{
-			$strHtml .= "{$attacker->getRndName()}把球传出,";
+			$strHtml .= "{$attacker->getRndName()}把球传";
 			$newAttacker = $attackPlayerCollection->popRndPlayer();
 			
 			if(!$newAttacker)
 			{
-				$strHtml .= "没有接应队员,进攻结束<br/>";
+				$strHtml .= "出,没有接应队员,进攻结束<br/>";
 				$this->curMatch->turnFaqiuquan();
 			}
 			else
 			{
+				$strHtml .= "给{$newAttacker->getRndName()},";
 				$newDefenser = $defensePlayerCollection->popRndPlayer();
 				$distance -= mt_rand(10,20);
 				if( ($distance <= 0) || !$newDefenser)
@@ -808,8 +811,6 @@ class MatchController extends AppController
 		}
 		
 		$curMatch->hostTeam->save();
-		
-		$this->curMatch->replay = $this->replay;
 		$this->curMatch->save();
 		
 		$count = MatchManager::getInstance()->find('count', array(
@@ -1236,20 +1237,38 @@ class MatchController extends AppController
 	}
     
 	
-    private function corner($attackTeam, $defenseTeam, PlayerCollection $attackShoufaCollection, PlayerCollection $defenseShoufaCollection)
+    private function corner($attackTeam, $defenseTeam, $attackShoufaCollection, $defenseShoufaCollection)
     {
 		$goalkeeper = $defenseShoufaCollection->getGoalkeeper();
 		$cornerKicker = $attackShoufaCollection->getCornerKicker($attackTeam->CornerKicker_id);
 		$cornerPosition = array_rand(Match::$cornerPositions);
-		$shoter = NULL;
-        
-		$isHigh = 0;
+		$cornerHeight = 0; //1=>高 2=>半高 3=>低
 		if(in_array($cornerPosition, [1,2,3]))
 		{
-			$isHigh = mt_rand(0,3) ? 1 : 0;
+			$cornerHeight = mt_rand(0,3) ? 1 : 3;
 		}
 		
-		$strHtml = "{$attackTeam->getRndName()}获得角球," . $cornerKicker->name . '主罚角球，皮球' . ($isHigh?'飞':'横扫') . '到'.Match::$cornerPositions[$cornerPosition].',';
+		$strHtml = "{$attackTeam->getRndName()}获得角球," . $cornerKicker->name . '主罚角球，';
+		$strHtml .= $this->onCornerLand($attackTeam, $defenseTeam, $attackShoufaCollection, $defenseShoufaCollection, $cornerPosition, $cornerHeight, $goalkeeper, $cornerKicker);
+        
+		return $strHtml;
+    }
+	
+	/**
+	 * 角球落点
+	 * @param type $attackTeam
+	 * @param type $defenseTeam
+	 * @param PlayerCollection $attackShoufaCollection
+	 * @param PlayerCollection $defenseShoufaCollection
+	 * @param type $cornerPosition
+	 * @param type $cornerHeight 1=>高 2=>半高 3=>低
+	 * @return type
+	 */
+	private function onCornerLand($attackTeam, $defenseTeam, PlayerCollection $attackShoufaCollection, PlayerCollection $defenseShoufaCollection, $cornerPosition, $cornerHeight, $goalkeeper, $cornerKicker)
+	{
+		$strHtml = '皮球' . (in_array($cornerHeight,[1,2])?'飞':'横扫') . '到'.Match::$cornerPositions[$cornerPosition].',';
+		$shoter = NULL;
+		
 		$attackCornerCollection = $attackShoufaCollection->getChildrenByCornerPosition($cornerPosition);
 		$defenseCornerCollection = $defenseShoufaCollection->getChildrenByCornerPosition($cornerPosition);
 		
@@ -1260,7 +1279,7 @@ class MatchController extends AppController
 			if($player === $cornerKicker)
 				continue;
 			
-			$qiangdianValue = $player->getQiangdianValue($isHigh);
+			$qiangdianValue = $player->getQiangdianValue($cornerHeight);
 			if($qiangdianValue > $max)
 			{
 				$max = $qiangdianValue;
@@ -1272,8 +1291,20 @@ class MatchController extends AppController
 		
 		if (!$shoter) //无人抢到点
         {
-			$strHtml .= "没人抢到点, 门球.<br/>";
-			$this->curMatch->turnFaqiuquan();
+			$nextCornerHeight = ($cornerHeight<3) ? ($cornerHeight+1) : 3;
+			if($cornerPosition == 1) //前点
+			{
+				$strHtml .= $this->onCornerLand($attackTeam, $defenseTeam, $attackShoufaCollection, $defenseShoufaCollection, 2, $nextCornerHeight, $goalkeeper, $cornerKicker);
+			}
+			elseif($cornerPosition == 2) //中点
+			{
+				$strHtml .= $this->onCornerLand($attackTeam, $defenseTeam, $attackShoufaCollection, $defenseShoufaCollection, 3, $nextCornerHeight, $goalkeeper, $cornerKicker);
+			}
+			elseif(in_array($cornerPosition, [3,4]))
+			{
+				$strHtml .= "没人抢到点, 门球.<br/>";
+				$this->curMatch->turnFaqiuquan();
+			}
         }
 		else if ($isAttackingGet && ($shoter) ) //进攻方抢到点
         {
@@ -1290,7 +1321,7 @@ class MatchController extends AppController
 			}
 			else
 			{
-				if($isHigh)
+				if(in_array($cornerHeight,[1,2]))
 				{
 					$shotValue = $shoter->getHeaderValue();
 					$strHtml .= $shoter->getRndHeadStyle();
@@ -1321,7 +1352,7 @@ class MatchController extends AppController
 				else
 				{
 					//快速反击或阵地战
-					$strHtml .= $this->quickAttack();
+					$strHtml .= '皮球飞出禁区<br/>' . $this->quickAttack();
 				}
             }
         }
@@ -1338,9 +1369,9 @@ class MatchController extends AppController
 				$strHtml .= $this->quickAttack();
 			}
         }
-        
+		
 		return $strHtml;
-    }
+	}
     
     private function generateZhenrongHtml($players, $curTeam)
     {
@@ -1393,8 +1424,10 @@ class MatchController extends AppController
     
     public function watch($id)
     {
-        MatchManager::getInstance()->watch($id);
-        echo 1;
+		$curMatch = Match::getById($id);
+		$curMatch->isWatched = 1;
+		$curMatch->save();
+		echo 1;
     }
 	
 	public function watch_today()
@@ -1849,5 +1882,11 @@ class MatchController extends AppController
 		}
 		
 		return $strHtml;
+	}
+	
+	public function ajax_get_reply($matchId)
+	{
+		$curMatch = Match::getById($matchId);
+		exit($curMatch->replay);
 	}
 }

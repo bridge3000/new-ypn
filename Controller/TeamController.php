@@ -562,7 +562,7 @@ class TeamController extends AppController
                     $names = PlayerManager::getInstance()->getLeastYoungPlayers($positionId, $count, $firstNames, $familyNames, $countries, $usedNOs, $curTeam->getLeagueId(), $curTeam->getId(), $nowDate, $existPlayerNames);
                     foreach($names as $newPlayerName)
                     {
-                        $strHtml .= "在二线队抽调了<span=\"blue_bold_span\">" . $curTeam->getName() . "</span>在二线队抽调了<span=\"green_bold_span\">" . $newPlayerName . "</span>到一线队<br>";
+                        $strHtml .= "<span=\"blue_bold_span\">" . $curTeam->getName() . "</span>在二线队抽调了<span=\"green_bold_span\">" . $newPlayerName . "</span>到一线队<br>";
 	
 						$curTeam->addMoney(-\MainConfig::GENERATE_YOUNG_PLAYER_FEE, '抽调新队员', $nowDate);
 						$curTeam->player_count++;

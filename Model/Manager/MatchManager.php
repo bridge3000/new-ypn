@@ -71,11 +71,6 @@ class MatchManager extends DataManager
         DBManager::getInstance()->copyTable(MainConfig::PREFIX . 'bak_matches', MainConfig::PREFIX . $this->table, $ignoreFields);
     }
     
-    public function watch($id)
-    {
-        $this->update(array('isWatched'=>1), array('id'=>$id));
-    }
-	
 	public function watchByDay($playDate)
 	{
 		$this->update(array('isWatched'=>1), array('PlayTime'=>$playDate));
