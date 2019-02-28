@@ -115,8 +115,8 @@ class MatchController extends AppController
 			$this->replay = '';
 			$this->curMatch->hostTeam = $matchTeams[$curMatch->HostTeam_id];
 			$this->curMatch->guestTeam = $matchTeams[$curMatch->GuestTeam_id];
-			$this->curMatch->hostPlayers['shoufa'] = [];
-			$this->curMatch->guestPlayers['shoufa'] = [];
+//			$this->curMatch->hostPlayers['shoufa'] = [];
+//			$this->curMatch->guestPlayers['shoufa'] = [];
 			$this->curMatch->hostShoufaCollection = new PlayerCollection();
 			$this->curMatch->hostBandengCollection = new PlayerCollection();
 			$this->curMatch->guestShoufaCollection = new PlayerCollection();
@@ -141,12 +141,12 @@ class MatchController extends AppController
 			
 			$curMatch->setShoufa($teamPlayers[$curMatch->HostTeam_id], TRUE);
             $allMatchHtml .= '<div class="shoufa_div">';
-            $allMatchHtml .= $this->generateZhenrongHtml($curMatch->hostPlayers, $curMatch->hostTeam);
+            $allMatchHtml .= $this->generateZhenrongHtml(TRUE);
             $allMatchHtml .= '</div>';
             
 			$curMatch->setShoufa($teamPlayers[$curMatch->GuestTeam_id], FALSE);
             $allMatchHtml .= '<div class="shoufa_div">';
-            $allMatchHtml .= $this->generateZhenrongHtml($curMatch->guestPlayers, $curMatch->guestTeam);
+            $allMatchHtml .= $this->generateZhenrongHtml(FALSE);
             $allMatchHtml .= '</div><div style="clear:both"></div>';
 			
 			PlayerManager::getInstance()->clearPunish(array($curMatch->HostTeam_id,$curMatch->GuestTeam_id), $curMatch->class_id);
@@ -502,17 +502,17 @@ class MatchController extends AppController
         {
             $attackTeam = $this->curMatch->hostTeam;
             $defenseTeam = $this->curMatch->guestTeam;
-			$attackPlayerCollection->loadQuickCollection($this->curMatch->hostPlayers['shoufa']);
-			$defensePlayerCollection->loadQuickCollection($this->curMatch->guestPlayers['shoufa']);
-			$goalkeeper = PlayerCollection::findGoalkeeper($this->curMatch->guestPlayers['shoufa']);
+			$attackPlayerCollection = $this->curMatch->hostShoufaCollection->loadQuickCollection();
+			$defensePlayerCollection = $this->curMatch->guestShoufaCollection->loadQuickCollection();
+			$goalkeeper = $this->curMatch->guestShoufaCollection->getGoalkeeper();
         }
         else
         {
             $attackTeam = $this->curMatch->guestTeam;
             $defenseTeam = $this->curMatch->hostTeam;
-			$attackPlayerCollection->loadQuickCollection($this->curMatch->guestPlayers['shoufa']);
-			$defensePlayerCollection->loadQuickCollection($this->curMatch->hostPlayers['shoufa']);
-			$goalkeeper = PlayerCollection::findGoalkeeper($this->curMatch->hostPlayers['shoufa']);
+			$attackPlayerCollection = $this->curMatch->guestShoufaCollection->loadQuickCollection();
+			$defensePlayerCollection= $this->curMatch->hostShoufaCollection->loadQuickCollection();
+			$goalkeeper = $this->curMatch->hostShoufaCollection->getGoalkeeper();
         }
 		
 		$distance = mt_rand(60, 80); //每20米需要1个人, 或传或奔袭
@@ -1200,12 +1200,8 @@ class MatchController extends AppController
 		
 		for($i=0;$i<$successTeamCount;$i+=2)
 		{
-//			var_dump($successTeamCount, floor($i*2/$successTeamCount), MainConfig::$elPlayoffDates[16][floor($i*2/$successTeamCount)][0]);exit;
 			$playDate1 = $nextYear . '-' . MainConfig::$elPlayoffDates[13][floor($i*2/$successTeamCount)][0];
 			$playDate2 = $nextYear . '-' . MainConfig::$elPlayoffDates[13][floor($i*2/$successTeamCount)][1];
-			
-			
-//			var_dump($playDate1, $playDate2);exit;
 			
 			$hostTeamId = $successTeamIds[$i];
 			$guestTeamId = $successTeamIds[$i+1];
@@ -1373,11 +1369,14 @@ class MatchController extends AppController
 		return $strHtml;
 	}
     
-    private function generateZhenrongHtml($players, $curTeam)
+    private function generateZhenrongHtml($isHostTeam)
     {
+		$collection = $isHostTeam ? $this->curMatch->hostShoufaCollection : $this->curMatch->guestShoufaCollection;
+		$curTeam = $isHostTeam ? $this->curMatch->hostTeam : $this->curMatch->guestTeam;
+		
         $str = "<div class='title'>" . $curTeam->name . " </div><table class='tb_style_1'>";
 
-        foreach($players['shoufa'] as $player)
+        foreach($collection as $player)
         {
             $str .= '<tr><td>' . $player->ShirtNo . "</td><td>" . $player->name . "</td><td>" . MainConfig::$positions[$player->position_id] . '</td></tr>';
         }

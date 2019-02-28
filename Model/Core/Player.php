@@ -985,6 +985,12 @@ class Player extends YpnModel
 		$this->sinew -= ($this->pinqiang+$this->ShotDesire+$this->scope) / 3;
 	}
 	
+	public function hasEnoughSinew()
+	{
+		$hasEnoughSinew = $this->sinew > (($this->pinqiang+$this->ShotDesire+$this->scope) / 3);
+		return $hasEnoughSinew;
+	}
+	
 	/**
 	 * 
 	 * @return int 1传球 2过人

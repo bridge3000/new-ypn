@@ -29,29 +29,32 @@ class PlayerCollection extends Collection
 	 * 组建防守反击集合
 	 * @param type $players
 	 */
-	public function loadQuickCollection($players)
+	public function loadQuickCollection()
 	{
-		foreach($players as $player)
+		$newItems = [];
+		foreach($this->items as $player)
 		{
 			if( ($player->CornerPosition_id == 4) && ($player->position_id != 4) )
 			{
-				$this->items[] = $player;
+				$newItems[] = $player;
 			}
 		}
 		
-		shuffle($this->items);
+		shuffle($newItems);
+		
+		return new static($newItems);
 	}
 	
-	public static function findGoalkeeper($players)
-	{
-		foreach($players as $player)
-		{
-			if($player->position_id == 4)
-			{
-				return $player;
-			}
-		}
-	}
+//	public static function findGoalkeeper($players)
+//	{
+//		foreach($players as $player)
+//		{
+//			if($player->position_id == 4)
+//			{
+//				return $player;
+//			}
+//		}
+//	}
 	
 	public function getLongShoter()
 	{
@@ -213,4 +216,227 @@ class PlayerCollection extends Collection
 		
 		return $children;
 	}
+	
+	public function autoSetShoufa($matchClassId, $formattion, $punishField)
+	{
+		foreach($this->items as &$player)
+        {
+            if (in_array($player->condition_id, array(1, 2)))
+            {
+                $player->condition_id = 3;
+            }
+        }
+		
+        /*公共的 门将 左右前卫 左右后卫*/
+		$positions = [4]; //优先门将
+
+        /*根据阵型判断*/
+        switch ($formattion) 
+        {
+        	case "4-4-2":
+				$positions[] = 8;
+				$positions[] = 2;
+				$positions[] = 1;
+				$positions[] = 1;
+				$positions[] = 3;
+				$positions[] = 3;
+        		break;
+        	case "3-5-2":
+            case "5-3-2":
+				$positions[] = 2;
+				$positions[] = 2;
+				$positions[] = 8;
+				$positions[] = 1;
+				$positions[] = 1;
+				$positions[] = 3;
+            	break;
+        	case "3-4-3":
+				$positions[] = 2;
+				$positions[] = 2;
+				$positions[] = 5;
+				$positions[] = 6;
+				$positions[] = 7;
+				$positions[] = 3;
+				break;
+            case "4-3-3":
+				$positions[] = 2;
+				$positions[] = 5;
+				$positions[] = 6;
+				$positions[] = 7;
+				$positions[] = 3;
+				$positions[] = 3;
+            	break;
+            case "4-5-1":
+				$positions[] = 2;
+				$positions[] = 2;
+				$positions[] = 8;
+				$positions[] = 1;
+				$positions[] = 3;
+				$positions[] = 3;
+            	break;
+			case "5-4-1":
+				$positions[] = 2;
+				$positions[] = 2;
+				$positions[] = 3;
+				$positions[] = 1;
+				$positions[] = 3;
+				$positions[] = 3;
+            	break;
+            case "圣诞树":
+				$positions[] = 2;
+				$positions[] = 8;
+				$positions[] = 8;
+				$positions[] = 1;
+				$positions[] = 3;
+				$positions[] = 3;
+	            break;
+        }
+		
+		$positions[] = 13;
+		$positions[] = 14;
+		$positions[] = 9;
+		$positions[] = 10;
+		
+		foreach($positions as $positionId)
+		{
+			$this->setOnline($positionId, $punishField, $matchClassId);
+		}
+
+        /*设置5个替补队员*/
+        $j = 0;
+        $isGetKeeper = false;
+
+        foreach($this->items as $curPlayer)
+        {
+        	if ( ($curPlayer->condition_id == 3) && ($curPlayer->position_id == 4)  && ($curPlayer->$punishField == 0) && !$isGetKeeper)
+        	{
+        		$curPlayer->condition_id = 2;
+        		$isGetKeeper = true;
+        	}
+        	
+        	if ( ($curPlayer->condition_id == 3) && ($curPlayer->position_id != 4) && ($curPlayer->$punishField == 0) && ($j < 4) )
+        	{
+        		$curPlayer->condition_id = 2;
+        		$j++;
+        	}
+                	
+        	if ($j == 4 && $isGetKeeper) break;
+        }
+	}
+	
+	private function setOnline($positionId, $punish, $matchClassId)
+    {		        
+		$players = $this->items;
+		//如果是友谊赛，遍历所有球员，状态*磨合度低的球员上场
+		if ($matchClassId == 24)
+		{
+			$minPower = 10000;
+			$onlineIndex = -1;
+			
+			for ($i = 0;$i < count($players);$i++)
+			{
+				if ( ($players[$i]->condition_id == 3) && $players[$i]->hasEnoughSinew() && ($players[$i]->position_id == $positionId) )
+				{
+					if ($players[$i]->cooperate * $players[$i]->state < $minPower)
+					{
+						$minPower = $players[$i]->cooperate * $players[$i]->state;
+						$onlineIndex = $i;	
+					}
+				}
+			}
+			
+			if ($onlineIndex <> -1)
+			{
+                $players[$onlineIndex]->condition_id = 1;
+				return;
+			}
+		}
+		
+		//其他比赛类型走正常步骤
+        switch ($positionId)
+        {
+            case 5:
+            case 9:
+            case 13:
+                $dirProperties = "LeftProperties";
+                break;
+            case 6:
+            case 10:
+            case 14:
+                $dirProperties = "RightProperties";
+                break;
+            default:
+                $dirProperties = "MidProperties";
+                break;
+        }
+
+        /*根据位置来设置不同的排序方式*/
+        $max = 0;
+        $temp = 0;
+        $bestIndex = -1;
+        for ($i = 0;$i < count($players);$i++)
+        {
+        	if ( ($players[$i]->condition_id==3) && ($players[$i]->$punish==0) && $players[$i]->hasEnoughSinew())
+        	{
+	        	switch ($positionId)
+		        {
+		            case 1:
+		                $temp = $players[$i]->ShotDesire + $players[$i]->ShotAccurate + $players[$i]->ShotPower + $players[$i]->qiangdian;
+		                break;
+		            case 2:
+		                $temp = $players[$i]->pinqiang + $players[$i]->tackle + $players[$i]->BallControl + $players[$i]->close_marking + $players[$i]->pass + $players[$i]->SinewMax;
+		                break;
+		            case 3:
+		                $temp = $players[$i]->tackle + $players[$i]->qiangdian + $players[$i]->close_marking + $players[$i]->height / 2;
+		                break;
+		            case 4:
+		                $temp = $players[$i]->save + $players[$i]->height / 2;
+		            	break;
+                    case 5:
+		            case 6:
+		                $temp = ($players[$i]->agility + $players[$i]->speed + $players[$i]->beat);
+		                break;
+		            case 7:
+		                $temp = $players[$i]->header + $players[$i]->ShotDesire + $players[$i]->ShotAccurate + $players[$i]->ShotPower + $players[$i]->qiangdian  + $players[$i]->height / 2;
+		                break;
+		            case 8:
+		                $temp = $players[$i]->ShotAccurate + $players[$i]->BallControl + $players[$i]->pass;
+		                break;
+		            case 9:
+		            case 10:
+		                $temp = ($players[$i]->agility + $players[$i]->BallControl + $players[$i]->beat + $players[$i]->speed);
+		                break;
+		            case 13:
+		            case 14:
+		                $temp = ($players[$i]->agility/2 + $players[$i]->tackle + $players[$i]->close_marking + $players[$i]->speed/2);
+		                break;
+		        }
+		        
+		        $temp *= $players[$i]->state * $players[$i]->$dirProperties;
+		        if ($temp > $max)
+		        {
+		        	$max = $temp;
+		        	$bestIndex = $i;
+		        }
+        	}
+        }
+
+        /*如果没有找到sinew<70的*/
+        if ($bestIndex == -1)
+        {
+            for ($i = 0;$i < count($players);$i++)
+        	{
+	        	if ($players[$i]->condition_id == 3 && $players[$i]->$punish == 0)
+	        	{
+		        	$bestIndex = $i;
+		        	break;
+	        	}
+        	}
+        }
+        
+        if ($bestIndex == -1) return; 
+        
+        $players[$bestIndex]->condition_id = 1;
+        $players[$bestIndex]->position_id = $positionId;
+    }
 }
